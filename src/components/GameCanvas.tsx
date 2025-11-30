@@ -10,6 +10,7 @@ import {
   TOWER_SIZE,
   PROJECTILE_SIZE,
 } from '../types/game';
+import { DEV_CONFIG } from '../config/dev';
 
 interface GameCanvasProps {
   gameState: GameState;
@@ -52,19 +53,23 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick
     gameState.projectiles.forEach((projectile) => drawProjectile(ctx, projectile));
 
     // Отладочная информация на canvas
-    ctx.fillStyle = '#0f0';
-    ctx.font = '14px monospace';
-    ctx.fillText(`Enemies: ${gameState.enemies.length}`, CANVAS_PADDING + 10, CANVAS_PADDING + 20);
-    ctx.fillText(`Towers: ${gameState.towers.length}`, CANVAS_PADDING + 10, CANVAS_PADDING + 40);
-    ctx.fillText(`Wave: ${gameState.currentWave}`, CANVAS_PADDING + 10, CANVAS_PADDING + 60);
+    if (DEV_CONFIG.SHOW_DEBUG_INFO) {
+      ctx.fillStyle = '#0f0';
+      ctx.font = '14px monospace';
+      ctx.fillText(`Enemies: ${gameState.enemies.length}`, CANVAS_PADDING + 10, CANVAS_PADDING + 20);
+      ctx.fillText(`Towers: ${gameState.towers.length}`, CANVAS_PADDING + 10, CANVAS_PADDING + 40);
+      ctx.fillText(`Wave: ${gameState.currentWave}`, CANVAS_PADDING + 10, CANVAS_PADDING + 60);
+    }
 
     // Координаты углов игрового поля
-    ctx.fillStyle = '#ff0';
-    ctx.font = 'bold 11px monospace';
-    ctx.fillText(`(${CANVAS_PADDING}, ${CANVAS_PADDING})`, CANVAS_PADDING + 5, CANVAS_PADDING + 15);
-    ctx.fillText(`(${CANVAS_PADDING + GAME_WIDTH}, ${CANVAS_PADDING})`, CANVAS_PADDING + GAME_WIDTH - 80, CANVAS_PADDING + 15);
-    ctx.fillText(`(${CANVAS_PADDING}, ${CANVAS_PADDING + GAME_HEIGHT})`, CANVAS_PADDING + 5, CANVAS_PADDING + GAME_HEIGHT - 5);
-    ctx.fillText(`(${CANVAS_PADDING + GAME_WIDTH}, ${CANVAS_PADDING + GAME_HEIGHT})`, CANVAS_PADDING + GAME_WIDTH - 95, CANVAS_PADDING + GAME_HEIGHT - 5);
+    if (DEV_CONFIG.SHOW_COORDINATES) {
+      ctx.fillStyle = '#ff0';
+      ctx.font = 'bold 11px monospace';
+      ctx.fillText(`(${CANVAS_PADDING}, ${CANVAS_PADDING})`, CANVAS_PADDING + 5, CANVAS_PADDING + 15);
+      ctx.fillText(`(${CANVAS_PADDING + GAME_WIDTH}, ${CANVAS_PADDING})`, CANVAS_PADDING + GAME_WIDTH - 80, CANVAS_PADDING + 15);
+      ctx.fillText(`(${CANVAS_PADDING}, ${CANVAS_PADDING + GAME_HEIGHT})`, CANVAS_PADDING + 5, CANVAS_PADDING + GAME_HEIGHT - 5);
+      ctx.fillText(`(${CANVAS_PADDING + GAME_WIDTH}, ${CANVAS_PADDING + GAME_HEIGHT})`, CANVAS_PADDING + GAME_WIDTH - 95, CANVAS_PADDING + GAME_HEIGHT - 5);
+    }
 
     // Рисуем радиус действия выбранной башни (при наведении)
     // Это можно добавить позже для улучшения UX
@@ -122,9 +127,11 @@ function drawPath(ctx: CanvasRenderingContext2D, path: { x: number; y: number }[
     ctx.fill();
     
     // Координаты каждой точки пути
-    ctx.fillStyle = '#f0f';
-    ctx.font = '11px monospace';
-    ctx.fillText(`(${point.x}, ${point.y})`, point.x + 10, point.y - 10);
+    if (DEV_CONFIG.SHOW_PATH_COORDINATES) {
+      ctx.fillStyle = '#f0f';
+      ctx.font = '11px monospace';
+      ctx.fillText(`(${point.x}, ${point.y})`, point.x + 10, point.y - 10);
+    }
     
     // Номер точки
     if (index === 0) {

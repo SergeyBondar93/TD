@@ -1,0 +1,108 @@
+// Базовые типы для игры Tower Defense
+
+export interface Position {
+  x: number;
+  y: number;
+}
+
+export interface Enemy {
+  id: string;
+  position: Position;
+  health: number;
+  maxHealth: number;
+  speed: number;
+  level: number; // Уровень сложности врага
+  pathIndex: number; // Индекс текущей точки на пути
+  reward: number; // Награда за уничтожение
+}
+
+export interface Tower {
+  id: string;
+  position: Position;
+  level: 1 | 2 | 3; // 3 уровня башенок
+  damage: number;
+  range: number;
+  fireRate: number; // Выстрелов в секунду
+  lastFireTime: number;
+  cost: number;
+}
+
+export interface Projectile {
+  id: string;
+  position: Position;
+  targetEnemyId: string;
+  damage: number;
+  speed: number;
+}
+
+export interface GameState {
+  money: number;
+  lives: number;
+  currentWave: number;
+  enemies: Enemy[];
+  towers: Tower[];
+  projectiles: Projectile[];
+  path: Position[];
+  gameStatus: 'menu' | 'playing' | 'paused' | 'won' | 'lost';
+  selectedTowerLevel: 1 | 2 | 3 | null;
+  currentLevel: number; // 1-10 уровней сложности
+}
+
+export interface LevelConfig {
+  level: number;
+  waves: WaveConfig[];
+  startingMoney: number;
+  startingLives: number;
+}
+
+export interface WaveConfig {
+  enemyCount: number;
+  enemyLevel: number;
+  enemyHealth: number;
+  enemySpeed: number;
+  enemyReward: number;
+  spawnDelay: number; // Задержка между спавном врагов (мс)
+}
+
+export interface TowerStats {
+  level: 1 | 2 | 3;
+  damage: number;
+  range: number;
+  fireRate: number;
+  cost: number;
+  upgradeCost?: number;
+}
+
+export const TOWER_STATS: Record<1 | 2 | 3, TowerStats> = {
+  1: {
+    level: 1,
+    damage: 10,
+    range: 100,
+    fireRate: 1, // 1 выстрел в секунду
+    cost: 50,
+    upgradeCost: 100,
+  },
+  2: {
+    level: 2,
+    damage: 25,
+    range: 120,
+    fireRate: 1.5,
+    cost: 150,
+    upgradeCost: 200,
+  },
+  3: {
+    level: 3,
+    damage: 50,
+    range: 150,
+    fireRate: 2,
+    cost: 350,
+  },
+};
+
+export const CANVAS_WIDTH = 800;
+export const CANVAS_HEIGHT = 600;
+export const CELL_SIZE = 40;
+export const ENEMY_SIZE = 30;
+export const TOWER_SIZE = 35;
+export const PROJECTILE_SIZE = 8;
+export const PROJECTILE_SPEED = 300; // пикселей в секунду

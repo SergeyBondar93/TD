@@ -34,13 +34,17 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick
     gameState.towers.forEach((tower) => drawTower(ctx, tower));
 
     // Рисуем врагов
-    if (gameState.enemies.length > 0) {
-      console.log('🎨 Rendering enemies:', gameState.enemies.length);
-    }
     gameState.enemies.forEach((enemy) => drawEnemy(ctx, enemy));
 
     // Рисуем снаряды
     gameState.projectiles.forEach((projectile) => drawProjectile(ctx, projectile));
+
+    // Отладочная информация на canvas
+    ctx.fillStyle = '#0f0';
+    ctx.font = '14px monospace';
+    ctx.fillText(`Enemies: ${gameState.enemies.length}`, 10, 20);
+    ctx.fillText(`Towers: ${gameState.towers.length}`, 10, 40);
+    ctx.fillText(`Wave: ${gameState.currentWave}`, 10, 60);
 
     // Рисуем радиус действия выбранной башни (при наведении)
     // Это можно добавить позже для улучшения UX
@@ -92,15 +96,25 @@ function drawPath(ctx: CanvasRenderingContext2D, path: { x: number; y: number }[
 
   // Рисуем точки пути
   ctx.fillStyle = '#0f3460';
-  path.forEach((point) => {
+  path.forEach((point, index) => {
     ctx.beginPath();
     ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
     ctx.fill();
+    
+    // Номер точки
+    if (index === 0) {
+      ctx.fillStyle = '#0f0';
+      ctx.font = 'bold 16px Arial';
+      ctx.fillText('START', point.x + 10, point.y);
+      ctx.fillStyle = '#0f3460';
+    }
   });
 }
 
 // Рисование врага (квадратик с уровнем и HP)
 function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy) {
+  console.log('Drawing enemy:', enemy.position, 'Level:', enemy.level, 'HP:', enemy.health);
+  
   const size = ENEMY_SIZE;
   const x = enemy.position.x - size / 2;
   const y = enemy.position.y - size / 2;

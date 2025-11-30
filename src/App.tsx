@@ -3,6 +3,7 @@ import { GameCanvas } from './components/GameCanvas';
 import { GameUI } from './components/GameUI';
 import { LevelSelect } from './components/LevelSelect';
 import { GameOver } from './components/GameOver';
+import { DebugInfo } from './components/DebugInfo';
 import type { GameState, Enemy, Tower, Projectile } from './types/game';
 import { TOWER_STATS } from './types/game';
 import { LEVELS, DEFAULT_PATH } from './config/levels';
@@ -49,34 +50,24 @@ function App() {
 
   // Начало новой волны
   const startWave = useCallback(() => {
-    console.log('🎬 startWave called');
     setGameState((prev) => {
       
-      if (!prev) {
-        console.log('❌ No prev state');
-        return null;
-      }
+      if (!prev) return null;
 
       const levelConfig = LEVELS[prev.currentLevel - 1];
       const nextWave = prev.currentWave;
 
-      console.log('📊 Current wave:', nextWave, 'Total waves:', levelConfig.waves.length);
-
       if (nextWave >= levelConfig.waves.length) {
         // Все волны пройдены
-        console.log('✅ All waves completed');
         return { ...prev, gameStatus: 'won' };
       }
 
-      // Инициализируем спавн врагов
+      // Инициализируем спавн врагов (устанавливаем время в прошлое для мгновенного первого спавна)
       waveSpawnRef.current = {
         waveIndex: nextWave,
         enemiesSpawned: 0,
-        lastSpawnTime: Date.now(),
+        lastSpawnTime: Date.now() - 10000, // Первый враг спавнится сразу
       };
-
-      console.log('🚀 Wave spawn initialized:', waveSpawnRef.current);
-      console.log('👾 Wave config:', levelConfig.waves[nextWave]);
 
       return {
         ...prev,
@@ -126,11 +117,7 @@ function App() {
 
   // Основной игровой цикл
   useEffect(() => {
-    console.log('🎮 Game loop effect triggered. Status:', gameState?.gameStatus);
-    
     if (!gameState || gameState.gameStatus !== 'playing') return;
-
-    console.log('▶️ Starting game loop');
 
     const gameLoop = (currentTime: number) => {
       if (lastTimeRef.current === 0) {
@@ -145,20 +132,15 @@ function App() {
       setGameState((prev) => {
         if (!prev || prev.gameStatus !== 'playing') return prev;
 
-        let newState = { ...prev };
         const levelConfig = LEVELS[prev.currentLevel - 1];
+        let enemies = [...prev.enemies];
+        let lives = prev.lives;
+        let money = prev.money;
 
         // Спавн врагов
         if (waveSpawnRef.current) {
           const waveConfig = levelConfig.waves[waveSpawnRef.current.waveIndex];
           const timeSinceLastSpawn = Date.now() - waveSpawnRef.current.lastSpawnTime;
-
-          console.log('🔄 Spawn check:', {
-            spawned: waveSpawnRef.current.enemiesSpawned,
-            total: waveConfig.enemyCount,
-            timeSince: timeSinceLastSpawn,
-            delay: waveConfig.spawnDelay,
-          });
 
           if (
             waveSpawnRef.current.enemiesSpawned < waveConfig.enemyCount &&
@@ -175,20 +157,16 @@ function App() {
               reward: waveConfig.enemyReward,
             };
 
-            console.log('👾 Spawning enemy:', newEnemy);
-
-            newState.enemies = [...newState.enemies, newEnemy];
+            console.log('🆕 Creating enemy:', newEnemy);
+            enemies.push(newEnemy);
             waveSpawnRef.current.enemiesSpawned++;
             waveSpawnRef.current.lastSpawnTime = Date.now();
           }
 
           // Если все враги заспавнились, останавливаем спавн
           if (waveSpawnRef.current.enemiesSpawned >= waveConfig.enemyCount) {
-            console.log('✅ All enemies spawned for this wave');
             waveSpawnRef.current = null;
           }
-        } else {
-          console.log('⏸️ No active wave spawn');
         }
 
         // Обновление позиций врагов
@@ -196,7 +174,7 @@ function App() {
         let lostLives = 0;
         let earnedMoney = 0;
 
-        for (const enemy of newState.enemies) {
+        for (const enemy of enemies) {
           if (enemy.health <= 0) {
             // Враг мертв
             earnedMoney += enemy.reward;
@@ -216,30 +194,25 @@ function App() {
           }
         }
 
-        newState.enemies = updatedEnemies;
-        newState.lives -= lostLives;
-        newState.money += earnedMoney;
-
-        if (newState.enemies.length > 0) {
-          console.log('📍 Active enemies:', newState.enemies.length, 'First enemy pos:', newState.enemies[0]?.position);
-        }
+        enemies = updatedEnemies;
+        lives -= lostLives;
+        money += earnedMoney;
 
         // Проверка проигрыша
-        if (newState.lives <= 0) {
-          newState.gameStatus = 'lost';
-          return newState;
+        if (lives <= 0) {
+          return { ...prev, gameStatus: 'lost', lives: 0 };
         }
 
         // Башни стреляют
         const now = Date.now();
-        const newProjectiles: Projectile[] = [...newState.projectiles];
+        let projectiles: Projectile[] = [...prev.projectiles];
 
-        for (const tower of newState.towers) {
+        const updatedTowers = prev.towers.map((tower) => {
           const timeSinceLastFire = now - tower.lastFireTime;
           const fireInterval = 1000 / tower.fireRate;
 
           if (timeSinceLastFire >= fireInterval) {
-            const target = findClosestEnemyInRange(tower, newState.enemies);
+            const target = findClosestEnemyInRange(tower, enemies);
 
             if (target) {
               const projectile: Projectile = {
@@ -250,17 +223,18 @@ function App() {
                 speed: 300,
               };
 
-              newProjectiles.push(projectile);
-              tower.lastFireTime = now;
+              projectiles.push(projectile);
+              return { ...tower, lastFireTime: now };
             }
           }
-        }
+          return tower;
+        });
 
         // Обновление снарядов
         const activeProjectiles: Projectile[] = [];
 
-        for (const projectile of newProjectiles) {
-          const target = newState.enemies.find((e) => e.id === projectile.targetEnemyId);
+        for (const projectile of projectiles) {
+          const target = enemies.find((e) => e.id === projectile.targetEnemyId);
 
           if (!target) continue;
 
@@ -278,9 +252,14 @@ function App() {
           }
         }
 
-        newState.projectiles = activeProjectiles;
-
-        return newState;
+        return {
+          ...prev,
+          enemies,
+          lives,
+          money,
+          towers: updatedTowers,
+          projectiles: activeProjectiles,
+        };
       });
 
       animationFrameId = requestAnimationFrame(gameLoop);
@@ -339,6 +318,8 @@ function App() {
           onMenu={() => setGameState(null)}
         />
       )}
+
+      <DebugInfo gameState={gameState} />
     </div>
   );
 }

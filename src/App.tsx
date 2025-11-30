@@ -49,32 +49,41 @@ function App() {
 
   // Начало новой волны
   const startWave = useCallback(() => {
-    if (!gameState) return;
+    console.log('🎬 startWave called');
+    setGameState((prev) => {
+      
+      if (!prev) {
+        console.log('❌ No prev state');
+        return null;
+      }
 
-    const levelConfig = LEVELS[gameState.currentLevel - 1];
-    const nextWave = gameState.currentWave;
+      const levelConfig = LEVELS[prev.currentLevel - 1];
+      const nextWave = prev.currentWave;
 
-    if (nextWave >= levelConfig.waves.length) {
-      // Все волны пройдены
-      setGameState((prev) => (prev ? { ...prev, gameStatus: 'won' } : null));
-      return;
-    }
+      console.log('📊 Current wave:', nextWave, 'Total waves:', levelConfig.waves.length);
 
-    setGameState((prev) =>
-      prev
-        ? {
-            ...prev,
-            currentWave: nextWave + 1,
-          }
-        : null
-    );
+      if (nextWave >= levelConfig.waves.length) {
+        // Все волны пройдены
+        console.log('✅ All waves completed');
+        return { ...prev, gameStatus: 'won' };
+      }
 
-    waveSpawnRef.current = {
-      waveIndex: nextWave,
-      enemiesSpawned: 0,
-      lastSpawnTime: Date.now(),
-    };
-  }, [gameState]);
+      // Инициализируем спавн врагов
+      waveSpawnRef.current = {
+        waveIndex: nextWave,
+        enemiesSpawned: 0,
+        lastSpawnTime: Date.now(),
+      };
+
+      console.log('🚀 Wave spawn initialized:', waveSpawnRef.current);
+      console.log('👾 Wave config:', levelConfig.waves[nextWave]);
+
+      return {
+        ...prev,
+        currentWave: nextWave + 1,
+      };
+    });
+  }, []);
 
   // Клик по canvas - размещение башни
   const handleCanvasClick = useCallback(
@@ -117,11 +126,17 @@ function App() {
 
   // Основной игровой цикл
   useEffect(() => {
+    console.log('🎮 Game loop effect triggered. Status:', gameState?.gameStatus);
+    
     if (!gameState || gameState.gameStatus !== 'playing') return;
+
+    console.log('▶️ Starting game loop');
 
     const gameLoop = (currentTime: number) => {
       if (lastTimeRef.current === 0) {
         lastTimeRef.current = currentTime;
+        animationFrameId = requestAnimationFrame(gameLoop);
+        return;
       }
 
       const deltaTime = currentTime - lastTimeRef.current;
@@ -138,6 +153,13 @@ function App() {
           const waveConfig = levelConfig.waves[waveSpawnRef.current.waveIndex];
           const timeSinceLastSpawn = Date.now() - waveSpawnRef.current.lastSpawnTime;
 
+          console.log('🔄 Spawn check:', {
+            spawned: waveSpawnRef.current.enemiesSpawned,
+            total: waveConfig.enemyCount,
+            timeSince: timeSinceLastSpawn,
+            delay: waveConfig.spawnDelay,
+          });
+
           if (
             waveSpawnRef.current.enemiesSpawned < waveConfig.enemyCount &&
             timeSinceLastSpawn >= waveConfig.spawnDelay
@@ -153,6 +175,8 @@ function App() {
               reward: waveConfig.enemyReward,
             };
 
+            console.log('👾 Spawning enemy:', newEnemy);
+
             newState.enemies = [...newState.enemies, newEnemy];
             waveSpawnRef.current.enemiesSpawned++;
             waveSpawnRef.current.lastSpawnTime = Date.now();
@@ -160,8 +184,11 @@ function App() {
 
           // Если все враги заспавнились, останавливаем спавн
           if (waveSpawnRef.current.enemiesSpawned >= waveConfig.enemyCount) {
+            console.log('✅ All enemies spawned for this wave');
             waveSpawnRef.current = null;
           }
+        } else {
+          console.log('⏸️ No active wave spawn');
         }
 
         // Обновление позиций врагов
@@ -170,24 +197,32 @@ function App() {
         let earnedMoney = 0;
 
         for (const enemy of newState.enemies) {
+          if (enemy.health <= 0) {
+            // Враг мертв
+            earnedMoney += enemy.reward;
+            continue;
+          }
+
           const updated = updateEnemyPosition(enemy, prev.path, deltaTime);
 
           if (updated.reachedEnd) {
             lostLives++;
-          } else if (enemy.health > 0) {
+          } else {
             updatedEnemies.push({
               ...enemy,
               position: updated.position,
               pathIndex: updated.pathIndex,
             });
-          } else {
-            earnedMoney += enemy.reward;
           }
         }
 
         newState.enemies = updatedEnemies;
         newState.lives -= lostLives;
         newState.money += earnedMoney;
+
+        if (newState.enemies.length > 0) {
+          console.log('📍 Active enemies:', newState.enemies.length, 'First enemy pos:', newState.enemies[0]?.position);
+        }
 
         // Проверка проигрыша
         if (newState.lives <= 0) {

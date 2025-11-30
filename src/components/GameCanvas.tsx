@@ -34,6 +34,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick
     gameState.towers.forEach((tower) => drawTower(ctx, tower));
 
     // Рисуем врагов
+    if (gameState.enemies.length > 0) {
+      console.log('🎨 Rendering enemies:', gameState.enemies.length);
+    }
     gameState.enemies.forEach((enemy) => drawEnemy(ctx, enemy));
 
     // Рисуем снаряды

@@ -101,6 +101,9 @@ export const TOWER_STATS: Record<1 | 2 | 3, TowerStats> = {
 
 export const CANVAS_WIDTH = 800;
 export const CANVAS_HEIGHT = 600;
+export const CANVAS_PADDING = 30;
+export const GAME_WIDTH = CANVAS_WIDTH - CANVAS_PADDING * 2;
+export const GAME_HEIGHT = CANVAS_HEIGHT - CANVAS_PADDING * 2;
 export const CELL_SIZE = 40;
 export const ENEMY_SIZE = 30;
 export const TOWER_SIZE = 35;

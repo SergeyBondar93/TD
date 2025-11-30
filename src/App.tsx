@@ -7,6 +7,7 @@ import { DebugInfo } from './components/DebugInfo';
 import type { GameState, Enemy, Tower, Projectile } from './types/game';
 import { TOWER_STATS } from './types/game';
 import { LEVELS, DEFAULT_PATH } from './config/levels';
+import { DEV_CONFIG } from './config/dev';
 import {
   generateId,
   updateEnemyPosition,
@@ -31,11 +32,29 @@ function App() {
     const levelConfig = LEVELS[levelNumber - 1];
     if (!levelConfig) return;
 
+    let initialEnemies: Enemy[] = [];
+
+    // Создаем тестовых врагов если включен режим отладки
+    if (DEV_CONFIG.TEST_ENEMIES) {
+      for (let i = 0; i < DEV_CONFIG.TEST_ENEMIES_COUNT; i++) {
+        initialEnemies.push({
+          id: generateId(),
+          position: { x: 30 + i * DEV_CONFIG.TEST_ENEMIES_DISTANCE, y: 130 },
+          health: 100,
+          maxHealth: 100,
+          speed: 50,
+          level: i + 1,
+          pathIndex: 0,
+          reward: 20,
+        });
+      }
+    }
+
     setGameState({
       money: levelConfig.startingMoney,
       lives: levelConfig.startingLives,
       currentWave: 0,
-      enemies: [],
+      enemies: initialEnemies,
       towers: [],
       projectiles: [],
       path: DEFAULT_PATH,
@@ -68,7 +87,11 @@ function App() {
         enemiesSpawned: 0,
         lastSpawnTime: Date.now() - 10000, // Первый враг спавнится сразу
       };
-
+      console.log({
+        ...prev,
+        currentWave: nextWave + 1,
+      });
+      
       return {
         ...prev,
         currentWave: nextWave + 1,
@@ -157,7 +180,6 @@ function App() {
               reward: waveConfig.enemyReward,
             };
 
-            console.log('🆕 Creating enemy:', newEnemy);
             enemies.push(newEnemy);
             waveSpawnRef.current.enemiesSpawned++;
             waveSpawnRef.current.lastSpawnTime = Date.now();

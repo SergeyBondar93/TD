@@ -3,6 +3,9 @@ import type { GameState, Enemy, Tower, Projectile } from '../types/game';
 import {
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
+  CANVAS_PADDING,
+  GAME_WIDTH,
+  GAME_HEIGHT,
   ENEMY_SIZE,
   TOWER_SIZE,
   PROJECTILE_SIZE,
@@ -27,8 +30,17 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick
     ctx.fillStyle = '#1a1a2e';
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
+    // Заливка игрового поля
+    ctx.fillStyle = '#16213e';
+    ctx.fillRect(CANVAS_PADDING, CANVAS_PADDING, GAME_WIDTH, GAME_HEIGHT);
+
     // Рисуем путь
     drawPath(ctx, gameState.path);
+
+    // Рисуем границу игрового поля поверх всего
+    ctx.strokeStyle = '#0f3460';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(CANVAS_PADDING, CANVAS_PADDING, GAME_WIDTH, GAME_HEIGHT);
 
     // Рисуем башни
     gameState.towers.forEach((tower) => drawTower(ctx, tower));
@@ -42,9 +54,17 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick
     // Отладочная информация на canvas
     ctx.fillStyle = '#0f0';
     ctx.font = '14px monospace';
-    ctx.fillText(`Enemies: ${gameState.enemies.length}`, 10, 20);
-    ctx.fillText(`Towers: ${gameState.towers.length}`, 10, 40);
-    ctx.fillText(`Wave: ${gameState.currentWave}`, 10, 60);
+    ctx.fillText(`Enemies: ${gameState.enemies.length}`, CANVAS_PADDING + 10, CANVAS_PADDING + 20);
+    ctx.fillText(`Towers: ${gameState.towers.length}`, CANVAS_PADDING + 10, CANVAS_PADDING + 40);
+    ctx.fillText(`Wave: ${gameState.currentWave}`, CANVAS_PADDING + 10, CANVAS_PADDING + 60);
+
+    // Координаты углов игрового поля
+    ctx.fillStyle = '#ff0';
+    ctx.font = 'bold 11px monospace';
+    ctx.fillText(`(${CANVAS_PADDING}, ${CANVAS_PADDING})`, CANVAS_PADDING + 5, CANVAS_PADDING + 15);
+    ctx.fillText(`(${CANVAS_PADDING + GAME_WIDTH}, ${CANVAS_PADDING})`, CANVAS_PADDING + GAME_WIDTH - 80, CANVAS_PADDING + 15);
+    ctx.fillText(`(${CANVAS_PADDING}, ${CANVAS_PADDING + GAME_HEIGHT})`, CANVAS_PADDING + 5, CANVAS_PADDING + GAME_HEIGHT - 5);
+    ctx.fillText(`(${CANVAS_PADDING + GAME_WIDTH}, ${CANVAS_PADDING + GAME_HEIGHT})`, CANVAS_PADDING + GAME_WIDTH - 95, CANVAS_PADDING + GAME_HEIGHT - 5);
 
     // Рисуем радиус действия выбранной башни (при наведении)
     // Это можно добавить позже для улучшения UX
@@ -80,7 +100,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick
 function drawPath(ctx: CanvasRenderingContext2D, path: { x: number; y: number }[]) {
   if (path.length < 2) return;
 
-  ctx.strokeStyle = '#16213e';
+  ctx.strokeStyle = '#2a4a6e';
   ctx.lineWidth = 40;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
@@ -101,20 +121,28 @@ function drawPath(ctx: CanvasRenderingContext2D, path: { x: number; y: number }[
     ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
     ctx.fill();
     
+    // Координаты каждой точки пути
+    ctx.fillStyle = '#f0f';
+    ctx.font = '11px monospace';
+    ctx.fillText(`(${point.x}, ${point.y})`, point.x + 10, point.y - 10);
+    
     // Номер точки
     if (index === 0) {
       ctx.fillStyle = '#0f0';
       ctx.font = 'bold 16px Arial';
-      ctx.fillText('START', point.x + 10, point.y);
-      ctx.fillStyle = '#0f3460';
+      ctx.fillText('START', point.x + 10, point.y + 15);
     }
+    if (index === path.length - 1) {
+      ctx.fillStyle = '#f00';
+      ctx.font = 'bold 16px Arial';
+      ctx.fillText('END', point.x + 10, point.y + 15);
+    }
+    ctx.fillStyle = '#0f3460';
   });
 }
 
 // Рисование врага (квадратик с уровнем и HP)
 function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy) {
-  console.log('Drawing enemy:', enemy.position, 'Level:', enemy.level, 'HP:', enemy.health);
-  
   const size = ENEMY_SIZE;
   const x = enemy.position.x - size / 2;
   const y = enemy.position.y - size / 2;
@@ -158,6 +186,15 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy) {
     `${Math.ceil(enemy.health)}/${enemy.maxHealth}`,
     enemy.position.x,
     healthBarY - 6
+  );
+
+  // Координаты под врагом
+  ctx.fillStyle = '#0ff';
+  ctx.font = '9px monospace';
+  ctx.fillText(
+    `(${Math.round(enemy.position.x)}, ${Math.round(enemy.position.y)})`,
+    enemy.position.x,
+    y + size + 12
   );
 }
 

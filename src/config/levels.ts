@@ -292,14 +292,15 @@ export const LEVELS: LevelConfig[] = [
   },
 ];
 
-// Путь для врагов (зигзагообразный)
+// Путь для врагов (зигзагообразный) - с учетом паддинга
+const PADDING = 30;
 export const DEFAULT_PATH = [
-  { x: 0, y: 100 },
-  { x: 200, y: 100 },
-  { x: 200, y: 300 },
-  { x: 500, y: 300 },
-  { x: 500, y: 100 },
-  { x: 700, y: 100 },
-  { x: 700, y: 500 },
-  { x: 800, y: 500 },
+  { x: PADDING, y: 100 + PADDING },
+  { x: 200 + PADDING, y: 100 + PADDING },
+  { x: 200 + PADDING, y: 300 + PADDING },
+  { x: 500 + PADDING, y: 300 + PADDING },
+  { x: 500 + PADDING, y: 100 + PADDING },
+  { x: 700 + PADDING, y: 100 + PADDING },
+  { x: 700 + PADDING, y: 500 + PADDING },
+  { x: 770 + PADDING, y: 500 + PADDING },
 ];

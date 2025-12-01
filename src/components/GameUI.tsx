@@ -166,7 +166,9 @@ const styles: Record<string, React.CSSProperties> = {
   towerButton: {
     padding: '12px',
     backgroundColor: '#0f3460',
-    border: '2px solid #4ecdc4',
+    borderWidth: '2px',
+    borderStyle: 'solid',
+    borderColor: '#4ecdc4',
     borderRadius: '6px',
     color: '#fff',
     cursor: 'pointer',

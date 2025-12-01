@@ -1,5 +1,4 @@
 import type { Enemy, Tower, Projectile, Position } from '../types/game';
-import { PROJECTILE_SPEED } from '../types/game';
 
 // Вычисление расстояния между двумя точками
 export function distance(pos1: Position, pos2: Position): number {
@@ -85,7 +84,7 @@ export function updateProjectilePosition(
 
   if (dist === 0) return projectile.position;
 
-  const moveDistance = (PROJECTILE_SPEED * deltaTime) / 1000;
+  const moveDistance = (projectile.speed * deltaTime) / 1000;
   
   if (dist <= moveDistance) {
     return targetPosition;

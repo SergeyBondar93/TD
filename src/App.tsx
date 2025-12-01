@@ -19,7 +19,20 @@ import {
 import './App.css';
 
 function App() {
-  const [gameState, setGameState] = useState<GameState | null>(null);
+  // Атомарные состояния вместо монолитного gameState
+  const [currentLevel, setCurrentLevel] = useState<number | null>(null);
+  const [money, setMoney] = useState(0);
+  const [lives, setLives] = useState(0);
+  const [currentWave, setCurrentWave] = useState(0);
+  const [gameStatus, setGameStatus] = useState<'menu' | 'playing' | 'paused' | 'won' | 'lost'>('menu');
+  const [selectedTowerLevel, setSelectedTowerLevel] = useState<1 | 2 | 3 | null>(null);
+  
+  // Игровые сущности
+  const [enemies, setEnemies] = useState<Enemy[]>([]);
+  const [towers, setTowers] = useState<Tower[]>([]);
+  const [projectiles, setProjectiles] = useState<Projectile[]>([]);
+  
+  // Refs для игрового цикла
   const lastTimeRef = useRef<number>(0);
   const waveSpawnRef = useRef<{
     waveIndex: number;
@@ -31,6 +44,16 @@ function App() {
   const initializeGame = useCallback((levelNumber: number) => {
     const levelConfig = LEVELS[levelNumber - 1];
     if (!levelConfig) return;
+
+    // Сбрасываем все состояния
+    setCurrentLevel(levelNumber);
+    setMoney(levelConfig.startingMoney);
+    setLives(levelConfig.startingLives);
+    setCurrentWave(0);
+    setGameStatus('playing');
+    setSelectedTowerLevel(null);
+    setTowers([]);
+    setProjectiles([]);
 
     let initialEnemies: Enemy[] = [];
 
@@ -50,73 +73,65 @@ function App() {
       }
     }
 
-    setGameState({
-      money: levelConfig.startingMoney,
-      lives: levelConfig.startingLives,
-      currentWave: 0,
-      enemies: initialEnemies,
-      towers: [],
-      projectiles: [],
-      path: DEFAULT_PATH,
-      gameStatus: 'playing',
-      selectedTowerLevel: null,
-      currentLevel: levelNumber,
-    });
-
+    setEnemies(initialEnemies);
     waveSpawnRef.current = null;
     lastTimeRef.current = 0;
+
+    // Автоматически стартуем первую волну если нет тестовых врагов
+    if (!DEV_CONFIG.TEST_ENEMIES) {
+      // Небольшая задержка для инициализации
+      setTimeout(() => {
+        waveSpawnRef.current = {
+          waveIndex: 0,
+          enemiesSpawned: 0,
+          lastSpawnTime: Date.now() - 10000,
+        };
+        setCurrentWave(1);
+      }, 100);
+    }
   }, []);
 
   // Начало новой волны
   const startWave = useCallback(() => {
-    setGameState((prev) => {
-      
-      if (!prev) return null;
+    if (currentLevel === null) return;
 
-      const levelConfig = LEVELS[prev.currentLevel - 1];
-      const nextWave = prev.currentWave;
+    const levelConfig = LEVELS[currentLevel - 1];
+    const nextWaveIndex = currentWave;
 
-      if (nextWave >= levelConfig.waves.length) {
-        // Все волны пройдены
-        return { ...prev, gameStatus: 'won' };
-      }
+    if (nextWaveIndex >= levelConfig.waves.length) {
+      // Все волны пройдены
+      setGameStatus('won');
+      return;
+    }
 
-      // Инициализируем спавн врагов (устанавливаем время в прошлое для мгновенного первого спавна)
-      waveSpawnRef.current = {
-        waveIndex: nextWave,
-        enemiesSpawned: 0,
-        lastSpawnTime: Date.now() - 10000, // Первый враг спавнится сразу
-      };
-      console.log({
-        ...prev,
-        currentWave: nextWave + 1,
-      });
-      
-      return {
-        ...prev,
-        currentWave: nextWave + 1,
-      };
-    });
-  }, []);
+    // Инициализируем спавн врагов
+    waveSpawnRef.current = {
+      waveIndex: nextWaveIndex,
+      enemiesSpawned: 0,
+      lastSpawnTime: Date.now() - 10000, // Первый враг спавнится сразу
+    };
+
+    setCurrentWave(nextWaveIndex + 1);
+  }, [currentLevel, currentWave]);
 
   // Клик по canvas - размещение башни
   const handleCanvasClick = useCallback(
     (x: number, y: number) => {
-      if (!gameState || !gameState.selectedTowerLevel) return;
+      if (!selectedTowerLevel) return;
 
-      const towerStats = TOWER_STATS[gameState.selectedTowerLevel];
+      const towerStats = TOWER_STATS[selectedTowerLevel];
 
       // Проверяем, хватает ли денег
-      if (gameState.money < towerStats.cost) return;
+      if (money < towerStats.cost) return;
 
       // Проверяем, можно ли поставить башню
       const position = { x, y };
-      if (!canPlaceTower(position, gameState.towers, gameState.path)) return;
+      if (!canPlaceTower(position, towers, DEFAULT_PATH)) return;
 
       const newTower: Tower = {
         id: generateId(),
         position,
-        level: gameState.selectedTowerLevel,
+        level: selectedTowerLevel,
         damage: towerStats.damage,
         range: towerStats.range,
         fireRate: towerStats.fireRate,
@@ -124,23 +139,18 @@ function App() {
         cost: towerStats.cost,
       };
 
-      setGameState((prev) =>
-        prev
-          ? {
-              ...prev,
-              towers: [...prev.towers, newTower],
-              money: prev.money - towerStats.cost,
-              selectedTowerLevel: null,
-            }
-          : null
-      );
+      setTowers((prev) => [...prev, newTower]);
+      setMoney((prev) => prev - towerStats.cost);
+      setSelectedTowerLevel(null);
     },
-    [gameState]
+    [selectedTowerLevel, money, towers]
   );
 
   // Основной игровой цикл
   useEffect(() => {
-    if (!gameState || gameState.gameStatus !== 'playing') return;
+    if (currentLevel === null || gameStatus !== 'playing') return;
+
+    const levelConfig = LEVELS[currentLevel - 1];
 
     const gameLoop = (currentTime: number) => {
       if (lastTimeRef.current === 0) {
@@ -152,58 +162,50 @@ function App() {
       const deltaTime = currentTime - lastTimeRef.current;
       lastTimeRef.current = currentTime;
 
-      setGameState((prev) => {
-        if (!prev || prev.gameStatus !== 'playing') return prev;
+      // 1. Спавн врагов
+      if (waveSpawnRef.current) {
+        const waveConfig = levelConfig.waves[waveSpawnRef.current.waveIndex];
+        const timeSinceLastSpawn = Date.now() - waveSpawnRef.current.lastSpawnTime;
 
-        const levelConfig = LEVELS[prev.currentLevel - 1];
-        let enemies = [...prev.enemies];
-        let lives = prev.lives;
-        let money = prev.money;
+        if (
+          waveSpawnRef.current.enemiesSpawned < waveConfig.enemyCount &&
+          timeSinceLastSpawn >= waveConfig.spawnDelay
+        ) {
+          const newEnemy: Enemy = {
+            id: generateId(),
+            position: { ...DEFAULT_PATH[0] },
+            health: waveConfig.enemyHealth,
+            maxHealth: waveConfig.enemyHealth,
+            speed: waveConfig.enemySpeed,
+            level: waveConfig.enemyLevel,
+            pathIndex: 0,
+            reward: waveConfig.enemyReward,
+          };
 
-        // Спавн врагов
-        if (waveSpawnRef.current) {
-          const waveConfig = levelConfig.waves[waveSpawnRef.current.waveIndex];
-          const timeSinceLastSpawn = Date.now() - waveSpawnRef.current.lastSpawnTime;
-
-          if (
-            waveSpawnRef.current.enemiesSpawned < waveConfig.enemyCount &&
-            timeSinceLastSpawn >= waveConfig.spawnDelay
-          ) {
-            const newEnemy: Enemy = {
-              id: generateId(),
-              position: { ...prev.path[0] },
-              health: waveConfig.enemyHealth,
-              maxHealth: waveConfig.enemyHealth,
-              speed: waveConfig.enemySpeed,
-              level: waveConfig.enemyLevel,
-              pathIndex: 0,
-              reward: waveConfig.enemyReward,
-            };
-
-            enemies.push(newEnemy);
-            waveSpawnRef.current.enemiesSpawned++;
-            waveSpawnRef.current.lastSpawnTime = Date.now();
-          }
-
-          // Если все враги заспавнились, останавливаем спавн
-          if (waveSpawnRef.current.enemiesSpawned >= waveConfig.enemyCount) {
-            waveSpawnRef.current = null;
-          }
+          setEnemies((prev) => [...prev, newEnemy]);
+          waveSpawnRef.current.enemiesSpawned++;
+          waveSpawnRef.current.lastSpawnTime = Date.now();
         }
 
-        // Обновление позиций врагов
+        // Если все враги заспавнились, останавливаем спавн
+        if (waveSpawnRef.current.enemiesSpawned >= waveConfig.enemyCount) {
+          waveSpawnRef.current = null;
+        }
+      }
+
+      // 2. Обновление врагов
+      setEnemies((prevEnemies) => {
         const updatedEnemies: Enemy[] = [];
         let lostLives = 0;
         let earnedMoney = 0;
 
-        for (const enemy of enemies) {
+        for (const enemy of prevEnemies) {
           if (enemy.health <= 0) {
-            // Враг мертв
             earnedMoney += enemy.reward;
             continue;
           }
 
-          const updated = updateEnemyPosition(enemy, prev.path, deltaTime);
+          const updated = updateEnemyPosition(enemy, DEFAULT_PATH, deltaTime);
 
           if (updated.reachedEnd) {
             lostLives++;
@@ -216,72 +218,90 @@ function App() {
           }
         }
 
-        enemies = updatedEnemies;
-        lives -= lostLives;
-        money += earnedMoney;
-
-        // Проверка проигрыша
-        if (lives <= 0) {
-          return { ...prev, gameStatus: 'lost', lives: 0 };
+        // Обновляем жизни и деньги
+        if (lostLives > 0) {
+          setLives((prev) => {
+            const newLives = prev - lostLives;
+            if (newLives <= 0) {
+              setGameStatus('lost');
+              return 0;
+            }
+            return newLives;
+          });
         }
 
-        // Башни стреляют
-        const now = Date.now();
-        let projectiles: Projectile[] = [...prev.projectiles];
+        if (earnedMoney > 0) {
+          setMoney((prev) => prev + earnedMoney);
+        }
 
-        const updatedTowers = prev.towers.map((tower) => {
+        return updatedEnemies;
+      });
+
+      // 3. Башни стреляют
+      const now = Date.now();
+      setTowers((prevTowers) => {
+        const updatedTowers = [...prevTowers];
+        
+        prevTowers.forEach((tower, index) => {
           const timeSinceLastFire = now - tower.lastFireTime;
           const fireInterval = 1000 / tower.fireRate;
 
           if (timeSinceLastFire >= fireInterval) {
-            const target = findClosestEnemyInRange(tower, enemies);
+            // Получаем текущий список врагов синхронно
+            setEnemies((currentEnemies) => {
+              const target = findClosestEnemyInRange(tower, currentEnemies);
 
-            if (target) {
-              const projectile: Projectile = {
-                id: generateId(),
-                position: { ...tower.position },
-                targetEnemyId: target.id,
-                damage: tower.damage,
-                speed: 300,
-              };
+              if (target) {
+                const projectile: Projectile = {
+                  id: generateId(),
+                  position: { ...tower.position },
+                  targetEnemyId: target.id,
+                  damage: tower.damage,
+                  speed: 300,
+                };
 
-              projectiles.push(projectile);
-              return { ...tower, lastFireTime: now };
-            }
-          }
-          return tower;
-        });
+                setProjectiles((prev) => [...prev, projectile]);
+                updatedTowers[index] = { ...tower, lastFireTime: now };
+              }
 
-        // Обновление снарядов
-        const activeProjectiles: Projectile[] = [];
-
-        for (const projectile of projectiles) {
-          const target = enemies.find((e) => e.id === projectile.targetEnemyId);
-
-          if (!target) continue;
-
-          const newPosition = updateProjectilePosition(projectile, target.position, deltaTime);
-
-          if (checkProjectileHit({ ...projectile, position: newPosition }, target)) {
-            // Попадание
-            target.health -= projectile.damage;
-          } else {
-            // Снаряд продолжает лететь
-            activeProjectiles.push({
-              ...projectile,
-              position: newPosition,
+              return currentEnemies;
             });
           }
-        }
+        });
 
-        return {
-          ...prev,
-          enemies,
-          lives,
-          money,
-          towers: updatedTowers,
-          projectiles: activeProjectiles,
-        };
+        return updatedTowers;
+      });
+
+      // 4. Обновление снарядов
+      setProjectiles((prevProjectiles) => {
+        const activeProjectiles: Projectile[] = [];
+
+        setEnemies((currentEnemies) => {
+          const enemiesMap = new Map(currentEnemies.map((e) => [e.id, e]));
+
+          for (const projectile of prevProjectiles) {
+            const target = enemiesMap.get(projectile.targetEnemyId);
+
+            if (!target) continue;
+
+            const newPosition = updateProjectilePosition(projectile, target.position, deltaTime);
+
+            if (checkProjectileHit({ ...projectile, position: newPosition }, target)) {
+              // Попадание
+              target.health -= projectile.damage;
+            } else {
+              // Снаряд продолжает лететь
+              activeProjectiles.push({
+                ...projectile,
+                position: newPosition,
+              });
+            }
+          }
+
+          return Array.from(enemiesMap.values());
+        });
+
+        return activeProjectiles;
       });
 
       animationFrameId = requestAnimationFrame(gameLoop);
@@ -292,52 +312,60 @@ function App() {
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [gameState]);
+  }, [currentLevel, gameStatus]);
 
   // Меню выбора уровня
-  if (!gameState) {
+  if (currentLevel === null) {
     return <LevelSelect onSelectLevel={initializeGame} />;
   }
 
+  // Создаем объект gameState для совместимости с компонентами
+  const gameState: GameState = {
+    money,
+    lives,
+    currentWave,
+    enemies,
+    towers,
+    projectiles,
+    path: DEFAULT_PATH,
+    gameStatus,
+    selectedTowerLevel,
+    currentLevel,
+  };
+
   // Экран игры
-  const levelConfig = LEVELS[gameState.currentLevel - 1];
+  const levelConfig = LEVELS[currentLevel - 1];
   const canStartWave =
-    gameState.currentWave < levelConfig.waves.length &&
+    currentWave < levelConfig.waves.length &&
     !waveSpawnRef.current &&
-    gameState.enemies.length === 0;
+    enemies.length === 0;
 
   return (
     <div style={styles.app}>
       <div style={styles.gameContainer}>
         <GameCanvas gameState={gameState} onCanvasClick={handleCanvasClick} />
         <GameUI
-          money={gameState.money}
-          lives={gameState.lives}
-          currentWave={gameState.currentWave}
+          money={money}
+          lives={lives}
+          currentWave={currentWave}
           totalWaves={levelConfig.waves.length}
-          currentLevel={gameState.currentLevel}
-          gameStatus={gameState.gameStatus}
-          selectedTowerLevel={gameState.selectedTowerLevel}
-          onSelectTowerLevel={(level) =>
-            setGameState((prev) => (prev ? { ...prev, selectedTowerLevel: level } : null))
-          }
+          currentLevel={currentLevel}
+          gameStatus={gameStatus}
+          selectedTowerLevel={selectedTowerLevel}
+          onSelectTowerLevel={setSelectedTowerLevel}
           onStartWave={startWave}
-          onPause={() =>
-            setGameState((prev) => (prev ? { ...prev, gameStatus: 'paused' } : null))
-          }
-          onResume={() =>
-            setGameState((prev) => (prev ? { ...prev, gameStatus: 'playing' } : null))
-          }
+          onPause={() => setGameStatus('paused')}
+          onResume={() => setGameStatus('playing')}
           canStartWave={canStartWave}
         />
       </div>
 
-      {(gameState.gameStatus === 'won' || gameState.gameStatus === 'lost') && (
+      {(gameStatus === 'won' || gameStatus === 'lost') && (
         <GameOver
-          won={gameState.gameStatus === 'won'}
-          currentLevel={gameState.currentLevel}
-          onRestart={() => initializeGame(gameState.currentLevel)}
-          onMenu={() => setGameState(null)}
+          won={gameStatus === 'won'}
+          currentLevel={currentLevel}
+          onRestart={() => initializeGame(currentLevel)}
+          onMenu={() => setCurrentLevel(null)}
         />
       )}
 

@@ -2,7 +2,7 @@
 
 export const DEV_CONFIG = {
   // Показывать тестовых врагов при загрузке уровня
-  // TEST_ENEMIES: false,
+  TEST_ENEMIES: false,
   // TEST_ENEMIES: true,
   
   // Количество тестовых врагов

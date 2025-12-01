@@ -1,100 +1,108 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { GameCanvas } from './components/GameCanvas';
 import { GameUI } from './components/GameUI';
 import { LevelSelect } from './components/LevelSelect';
 import { GameOver } from './components/GameOver';
 import { DebugInfo } from './components/DebugInfo';
+import { useGameStore } from './stores/gameStore';
+import { useUIStore } from './stores/uiStore';
 import type { GameState, Enemy, Tower, Projectile } from './types/game';
 import { TOWER_STATS } from './types/game';
 import { LEVELS, DEFAULT_PATH } from './config/levels';
 import { DEV_CONFIG } from './config/dev';
 import {
-  generateId,
-  updateEnemyPosition,
-  updateProjectilePosition,
-  findClosestEnemyInRange,
-  checkProjectileHit,
   canPlaceTower,
-} from './utils/gameLogic';
+  processEnemies,
+  processTowerFire,
+  processProjectiles,
+  processWaveSpawn,
+  type WaveSpawnState,
+} from './utils/pureGameLogic';
 import './App.css';
 
 function App() {
-  // Атомарные состояния вместо монолитного gameState
-  const [currentLevel, setCurrentLevel] = useState<number | null>(DEV_CONFIG.AUTO_START_LEVEL ? 1 : null);
-  const [money, setMoney] = useState(0);
-  const [lives, setLives] = useState(0);
-  const [currentWave, setCurrentWave] = useState(0);
-  const [gameStatus, setGameStatus] = useState<'menu' | 'playing' | 'paused' | 'won' | 'lost'>('menu');
-  const [selectedTowerLevel, setSelectedTowerLevel] = useState<1 | 2 | 3 | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [gameSpeed, setGameSpeed] = useState(DEV_CONFIG.GAME_SPEED || 1);
-  
-  // Игровые сущности
-  const [enemies, setEnemies] = useState<Enemy[]>([]);
-  const [towers, setTowers] = useState<Tower[]>([]);
-  const [projectiles, setProjectiles] = useState<Projectile[]>([]);
-  
+  // Zustand stores
+  const {
+    enemies,
+    towers,
+    projectiles,
+    money,
+    lives,
+    currentWave,
+    currentLevel,
+    gameStatus,
+    gameSpeed,
+    setEnemies,
+    setTowers,
+    setProjectiles,
+    addEnemy,
+    addTower,
+    addProjectile,
+    setMoney,
+    setLives,
+    setCurrentWave,
+    setCurrentLevel,
+    setGameStatus,
+    setGameSpeed,
+    initializeGame: initializeGameStore,
+  } = useGameStore();
+
+  const { selectedTowerLevel, isInitialized, setSelectedTowerLevel, setIsInitialized } = useUIStore();
+
   // Refs для игрового цикла
   const lastTimeRef = useRef<number>(0);
-  const gameTimeRef = useRef<number>(0); // Накопленное игровое время с учетом скорости
-  const waveSpawnRef = useRef<{
-    waveIndex: number;
-    enemiesSpawned: number;
-    lastSpawnTime: number;
-  } | null>(null);
+  const gameTimeRef = useRef<number>(0);
+  const waveSpawnRef = useRef<WaveSpawnState | null>(null);
 
   // Инициализация игры с выбранным уровнем
-  const initializeGame = useCallback((levelNumber: number) => {
-    const levelConfig = LEVELS[levelNumber - 1];
-    if (!levelConfig) return;
+  const initializeGame = useCallback(
+    (levelNumber: number) => {
+      const levelConfig = LEVELS[levelNumber - 1];
+      if (!levelConfig) return;
 
-    // Сбрасываем все состояния
-    setCurrentLevel(levelNumber);
-    setMoney(levelConfig.startingMoney);
-    setLives(levelConfig.startingLives);
-    setCurrentWave(0);
-    setGameStatus('playing');
-    setSelectedTowerLevel(null);
-    setTowers([]);
-    setProjectiles([]);
+      // Инициализируем store
+      initializeGameStore(levelNumber, levelConfig.startingMoney, levelConfig.startingLives);
+      setSelectedTowerLevel(null);
 
-    let initialEnemies: Enemy[] = [];
+      let initialEnemies: Enemy[] = [];
 
-    // Создаем тестовых врагов если включен режим отладки
-    if (DEV_CONFIG.TEST_ENEMIES) {
-      for (let i = 0; i < DEV_CONFIG.TEST_ENEMIES_COUNT; i++) {
-        initialEnemies.push({
-          id: generateId(),
-          position: { x: 30 + i * DEV_CONFIG.TEST_ENEMIES_DISTANCE, y: 130 },
-          health: 100,
-          maxHealth: 100,
-          speed: 50,
-          level: i + 1,
-          pathIndex: 0,
-          reward: 20,
-        });
+      // Создаем тестовых врагов если включен режим отладки
+      if (DEV_CONFIG.TEST_ENEMIES) {
+        for (let i = 0; i < DEV_CONFIG.TEST_ENEMIES_COUNT; i++) {
+          const enemy: Enemy = {
+            id: `test-${i}`,
+            position: { x: 30 + i * DEV_CONFIG.TEST_ENEMIES_DISTANCE, y: 130 },
+            health: 100,
+            maxHealth: 100,
+            speed: 50,
+            level: i + 1,
+            pathIndex: 0,
+            reward: 20,
+          };
+          initialEnemies.push(enemy);
+        }
+        setEnemies(initialEnemies);
       }
-    }
 
-    setEnemies(initialEnemies);
-    waveSpawnRef.current = null;
-    lastTimeRef.current = 0;
-    gameTimeRef.current = 0;
-    setIsInitialized(true);
+      waveSpawnRef.current = null;
+      lastTimeRef.current = 0;
+      gameTimeRef.current = 0;
+      setIsInitialized(true);
 
-    // Автоматически стартуем первую волну если нет тестовых врагов
-    if (!DEV_CONFIG.TEST_ENEMIES) {
-      // Небольшая задержка для инициализации
-      setTimeout(() => {
-        waveSpawnRef.current = {
-          waveIndex: 0,
-          enemiesSpawned: 0,
-          lastSpawnTime: -10000, // Используем игровое время
-        };
-        setCurrentWave(1);
-      }, 100);
-    }
-  }, []);
+      // Автоматически стартуем первую волну если нет тестовых врагов
+      if (!DEV_CONFIG.TEST_ENEMIES) {
+        setTimeout(() => {
+          waveSpawnRef.current = {
+            waveIndex: 0,
+            enemiesSpawned: 0,
+            lastSpawnTime: -10000,
+          };
+          setCurrentWave(1);
+        }, 100);
+      }
+    },
+    [initializeGameStore, setSelectedTowerLevel, setEnemies, setCurrentWave, setIsInitialized]
+  );
 
   // Начало новой волны
   const startWave = useCallback(() => {
@@ -104,20 +112,18 @@ function App() {
     const nextWaveIndex = currentWave;
 
     if (nextWaveIndex >= levelConfig.waves.length) {
-      // Все волны пройдены
       setGameStatus('won');
       return;
     }
 
-    // Инициализируем спавн врагов
     waveSpawnRef.current = {
       waveIndex: nextWaveIndex,
       enemiesSpawned: 0,
-      lastSpawnTime: gameTimeRef.current - 10000, // Первый враг спавнится сразу
+      lastSpawnTime: gameTimeRef.current - 10000,
     };
 
     setCurrentWave(nextWaveIndex + 1);
-  }, [currentLevel, currentWave]);
+  }, [currentLevel, currentWave, setGameStatus, setCurrentWave]);
 
   // Клик по canvas - размещение башни
   const handleCanvasClick = useCallback(
@@ -126,15 +132,13 @@ function App() {
 
       const towerStats = TOWER_STATS[selectedTowerLevel];
 
-      // Проверяем, хватает ли денег
       if (money < towerStats.cost) return;
 
-      // Проверяем, можно ли поставить башню
       const position = { x, y };
       if (!canPlaceTower(position, towers, DEFAULT_PATH)) return;
 
       const newTower: Tower = {
-        id: generateId(),
+        id: `tower-${Date.now()}`,
         position,
         level: selectedTowerLevel,
         damage: towerStats.damage,
@@ -144,11 +148,11 @@ function App() {
         cost: towerStats.cost,
       };
 
-      setTowers((prev) => [...prev, newTower]);
-      setMoney((prev) => prev - towerStats.cost);
+      addTower(newTower);
+      setMoney(money - towerStats.cost);
       setSelectedTowerLevel(null);
     },
-    [selectedTowerLevel, money, towers]
+    [selectedTowerLevel, money, towers, addTower, setMoney, setSelectedTowerLevel]
   );
 
   // Автоматическая инициализация первого уровня в дев режиме
@@ -174,151 +178,73 @@ function App() {
       const deltaTime = currentTime - lastTimeRef.current;
       lastTimeRef.current = currentTime;
 
-      // Применяем множитель скорости игры
-      const adjustedDeltaTime = deltaTime * gameSpeed;
+      // Получаем актуальные значения из store
+      const state = useGameStore.getState();
+      const adjustedDeltaTime = deltaTime * state.gameSpeed;
       gameTimeRef.current += adjustedDeltaTime;
 
       // 1. Спавн врагов
       if (waveSpawnRef.current) {
         const waveConfig = levelConfig.waves[waveSpawnRef.current.waveIndex];
-        const timeSinceLastSpawn = gameTimeRef.current - waveSpawnRef.current.lastSpawnTime;
+        const spawnResult = processWaveSpawn(
+          waveSpawnRef.current,
+          waveConfig,
+          gameTimeRef.current,
+          DEFAULT_PATH[0]
+        );
 
-        if (
-          waveSpawnRef.current.enemiesSpawned < waveConfig.enemyCount &&
-          timeSinceLastSpawn >= waveConfig.spawnDelay
-        ) {
-          const newEnemy: Enemy = {
-            id: generateId(),
-            position: { ...DEFAULT_PATH[0] },
-            health: waveConfig.enemyHealth,
-            maxHealth: waveConfig.enemyHealth,
-            speed: waveConfig.enemySpeed,
-            level: waveConfig.enemyLevel,
-            pathIndex: 0,
-            reward: waveConfig.enemyReward,
-          };
-
-          setEnemies((prev) => [...prev, newEnemy]);
-          waveSpawnRef.current.enemiesSpawned++;
-          waveSpawnRef.current.lastSpawnTime = gameTimeRef.current;
+        if (spawnResult.newEnemy) {
+          state.addEnemy(spawnResult.newEnemy);
         }
 
-        // Если все враги заспавнились, останавливаем спавн
-        if (waveSpawnRef.current.enemiesSpawned >= waveConfig.enemyCount) {
-          waveSpawnRef.current = null;
-        }
+        waveSpawnRef.current = spawnResult.updatedSpawnState;
       }
 
       // 2. Обновление врагов
-      setEnemies((prevEnemies) => {
-        const updatedEnemies: Enemy[] = [];
-        let lostLives = 0;
-        let earnedMoney = 0;
+      const currentEnemies = useGameStore.getState().enemies;
+      const processedEnemies = processEnemies(currentEnemies, DEFAULT_PATH, adjustedDeltaTime);
+      state.setEnemies(processedEnemies.activeEnemies);
 
-        for (const enemy of prevEnemies) {
-          if (enemy.health <= 0) {
-            earnedMoney += enemy.reward;
-            continue;
-          }
-
-          const updated = updateEnemyPosition(enemy, DEFAULT_PATH, adjustedDeltaTime);
-
-          if (updated.reachedEnd) {
-            lostLives++;
-          } else {
-            updatedEnemies.push({
-              ...enemy,
-              position: updated.position,
-              pathIndex: updated.pathIndex,
-            });
-          }
+      if (processedEnemies.lostLives > 0) {
+        const currentLives = useGameStore.getState().lives;
+        const newLives = currentLives - processedEnemies.lostLives;
+        state.setLives(newLives);
+        if (newLives <= 0) {
+          state.setGameStatus('lost');
         }
+      }
 
-        // Обновляем жизни и деньги
-        if (lostLives > 0) {
-          setLives((prev) => {
-            const newLives = prev - lostLives;
-            if (newLives <= 0) {
-              setGameStatus('lost');
-              return 0;
-            }
-            return newLives;
-          });
-        }
-
-        if (earnedMoney > 0) {
-          setMoney((prev) => prev + earnedMoney);
-        }
-
-        return updatedEnemies;
-      });
+      if (processedEnemies.earnedMoney > 0) {
+        state.setMoney((prev) => prev + processedEnemies.earnedMoney);
+      }
 
       // 3. Башни стреляют
       const currentGameTime = gameTimeRef.current;
-      setTowers((prevTowers) => {
-        const updatedTowers = [...prevTowers];
-        
-        prevTowers.forEach((tower, index) => {
-          const timeSinceLastFire = currentGameTime - tower.lastFireTime;
-          const fireInterval = 1000 / tower.fireRate;
+      const currentTowers = useGameStore.getState().towers;
+      const newProjectiles: Projectile[] = [];
+      const updatedTowers: Tower[] = [];
 
-          if (timeSinceLastFire >= fireInterval) {
-            // Получаем текущий список врагов синхронно
-            setEnemies((currentEnemies) => {
-              const target = findClosestEnemyInRange(tower, currentEnemies);
+      for (const tower of currentTowers) {
+        const fireResult = processTowerFire(tower, processedEnemies.activeEnemies, currentGameTime);
+        updatedTowers.push(fireResult.updatedTower);
+        if (fireResult.projectile) {
+          newProjectiles.push(fireResult.projectile);
+        }
+      }
 
-              if (target) {
-                const projectile: Projectile = {
-                  id: generateId(),
-                  position: { ...tower.position },
-                  targetEnemyId: target.id,
-                  damage: tower.damage,
-                  speed: 300,
-                };
-
-                setProjectiles((prev) => [...prev, projectile]);
-                updatedTowers[index] = { ...tower, lastFireTime: currentGameTime };
-              }
-
-              return currentEnemies;
-            });
-          }
-        });
-
-        return updatedTowers;
-      });
+      state.setTowers(updatedTowers);
+      newProjectiles.forEach((p) => state.addProjectile(p));
 
       // 4. Обновление снарядов
-      setProjectiles((prevProjectiles) => {
-        const activeProjectiles: Projectile[] = [];
+      const currentProjectiles = useGameStore.getState().projectiles;
+      const processedProjectiles = processProjectiles(
+        currentProjectiles,
+        processedEnemies.activeEnemies,
+        adjustedDeltaTime
+      );
 
-        setEnemies((currentEnemies) => {
-          const enemiesMap = new Map(currentEnemies.map((e) => [e.id, e]));
-
-          for (const projectile of prevProjectiles) {
-            const target = enemiesMap.get(projectile.targetEnemyId);
-
-            if (!target) continue;
-
-            const newPosition = updateProjectilePosition(projectile, target.position, adjustedDeltaTime);
-
-            if (checkProjectileHit({ ...projectile, position: newPosition }, target)) {
-              // Попадание
-              target.health -= projectile.damage;
-            } else {
-              // Снаряд продолжает лететь
-              activeProjectiles.push({
-                ...projectile,
-                position: newPosition,
-              });
-            }
-          }
-
-          return Array.from(enemiesMap.values());
-        });
-
-        return activeProjectiles;
-      });
+      state.setProjectiles(processedProjectiles.activeProjectiles);
+      state.setEnemies(processedProjectiles.updatedEnemies);
 
       animationFrameId = requestAnimationFrame(gameLoop);
     };
@@ -328,7 +254,7 @@ function App() {
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [currentLevel, gameStatus, gameSpeed]);
+  }, [currentLevel, gameStatus]);
 
   // Меню выбора уровня
   if (currentLevel === null) {

@@ -217,23 +217,30 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy) {
   ctx.fillStyle = healthPercent > 0.5 ? '#0f0' : healthPercent > 0.25 ? '#ff0' : '#f00';
   ctx.fillRect(healthBarX, healthBarY, healthBarWidth * healthPercent, healthBarHeight);
 
-  // Текст HP над полоской
-  ctx.fillStyle = '#fff';
-  ctx.font = '10px Arial';
-  ctx.fillText(
-    `${Math.ceil(enemy.health)}/${enemy.maxHealth}`,
-    enemy.position.x,
-    healthBarY - 6
-  );
+  // Текст HP над полоской (скрываем для пехоты если включен флаг)
+  const isInfantry = enemy.type === 'infantry';
+  const shouldHideHP = DEV_CONFIG.HIDE_INFANTRY_HP && isInfantry;
+  
+  if (!shouldHideHP) {
+    ctx.fillStyle = '#fff';
+    ctx.font = '10px Arial';
+    ctx.fillText(
+      `${Math.ceil(enemy.health)}/${enemy.maxHealth}`,
+      enemy.position.x,
+      healthBarY - 6
+    );
+  }
 
-  // Координаты под врагом
-  ctx.fillStyle = '#0ff';
-  ctx.font = '9px monospace';
-  ctx.fillText(
-    `(${Math.round(enemy.position.x)}, ${Math.round(enemy.position.y)})`,
-    enemy.position.x,
-    y + size + 12
-  );
+  // Координаты под врагом (скрываем для пехоты если включен флаг)
+  if (!shouldHideHP) {
+    ctx.fillStyle = '#0ff';
+    ctx.font = '9px monospace';
+    ctx.fillText(
+      `(${Math.round(enemy.position.x)}, ${Math.round(enemy.position.y)})`,
+      enemy.position.x,
+      y + size + 12
+    );
+  }
 }
 
 // Рисование башни (квадратик с уровнем)

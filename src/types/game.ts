@@ -46,6 +46,7 @@ export interface GameState {
   gameStatus: 'menu' | 'playing' | 'paused' | 'won' | 'lost';
   selectedTowerLevel: 1 | 2 | 3 | null;
   currentLevel: number; // 1-10 уровней сложности
+  gameSpeed: number; // Скорость игры от 0.05 до 3.0
 }
 
 export interface LevelConfig {

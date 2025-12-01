@@ -4,9 +4,10 @@ import { TOWER_STATS } from '../types/game';
 
 interface DebugInfoProps {
   gameState: GameState | null;
+  onGameSpeedChange?: (speed: number) => void;
 }
 
-export const DebugInfo: React.FC<DebugInfoProps> = ({ gameState }) => {
+export const DebugInfo: React.FC<DebugInfoProps> = ({ gameState, onGameSpeedChange }) => {
   if (!gameState) return null;
 
   // Подсчет статистики
@@ -34,6 +35,25 @@ export const DebugInfo: React.FC<DebugInfoProps> = ({ gameState }) => {
   return (
     <div style={styles.container}>
       <h3 style={styles.mainTitle}>🔧 Debug Info</h3>
+      
+      {/* Контроль скорости игры */}
+      {onGameSpeedChange && gameState && (
+        <div style={styles.section}>
+          <h4 style={styles.sectionTitle}>⚡ Скорость игры</h4>
+          <div style={styles.sliderContainer}>
+            <input
+              type="range"
+              min="0.05"
+              max="3.0"
+              step="0.05"
+              value={gameState.gameSpeed}
+              onChange={(e) => onGameSpeedChange(parseFloat(e.target.value))}
+              style={styles.slider}
+            />
+            <div style={styles.speedValue}>{gameState.gameSpeed.toFixed(2)}x</div>
+          </div>
+        </div>
+      )}
       
       <div style={styles.columnsContainer}>
         {/* Левая колонка - Общее и Башни */}
@@ -325,5 +345,23 @@ const styles: Record<string, React.CSSProperties> = {
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: '4px',
+  },
+  sliderContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '4px',
+  },
+  slider: {
+    flex: 1,
+    height: '6px',
+    cursor: 'pointer',
+  },
+  speedValue: {
+    color: '#ff0',
+    fontWeight: 'bold',
+    fontSize: '12px',
+    minWidth: '50px',
+    textAlign: 'right',
   },
 };

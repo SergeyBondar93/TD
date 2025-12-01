@@ -22,4 +22,6 @@ export const DEV_CONFIG = {
   
   // Автоматически запускать первый уровень при загрузке (для разработки)
   AUTO_START_LEVEL: true,
+
+  GAME_SPEED: 0.05
 };

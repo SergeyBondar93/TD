@@ -27,6 +27,7 @@ function App() {
   const [gameStatus, setGameStatus] = useState<'menu' | 'playing' | 'paused' | 'won' | 'lost'>('menu');
   const [selectedTowerLevel, setSelectedTowerLevel] = useState<1 | 2 | 3 | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [gameSpeed, setGameSpeed] = useState(DEV_CONFIG.GAME_SPEED || 1);
   
   // Игровые сущности
   const [enemies, setEnemies] = useState<Enemy[]>([]);
@@ -171,6 +172,9 @@ function App() {
       const deltaTime = currentTime - lastTimeRef.current;
       lastTimeRef.current = currentTime;
 
+      // Применяем множитель скорости игры
+      const adjustedDeltaTime = deltaTime * gameSpeed;
+
       // 1. Спавн врагов
       if (waveSpawnRef.current) {
         const waveConfig = levelConfig.waves[waveSpawnRef.current.waveIndex];
@@ -214,7 +218,7 @@ function App() {
             continue;
           }
 
-          const updated = updateEnemyPosition(enemy, DEFAULT_PATH, deltaTime);
+          const updated = updateEnemyPosition(enemy, DEFAULT_PATH, adjustedDeltaTime);
 
           if (updated.reachedEnd) {
             lostLives++;
@@ -293,7 +297,7 @@ function App() {
 
             if (!target) continue;
 
-            const newPosition = updateProjectilePosition(projectile, target.position, deltaTime);
+            const newPosition = updateProjectilePosition(projectile, target.position, adjustedDeltaTime);
 
             if (checkProjectileHit({ ...projectile, position: newPosition }, target)) {
               // Попадание
@@ -321,7 +325,7 @@ function App() {
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [currentLevel, gameStatus]);
+  }, [currentLevel, gameStatus, gameSpeed]);
 
   // Меню выбора уровня
   if (currentLevel === null) {
@@ -340,6 +344,7 @@ function App() {
     gameStatus,
     selectedTowerLevel,
     currentLevel,
+    gameSpeed,
   };
 
   // Экран игры
@@ -351,7 +356,7 @@ function App() {
 
   return (
     <div style={styles.app}>
-      <DebugInfo gameState={gameState} />
+      <DebugInfo gameState={gameState} onGameSpeedChange={setGameSpeed} />
       
       <div style={styles.mainContent}>
         <div style={styles.gameSection}>

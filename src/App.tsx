@@ -36,6 +36,7 @@ function App() {
   
   // Refs для игрового цикла
   const lastTimeRef = useRef<number>(0);
+  const gameTimeRef = useRef<number>(0); // Накопленное игровое время с учетом скорости
   const waveSpawnRef = useRef<{
     waveIndex: number;
     enemiesSpawned: number;
@@ -78,6 +79,7 @@ function App() {
     setEnemies(initialEnemies);
     waveSpawnRef.current = null;
     lastTimeRef.current = 0;
+    gameTimeRef.current = 0;
     setIsInitialized(true);
 
     // Автоматически стартуем первую волну если нет тестовых врагов
@@ -87,7 +89,7 @@ function App() {
         waveSpawnRef.current = {
           waveIndex: 0,
           enemiesSpawned: 0,
-          lastSpawnTime: Date.now() - 10000,
+          lastSpawnTime: -10000, // Используем игровое время
         };
         setCurrentWave(1);
       }, 100);
@@ -111,7 +113,7 @@ function App() {
     waveSpawnRef.current = {
       waveIndex: nextWaveIndex,
       enemiesSpawned: 0,
-      lastSpawnTime: Date.now() - 10000, // Первый враг спавнится сразу
+      lastSpawnTime: gameTimeRef.current - 10000, // Первый враг спавнится сразу
     };
 
     setCurrentWave(nextWaveIndex + 1);
@@ -174,11 +176,12 @@ function App() {
 
       // Применяем множитель скорости игры
       const adjustedDeltaTime = deltaTime * gameSpeed;
+      gameTimeRef.current += adjustedDeltaTime;
 
       // 1. Спавн врагов
       if (waveSpawnRef.current) {
         const waveConfig = levelConfig.waves[waveSpawnRef.current.waveIndex];
-        const timeSinceLastSpawn = Date.now() - waveSpawnRef.current.lastSpawnTime;
+        const timeSinceLastSpawn = gameTimeRef.current - waveSpawnRef.current.lastSpawnTime;
 
         if (
           waveSpawnRef.current.enemiesSpawned < waveConfig.enemyCount &&
@@ -197,7 +200,7 @@ function App() {
 
           setEnemies((prev) => [...prev, newEnemy]);
           waveSpawnRef.current.enemiesSpawned++;
-          waveSpawnRef.current.lastSpawnTime = Date.now();
+          waveSpawnRef.current.lastSpawnTime = gameTimeRef.current;
         }
 
         // Если все враги заспавнились, останавливаем спавн
@@ -251,12 +254,12 @@ function App() {
       });
 
       // 3. Башни стреляют
-      const now = Date.now();
+      const currentGameTime = gameTimeRef.current;
       setTowers((prevTowers) => {
         const updatedTowers = [...prevTowers];
         
         prevTowers.forEach((tower, index) => {
-          const timeSinceLastFire = now - tower.lastFireTime;
+          const timeSinceLastFire = currentGameTime - tower.lastFireTime;
           const fireInterval = 1000 / tower.fireRate;
 
           if (timeSinceLastFire >= fireInterval) {
@@ -274,7 +277,7 @@ function App() {
                 };
 
                 setProjectiles((prev) => [...prev, projectile]);
-                updatedTowers[index] = { ...tower, lastFireTime: now };
+                updatedTowers[index] = { ...tower, lastFireTime: currentGameTime };
               }
 
               return currentEnemies;

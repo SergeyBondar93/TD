@@ -69,10 +69,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick
     if (DEV_CONFIG.SHOW_COORDINATES) {
       ctx.fillStyle = '#ff0';
       ctx.font = 'bold 11px monospace';
-      ctx.fillText(`(${CANVAS_PADDING}, ${CANVAS_PADDING})`, CANVAS_PADDING + 5, CANVAS_PADDING + 15);
-      ctx.fillText(`(${CANVAS_PADDING + GAME_WIDTH}, ${CANVAS_PADDING})`, CANVAS_PADDING + GAME_WIDTH - 80, CANVAS_PADDING + 15);
-      ctx.fillText(`(${CANVAS_PADDING}, ${CANVAS_PADDING + GAME_HEIGHT})`, CANVAS_PADDING + 5, CANVAS_PADDING + GAME_HEIGHT - 5);
-      ctx.fillText(`(${CANVAS_PADDING + GAME_WIDTH}, ${CANVAS_PADDING + GAME_HEIGHT})`, CANVAS_PADDING + GAME_WIDTH - 95, CANVAS_PADDING + GAME_HEIGHT - 5);
+      ctx.fillText(`X: ${CANVAS_PADDING}, Y: ${CANVAS_PADDING}`, CANVAS_PADDING + 5, CANVAS_PADDING + 15);
+      ctx.fillText(`X: ${CANVAS_PADDING + GAME_WIDTH}, Y: ${CANVAS_PADDING}`, CANVAS_PADDING + GAME_WIDTH - 100, CANVAS_PADDING + 15);
+      ctx.fillText(`X: ${CANVAS_PADDING}, Y: ${CANVAS_PADDING + GAME_HEIGHT}`, CANVAS_PADDING + 5, CANVAS_PADDING + GAME_HEIGHT - 5);
+      ctx.fillText(`X: ${CANVAS_PADDING + GAME_WIDTH}, Y: ${CANVAS_PADDING + GAME_HEIGHT}`, CANVAS_PADDING + GAME_WIDTH - 120, CANVAS_PADDING + GAME_HEIGHT - 5);
     }
 
     // Рисуем превью башни при выборе

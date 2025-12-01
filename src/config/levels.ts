@@ -18,7 +18,7 @@ export const LEVELS: LevelConfig[] = [
     startingLives: 20,
     waves: [
       {
-        enemyCount: 60,
+        enemyCount: 40,
         enemyLevel: 1,
         enemyHealth: 10,
         enemySpeed: 60,

@@ -23,7 +23,7 @@ export const DEV_CONFIG = {
   // Автоматически запускать первый уровень при загрузке (для разработки)
   AUTO_START_LEVEL: true,
 
-  GAME_SPEED: 0.05,
+  GAME_SPEED: 1.05,
   
   // Скрывать цифры HP у пехоты
   HIDE_INFANTRY_HP: true,

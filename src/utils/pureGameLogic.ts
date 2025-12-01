@@ -90,9 +90,22 @@ export function updateEnemyPosition(
   const perpX = -dirY;
   const perpY = dirX;
   
+  // Определяем направление поворота к следующей точке
+  let offsetSign = 1;
+  if (enemy.pathIndex + 2 < path.length) {
+    const nextTarget = path[enemy.pathIndex + 2];
+    const nextDx = nextTarget.x - currentTarget.x;
+    const nextDy = nextTarget.y - currentTarget.y;
+    
+    // Векторное произведение показывает направление поворота
+    // Если > 0 - поворот налево, если < 0 - направо
+    const cross = dirX * nextDy - dirY * nextDx;
+    offsetSign = cross > 0 ? -1 : 1;
+  }
+  
   // Целевая позиция с учетом смещения
-  const targetX = currentTarget.x + perpX * enemy.pathOffset + dirX * enemy.pathOffset;
-  const targetY = currentTarget.y + perpY * enemy.pathOffset + dirY * enemy.pathOffset;
+  const targetX = currentTarget.x + perpX * enemy.pathOffset + dirX * enemy.pathOffset * offsetSign;
+  const targetY = currentTarget.y + perpY * enemy.pathOffset + dirY * enemy.pathOffset * offsetSign;
   
   const distX = targetX - enemy.position.x;
   const distY = targetY - enemy.position.y;
@@ -367,7 +380,7 @@ export function processWaveSpawn(
     
     if (waveConfig.enemyType === 'infantry') {
       // Смещение от -20 до +20 пикселей для создания эффекта толпы
-      pathOffset = (Math.random() - 0.5) * 40;
+      pathOffset =  (Math.random() - 0.5) * 40;
       // Смещение применяется как перпендикулярно, так и вдоль направления движения
       spawnPosition.x += pathOffset;
       spawnPosition.y += pathOffset;

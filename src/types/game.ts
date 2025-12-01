@@ -25,6 +25,7 @@ export interface Tower {
   fireRate: number; // Выстрелов в секунду
   lastFireTime: number;
   cost: number;
+  size: number;
 }
 
 export interface Projectile {
@@ -71,6 +72,7 @@ export interface TowerStats {
   range: number;
   fireRate: number;
   cost: number;
+  size: number;
   upgradeCost?: number;
 }
 
@@ -81,6 +83,7 @@ export const TOWER_STATS: Record<1 | 2 | 3, TowerStats> = {
     range: 100,
     fireRate: 1, // 1 выстрел в секунду
     cost: 50,
+    size: 30,
     upgradeCost: 100,
   },
   2: {
@@ -89,6 +92,7 @@ export const TOWER_STATS: Record<1 | 2 | 3, TowerStats> = {
     range: 120,
     fireRate: 1.5,
     cost: 150,
+    size: 35,
     upgradeCost: 200,
   },
   3: {
@@ -97,6 +101,7 @@ export const TOWER_STATS: Record<1 | 2 | 3, TowerStats> = {
     range: 150,
     fireRate: 2,
     cost: 350,
+    size: 40,
   },
 };
 

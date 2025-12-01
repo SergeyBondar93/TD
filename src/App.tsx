@@ -146,6 +146,7 @@ function App() {
         fireRate: towerStats.fireRate,
         lastFireTime: 0,
         cost: towerStats.cost,
+        size: towerStats.size,
       };
 
       addTower(newTower);

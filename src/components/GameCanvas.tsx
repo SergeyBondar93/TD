@@ -237,7 +237,7 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy) {
 
 // Рисование башни (квадратик с уровнем)
 function drawTower(ctx: CanvasRenderingContext2D, tower: Tower) {
-  const size = TOWER_SIZE;
+  const size = tower.size;
   const x = tower.position.x - size / 2;
   const y = tower.position.y - size / 2;
 
@@ -302,7 +302,7 @@ function drawTowerPreview(
   const towerStats = TOWER_STATS[towerLevel];
   const canPlace = canPlaceTower(position, existingTowers, path);
   
-  const size = TOWER_SIZE;
+  const size = towerStats.size;
   const x = position.x - size / 2;
   const y = position.y - size / 2;
 

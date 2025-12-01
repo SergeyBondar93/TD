@@ -57,8 +57,13 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick
     // Рисуем снаряды
     gameState.projectiles.forEach((projectile) => drawProjectile(ctx, projectile));
 
-    // Рисуем огненные снаряды
+    // Рисуем огненные снаряды (старые, если есть)
     gameState.fireProjectiles?.forEach((fireProj) => drawFireProjectile(ctx, fireProj));
+
+    // Рисуем потоки огня (огнемет)
+    gameState.flameStreams?.forEach((stream) => 
+      drawFlameStream(ctx, stream, gameState.towers, gameState.enemies)
+    );
 
     // Рисуем ледяные снаряды
     gameState.iceProjectiles?.forEach((iceProj) => drawIceProjectile(ctx, iceProj));
@@ -471,6 +476,104 @@ function drawFireProjectile(ctx: CanvasRenderingContext2D, projectile: any) {
   ctx.fill();
   ctx.shadowBlur = 0;
   ctx.globalAlpha = 1;
+}
+
+// Рисование потока огня (огнемет)
+function drawFlameStream(ctx: CanvasRenderingContext2D, stream: any, towers: any[], enemies: any[]) {
+  const tower = towers.find(t => t.id === stream.towerId);
+  if (!tower) return;
+
+  // Находим направление к центру целей
+  const targetEnemies = enemies.filter(e => stream.targetEnemyIds.includes(e.id));
+  if (targetEnemies.length === 0) return;
+
+  // Вычисляем центр целей
+  let centerX = 0;
+  let centerY = 0;
+  for (const enemy of targetEnemies) {
+    centerX += enemy.position.x;
+    centerY += enemy.position.y;
+  }
+  centerX /= targetEnemies.length;
+  centerY /= targetEnemies.length;
+
+  const dx = centerX - tower.position.x;
+  const dy = centerY - tower.position.y;
+  const angle = Math.atan2(dy, dx);
+  const coneAngle = (tower.areaRadius || 60) * Math.PI / 180;
+
+  // Рисуем конус пламени
+  ctx.save();
+  ctx.globalAlpha = 0.6;
+
+  // Градиент от башни к дальности
+  const gradient = ctx.createLinearGradient(
+    tower.position.x,
+    tower.position.y,
+    tower.position.x + Math.cos(angle) * stream.range,
+    tower.position.y + Math.sin(angle) * stream.range
+  );
+  gradient.addColorStop(0, '#ff6600');
+  gradient.addColorStop(0.3, '#ff9900');
+  gradient.addColorStop(0.7, '#ffaa00');
+  gradient.addColorStop(1, 'rgba(255, 200, 0, 0.1)');
+
+  ctx.fillStyle = gradient;
+
+  // Рисуем конус
+  ctx.beginPath();
+  ctx.moveTo(tower.position.x, tower.position.y);
+  
+  const leftAngle = angle - coneAngle / 2;
+  const rightAngle = angle + coneAngle / 2;
+  
+  ctx.lineTo(
+    tower.position.x + Math.cos(leftAngle) * stream.range,
+    tower.position.y + Math.sin(leftAngle) * stream.range
+  );
+  
+  ctx.arc(
+    tower.position.x,
+    tower.position.y,
+    stream.range,
+    leftAngle,
+    rightAngle
+  );
+  
+  ctx.lineTo(tower.position.x, tower.position.y);
+  ctx.fill();
+
+  // Добавляем эффект "живого" пламени с несколькими слоями
+  for (let i = 0; i < 3; i++) {
+    const particleAngle = angle + (Math.random() - 0.5) * coneAngle;
+    const distance = stream.range * (0.3 + Math.random() * 0.7);
+    
+    const particleGradient = ctx.createRadialGradient(
+      tower.position.x + Math.cos(particleAngle) * distance,
+      tower.position.y + Math.sin(particleAngle) * distance,
+      0,
+      tower.position.x + Math.cos(particleAngle) * distance,
+      tower.position.y + Math.sin(particleAngle) * distance,
+      30
+    );
+    particleGradient.addColorStop(0, '#ffff00');
+    particleGradient.addColorStop(0.5, '#ff6600');
+    particleGradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+    
+    ctx.fillStyle = particleGradient;
+    ctx.globalAlpha = 0.3 + Math.random() * 0.3;
+    ctx.beginPath();
+    ctx.arc(
+      tower.position.x + Math.cos(particleAngle) * distance,
+      tower.position.y + Math.sin(particleAngle) * distance,
+      20 + Math.random() * 10,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+  }
+
+  ctx.restore();
 }
 
 // Рисование ледяного снаряда

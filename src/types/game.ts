@@ -99,6 +99,15 @@ export interface FireProjectile {
   areaRadius: number; // Радиус области поражения
 }
 
+export interface FlameStream {
+  id: string;
+  towerId: string;
+  targetEnemyIds: string[]; // Враги в конусе огня
+  damage: number; // Урон в секунду
+  startTime: number;
+  range: number; // Дальность пламени
+}
+
 export interface IceProjectile {
   id: string;
   position: Position;
@@ -119,6 +128,7 @@ export interface GameState {
   laserBeams: LaserBeam[];
   electricChains: ElectricChain[];
   fireProjectiles: FireProjectile[];
+  flameStreams: FlameStream[];
   iceProjectiles: IceProjectile[];
   path: Position[];
   gameStatus: 'menu' | 'playing' | 'paused' | 'won' | 'lost';
@@ -193,13 +203,13 @@ export const TOWER_STATS: Record<1 | 2 | 3 | 4 | 5, TowerStats> = {
   },
   4: {
     level: 4,
-    damage: 35,
-    range: 110,
-    fireRate: 0.8,
+    damage: 8, // Маленький урон в секунду, но постоянный
+    range: 120,
+    fireRate: 10, // 10 тиков в секунду для плавного урона
     cost: 200,
     size: 35,
     weaponType: WeaponType.FIRE,
-    areaRadius: 50, // Радиус взрыва
+    areaRadius: 60, // Угол конуса огня
     upgradeCost: 250,
   },
   5: {

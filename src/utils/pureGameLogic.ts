@@ -1,4 +1,4 @@
-import type { Enemy, Tower, Projectile, Position, WaveConfig, LaserBeam, ElectricChain, FireProjectile, IceProjectile } from '../types/game';
+import type { Enemy, Tower, Projectile, Position, WaveConfig, LaserBeam, ElectricChain, FireProjectile, FlameStream, IceProjectile } from '../types/game';
 import { ENEMY_SIZES, WeaponType as WeaponTypeEnum } from '../types/game';
 
 /**
@@ -240,6 +240,36 @@ export function findEnemyChain(
   return chain;
 }
 
+export function findEnemiesInCone(
+  towerPosition: Position,
+  targetPosition: Position,
+  enemies: Enemy[],
+  range: number,
+  coneAngle: number // угол в градусах
+): Enemy[] {
+  const dx = targetPosition.x - towerPosition.x;
+  const dy = targetPosition.y - towerPosition.y;
+  const targetAngle = Math.atan2(dy, dx);
+  const coneAngleRad = (coneAngle * Math.PI) / 180;
+
+  return enemies.filter(enemy => {
+    const dist = distance(towerPosition, enemy.position);
+    if (dist > range) return false;
+
+    const ex = enemy.position.x - towerPosition.x;
+    const ey = enemy.position.y - towerPosition.y;
+    const enemyAngle = Math.atan2(ey, ex);
+
+    // Вычисляем разницу углов
+    let angleDiff = Math.abs(enemyAngle - targetAngle);
+    if (angleDiff > Math.PI) {
+      angleDiff = 2 * Math.PI - angleDiff;
+    }
+
+    return angleDiff <= coneAngleRad / 2;
+  });
+}
+
 export function canPlaceTower(
   position: Position,
   towers: Tower[],
@@ -273,6 +303,7 @@ export interface TowerFireResult {
   laserBeam: LaserBeam | null;
   electricChain: ElectricChain | null;
   fireProjectile: FireProjectile | null;
+  flameStream: FlameStream | null;
   iceProjectile: IceProjectile | null;
 }
 
@@ -285,13 +316,13 @@ export function processTowerFire(
   const fireInterval = 1000 / tower.fireRate;
 
   if (timeSinceLastFire < fireInterval) {
-    return { updatedTower: tower, projectile: null, laserBeam: null, electricChain: null, fireProjectile: null, iceProjectile: null };
+    return { updatedTower: tower, projectile: null, laserBeam: null, electricChain: null, fireProjectile: null, flameStream: null, iceProjectile: null };
   }
 
   const target = findClosestEnemyInRange(tower, enemies);
 
   if (!target) {
-    return { updatedTower: { ...tower, currentTarget: undefined }, projectile: null, laserBeam: null, electricChain: null, fireProjectile: null, iceProjectile: null };
+    return { updatedTower: { ...tower, currentTarget: undefined }, projectile: null, laserBeam: null, electricChain: null, fireProjectile: null, flameStream: null, iceProjectile: null };
   }
 
   const updatedTower = { ...tower, lastFireTime: currentTime, currentTarget: target.id };
@@ -316,6 +347,7 @@ export function processTowerFire(
       laserBeam: null,
       electricChain,
       fireProjectile: null,
+      flameStream: null,
       iceProjectile: null,
     };
   }
@@ -336,19 +368,29 @@ export function processTowerFire(
       laserBeam,
       electricChain: null,
       fireProjectile: null,
+      flameStream: null,
       iceProjectile: null,
     };
   }
 
-  // Огненное оружие - снаряд с областью поражения
+  // Огненное оружие - поток пламени как огнемет
   if (tower.weaponType === WeaponTypeEnum.FIRE) {
-    const fireProjectile: FireProjectile = {
+    // Находим всех врагов в конусе пламени
+    const enemiesInCone = findEnemiesInCone(
+      tower.position,
+      target.position,
+      enemies,
+      tower.range,
+      tower.areaRadius || 60 // Угол конуса в градусах
+    );
+
+    const flameStream: FlameStream = {
       id: generateId(),
-      position: { ...tower.position },
-      targetEnemyId: target.id,
-      damage: tower.damage,
-      speed: 250,
-      areaRadius: tower.areaRadius || 40,
+      towerId: tower.id,
+      targetEnemyIds: enemiesInCone.map(e => e.id),
+      damage: tower.damage, // Урон в секунду
+      startTime: currentTime,
+      range: tower.range,
     };
 
     return {
@@ -356,7 +398,8 @@ export function processTowerFire(
       projectile: null,
       laserBeam: null,
       electricChain: null,
-      fireProjectile,
+      fireProjectile: null,
+      flameStream,
       iceProjectile: null,
     };
   }
@@ -379,6 +422,7 @@ export function processTowerFire(
       laserBeam: null,
       electricChain: null,
       fireProjectile: null,
+      flameStream: null,
       iceProjectile,
     };
   }
@@ -398,6 +442,7 @@ export function processTowerFire(
     laserBeam: null,
     electricChain: null,
     fireProjectile: null,
+    flameStream: null,
     iceProjectile: null,
   };
 }
@@ -521,6 +566,48 @@ export function processFireProjectiles(
 
   return {
     activeFireProjectiles,
+    updatedEnemies: Array.from(enemiesMap.values()),
+  };
+}
+
+// ============================================
+// Логика потоков огня
+// ============================================
+
+export interface ProcessedFlameStreams {
+  activeFlameStreams: FlameStream[];
+  updatedEnemies: Enemy[];
+}
+
+export function processFlameStreams(
+  flameStreams: FlameStream[],
+  enemies: Enemy[],
+  deltaTime: number,
+  currentTime: number
+): ProcessedFlameStreams {
+  const activeFlameStreams: FlameStream[] = [];
+  const enemiesMap = new Map(enemies.map((e) => [e.id, { ...e }]));
+
+  for (const stream of flameStreams) {
+    // Поток огня существует только 100мс (один кадр)
+    const duration = currentTime - stream.startTime;
+    if (duration > 100) continue;
+
+    // Наносим урон всем врагам в конусе
+    const damagePerTick = (stream.damage * deltaTime) / 1000; // Урон за deltaTime
+
+    for (const enemyId of stream.targetEnemyIds) {
+      const enemy = enemiesMap.get(enemyId);
+      if (enemy) {
+        enemy.health -= damagePerTick;
+      }
+    }
+
+    activeFlameStreams.push(stream);
+  }
+
+  return {
+    activeFlameStreams,
     updatedEnemies: Array.from(enemiesMap.values()),
   };
 }

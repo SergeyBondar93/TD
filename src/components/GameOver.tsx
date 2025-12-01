@@ -32,62 +32,80 @@ export const GameOver: React.FC<GameOverProps> = ({ won, currentLevel, onRestart
   );
 };
 
-const styles: Record<string, React.CSSProperties> = {
-  overlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  modal: {
-    backgroundColor: '#16213e',
-    padding: '50px',
-    borderRadius: '20px',
-    textAlign: 'center',
-    border: '3px solid #0f3460',
-    maxWidth: '500px',
-  },
-  wonTitle: {
-    fontSize: '48px',
-    color: '#2ecc71',
-    margin: '0 0 20px 0',
-  },
-  lostTitle: {
-    fontSize: '48px',
-    color: '#e74c3c',
-    margin: '0 0 20px 0',
-  },
-  message: {
-    fontSize: '20px',
-    color: '#fff',
-    margin: '0 0 30px 0',
-  },
-  buttons: {
-    display: 'flex',
-    gap: '15px',
-    justifyContent: 'center',
-  },
-  button: {
-    padding: '15px 30px',
-    fontSize: '18px',
-    fontWeight: 'bold',
-    border: 'none',
-    borderRadius: '10px',
-    cursor: 'pointer',
-    transition: 'all 0.3s',
-  },
-  restartButton: {
-    backgroundColor: '#3498db',
-    color: '#fff',
-  },
-  menuButton: {
-    backgroundColor: '#95a5a6',
-    color: '#fff',
-  },
+const overlay: React.CSSProperties = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  zIndex: 1000,
+};
+
+const modal: React.CSSProperties = {
+  backgroundColor: '#16213e',
+  padding: '50px',
+  borderRadius: '20px',
+  textAlign: 'center',
+  border: '3px solid #0f3460',
+  maxWidth: '500px',
+};
+
+const wonTitle: React.CSSProperties = {
+  fontSize: '48px',
+  color: '#2ecc71',
+  margin: '0 0 20px 0',
+};
+
+const lostTitle: React.CSSProperties = {
+  fontSize: '48px',
+  color: '#e74c3c',
+  margin: '0 0 20px 0',
+};
+
+const message: React.CSSProperties = {
+  fontSize: '20px',
+  color: '#fff',
+  margin: '0 0 30px 0',
+};
+
+const buttons: React.CSSProperties = {
+  display: 'flex',
+  gap: '15px',
+  justifyContent: 'center',
+};
+
+const button: React.CSSProperties = {
+  padding: '15px 30px',
+  fontSize: '18px',
+  fontWeight: 'bold',
+  border: 'none',
+  borderRadius: '10px',
+  cursor: 'pointer',
+  transition: 'all 0.3s',
+};
+
+const restartButton: React.CSSProperties = {
+  backgroundColor: '#3498db',
+  color: '#fff',
+};
+
+const menuButton: React.CSSProperties = {
+  backgroundColor: '#95a5a6',
+  color: '#fff',
+};
+
+const styles = {
+  overlay,
+  modal,
+  wonTitle,
+  lostTitle,
+  message,
+  buttons,
+  button,
+  restartButton,
+  menuButton,
 };

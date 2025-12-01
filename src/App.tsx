@@ -321,28 +321,34 @@ function App() {
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  app: {
-    minHeight: '100vh',
-    backgroundColor: '#1a1a2e',
-    display: 'flex',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-    padding: '10px',
-    gap: '10px',
-  },
-  mainContent: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px',
-    flex: 1,
-  },
-  gameSection: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px',
-    alignItems: 'flex-start',
-  },
+const app: React.CSSProperties = {
+  minHeight: '100vh',
+  backgroundColor: '#1a1a2e',
+  display: 'flex',
+  justifyContent: 'flex-start',
+  alignItems: 'flex-start',
+  padding: '10px',
+  gap: '10px',
+};
+
+const mainContent: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '10px',
+  flex: 1,
+};
+
+const gameSection: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '10px',
+  alignItems: 'flex-start',
+};
+
+const styles = {
+  app,
+  mainContent,
+  gameSection,
 };
 
 export default App;

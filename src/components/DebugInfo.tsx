@@ -249,120 +249,158 @@ export const DebugInfo: React.FC<DebugInfoProps> = ({ gameState, onGameSpeedChan
   );
 };
 
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
-    color: '#0f0',
-    padding: '10px',
-    borderRadius: '6px',
-    fontFamily: 'monospace',
-    fontSize: '10px',
-    maxHeight: 'calc(100vh - 20px)',
-    overflowY: 'auto',
-    border: '1px solid #0f0',
-  },
-  columnsContainer: {
-    display: 'flex',
-    gap: '10px',
-  },
-  column: {
-    flex: 1,
-    minWidth: '200px',
-  },
-  mainTitle: {
-    margin: '0 0 8px 0',
-    color: '#0ff',
-    fontSize: '13px',
-    textAlign: 'center',
-    borderBottom: '1px solid #0ff',
-    paddingBottom: '4px',
-  },
-  section: {
-    marginBottom: '8px',
-    padding: '6px',
-    backgroundColor: 'rgba(0, 255, 0, 0.05)',
-    borderRadius: '4px',
-    border: '1px solid rgba(0, 255, 0, 0.3)',
-  },
-  sectionTitle: {
-    margin: '0 0 4px 0',
-    color: '#0ff',
-    fontSize: '11px',
-    borderBottom: '1px solid rgba(0, 255, 255, 0.3)',
-    paddingBottom: '2px',
-  },
-  info: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-  },
-  infoRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    padding: '2px 0',
-  },
-  value: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  highlight: {
-    color: '#ff0',
-    fontWeight: 'bold',
-  },
-  subsection: {
-    marginTop: '4px',
-    paddingLeft: '6px',
-    borderLeft: '2px solid rgba(0, 255, 0, 0.3)',
-  },
-  subsectionTitle: {
-    color: '#0f0',
-    fontSize: '10px',
-    marginBottom: '3px',
-    fontWeight: 'bold',
-  },
-  entityCard: {
-    marginBottom: '4px',
-    padding: '4px',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    borderRadius: '3px',
-    border: '1px solid rgba(0, 255, 0, 0.2)',
-  },
-  entityHeader: {
-    color: '#ff0',
-    fontSize: '10px',
-    marginBottom: '2px',
-    fontWeight: 'bold',
-  },
-  entityDetails: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1px',
-    fontSize: '9px',
-    color: '#0f0',
-  },
-  moreInfo: {
-    color: '#888',
-    fontSize: '10px',
-    fontStyle: 'italic',
-    textAlign: 'center',
-    marginTop: '4px',
-  },
-  sliderContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    padding: '4px',
-  },
-  slider: {
-    flex: 1,
-    height: '6px',
-    cursor: 'pointer',
-  },
-  speedValue: {
-    color: '#ff0',
-    fontWeight: 'bold',
-    fontSize: '12px',
-    minWidth: '50px',
-    textAlign: 'right',
-  },
+const container: React.CSSProperties = {
+  backgroundColor: 'rgba(0, 0, 0, 0.85)',
+  color: '#0f0',
+  padding: '10px',
+  borderRadius: '6px',
+  fontFamily: 'monospace',
+  fontSize: '10px',
+  maxHeight: 'calc(100vh - 20px)',
+  overflowY: 'auto',
+  border: '1px solid #0f0',
+};
+
+const columnsContainer: React.CSSProperties = {
+  display: 'flex',
+  gap: '10px',
+};
+
+const column: React.CSSProperties = {
+  flex: 1,
+  minWidth: '200px',
+};
+
+const mainTitle: React.CSSProperties = {
+  margin: '0 0 8px 0',
+  color: '#0ff',
+  fontSize: '13px',
+  textAlign: 'center',
+  borderBottom: '1px solid #0ff',
+  paddingBottom: '4px',
+};
+
+const section: React.CSSProperties = {
+  marginBottom: '8px',
+  padding: '6px',
+  backgroundColor: 'rgba(0, 255, 0, 0.05)',
+  borderRadius: '4px',
+  border: '1px solid rgba(0, 255, 0, 0.3)',
+};
+
+const sectionTitle: React.CSSProperties = {
+  margin: '0 0 4px 0',
+  color: '#0ff',
+  fontSize: '11px',
+  borderBottom: '1px solid rgba(0, 255, 255, 0.3)',
+  paddingBottom: '2px',
+};
+
+const info: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '4px',
+};
+
+const infoRow: React.CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  padding: '2px 0',
+};
+
+const value: React.CSSProperties = {
+  color: '#fff',
+  fontWeight: 'bold',
+};
+
+const highlight: React.CSSProperties = {
+  color: '#ff0',
+  fontWeight: 'bold',
+};
+
+const subsection: React.CSSProperties = {
+  marginTop: '4px',
+  paddingLeft: '6px',
+  borderLeft: '2px solid rgba(0, 255, 0, 0.3)',
+};
+
+const subsectionTitle: React.CSSProperties = {
+  color: '#0f0',
+  fontSize: '10px',
+  marginBottom: '3px',
+  fontWeight: 'bold',
+};
+
+const entityCard: React.CSSProperties = {
+  marginBottom: '4px',
+  padding: '4px',
+  backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  borderRadius: '3px',
+  border: '1px solid rgba(0, 255, 0, 0.2)',
+};
+
+const entityHeader: React.CSSProperties = {
+  color: '#ff0',
+  fontSize: '10px',
+  marginBottom: '2px',
+  fontWeight: 'bold',
+};
+
+const entityDetails: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '1px',
+  fontSize: '9px',
+  color: '#0f0',
+};
+
+const moreInfo: React.CSSProperties = {
+  color: '#888',
+  fontSize: '10px',
+  fontStyle: 'italic',
+  textAlign: 'center',
+  marginTop: '4px',
+};
+
+const sliderContainer: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '10px',
+  padding: '4px',
+};
+
+const slider: React.CSSProperties = {
+  flex: 1,
+  height: '6px',
+  cursor: 'pointer',
+};
+
+const speedValue: React.CSSProperties = {
+  color: '#ff0',
+  fontWeight: 'bold',
+  fontSize: '12px',
+  minWidth: '50px',
+  textAlign: 'right',
+};
+
+const styles = {
+  container,
+  columnsContainer,
+  column,
+  mainTitle,
+  section,
+  sectionTitle,
+  info,
+  infoRow,
+  value,
+  highlight,
+  subsection,
+  subsectionTitle,
+  entityCard,
+  entityHeader,
+  entityDetails,
+  moreInfo,
+  sliderContainer,
+  slider,
+  speedValue,
 };

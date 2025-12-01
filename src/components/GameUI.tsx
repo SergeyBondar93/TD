@@ -133,134 +133,178 @@ export const GameUI: React.FC<GameUIProps> = ({
   );
 };
 
+const container: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'row',
+  gap: '15px',
+  padding: '10px',
+  backgroundColor: '#16213e',
+  color: '#fff',
+  borderRadius: '6px',
+  width: '100%',
+  maxWidth: '100%',
+  alignItems: 'flex-start',
+};
+
+const infoSection: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'row',
+  gap: '10px',
+  padding: '8px 12px',
+  backgroundColor: '#0f3460',
+  borderRadius: '6px',
+  alignItems: 'center',
+};
+
+const towerSection: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  flex: 1,
+};
+
+const controlSection: React.CSSProperties = {
+  display: 'flex',
+  gap: '8px',
+};
+
+const infoItem: React.CSSProperties = {
+  display: 'flex',
+  gap: '6px',
+  alignItems: 'center',
+  fontSize: '15px',
+};
+
+const separator: React.CSSProperties = {
+  width: '1px',
+  height: '20px',
+  backgroundColor: 'rgba(255, 255, 255, 0.3)',
+};
+
+const label: React.CSSProperties = {
+  fontWeight: 'normal',
+};
+
+const value: React.CSSProperties = {
+  fontWeight: 'bold',
+  color: '#4ecdc4',
+};
+
+const towerPanel: React.CSSProperties = {
+  marginBottom: '20px',
+};
+
+const panelTitle: React.CSSProperties = {
+  margin: '0 0 15px 0',
+  fontSize: '18px',
+  color: '#4ecdc4',
+};
+
+const towerButtons: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '10px',
+};
+
+const towerButton: React.CSSProperties = {
+  padding: '12px',
+  backgroundColor: '#0f3460',
+  borderWidth: '2px',
+  borderStyle: 'solid',
+  borderColor: '#4ecdc4',
+  borderRadius: '6px',
+  color: '#fff',
+  cursor: 'pointer',
+  transition: 'all 0.2s',
+  fontSize: '14px',
+};
+
+const towerButtonSelected: React.CSSProperties = {
+  backgroundColor: '#4ecdc4',
+  color: '#000',
+  fontWeight: 'bold',
+};
+
+const towerButtonDisabled: React.CSSProperties = {
+  opacity: 0.5,
+  cursor: 'not-allowed',
+  borderColor: '#555',
+};
+
+const towerLevel: React.CSSProperties = {
+  fontSize: '16px',
+  fontWeight: 'bold',
+  marginBottom: '8px',
+};
+
+const towerStats: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
+  gap: '4px',
+  fontSize: '12px',
+};
+
+const controls: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '10px',
+  marginBottom: '15px',
+};
+
+const controlButton: React.CSSProperties = {
+  padding: '12px 20px',
+  border: 'none',
+  borderRadius: '6px',
+  fontSize: '16px',
+  fontWeight: 'bold',
+  cursor: 'pointer',
+  transition: 'all 0.2s',
+};
+
+const startButton: React.CSSProperties = {
+  backgroundColor: '#2ecc71',
+  color: '#fff',
+};
+
+const pauseButton: React.CSSProperties = {
+  backgroundColor: '#f39c12',
+  color: '#fff',
+};
+
+const buttonDisabled: React.CSSProperties = {
+  opacity: 0.5,
+  cursor: 'not-allowed',
+};
+
+const hint: React.CSSProperties = {
+  padding: '10px',
+  backgroundColor: '#0f3460',
+  borderRadius: '6px',
+  textAlign: 'center',
+  fontSize: '14px',
+  color: '#4ecdc4',
+};
+
 const styles = {
-  container: {
-    display: 'flex',
-    flexDirection: 'row',
-    gap: '15px',
-    padding: '10px',
-    backgroundColor: '#16213e',
-    color: '#fff',
-    borderRadius: '6px',
-    width: '100%',
-    maxWidth: '100%',
-    alignItems: 'flex-start',
-  },
-  infoSection: {
-    display: 'flex',
-    flexDirection: 'row',
-    gap: '10px',
-    padding: '8px 12px',
-    backgroundColor: '#0f3460',
-    borderRadius: '6px',
-    alignItems: 'center',
-  },
-  towerSection: {
-    display: 'flex',
-    alignItems: 'center',
-    flex: 1,
-  },
-  controlSection: {
-    display: 'flex',
-    gap: '8px',
-  },
-  infoItem: {
-    display: 'flex',
-    gap: '6px',
-    alignItems: 'center',
-    fontSize: '15px',
-  },
-  separator: {
-    width: '1px',
-    height: '20px',
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  label: {
-    fontWeight: 'normal',
-  },
-  value: {
-    fontWeight: 'bold',
-    color: '#4ecdc4',
-  },
-  towerPanel: {
-    marginBottom: '20px',
-  },
-  panelTitle: {
-    margin: '0 0 15px 0',
-    fontSize: '18px',
-    color: '#4ecdc4',
-  },
-  towerButtons: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px',
-  },
-  towerButton: {
-    padding: '12px',
-    backgroundColor: '#0f3460',
-    borderWidth: '2px',
-    borderStyle: 'solid',
-    borderColor: '#4ecdc4',
-    borderRadius: '6px',
-    color: '#fff',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    fontSize: '14px',
-  },
-  towerButtonSelected: {
-    backgroundColor: '#4ecdc4',
-    color: '#000',
-    fontWeight: 'bold',
-  },
-  towerButtonDisabled: {
-    opacity: 0.5,
-    cursor: 'not-allowed',
-    borderColor: '#555',
-  },
-  towerLevel: {
-    fontSize: '16px',
-    fontWeight: 'bold',
-    marginBottom: '8px',
-  },
-  towerStats: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '4px',
-    fontSize: '12px',
-  },
-  controls: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px',
-    marginBottom: '15px',
-  },
-  controlButton: {
-    padding: '12px 20px',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '16px',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-  },
-  startButton: {
-    backgroundColor: '#2ecc71',
-    color: '#fff',
-  },
-  pauseButton: {
-    backgroundColor: '#f39c12',
-    color: '#fff',
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-    cursor: 'not-allowed',
-  },
-  hint: {
-    padding: '10px',
-    backgroundColor: '#0f3460',
-    borderRadius: '6px',
-    textAlign: 'center',
-    fontSize: '14px',
-    color: '#4ecdc4',
-  },
-} as Record<string, React.CSSProperties>;
+  container,
+  infoSection,
+  towerSection,
+  controlSection,
+  infoItem,
+  separator,
+  label,
+  value,
+  towerPanel,
+  panelTitle,
+  towerButtons,
+  towerButton,
+  towerButtonSelected,
+  towerButtonDisabled,
+  towerLevel,
+  towerStats,
+  controls,
+  controlButton,
+  startButton,
+  pauseButton,
+  buttonDisabled,
+  hint,
+};

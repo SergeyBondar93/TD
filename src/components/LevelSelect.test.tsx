@@ -69,7 +69,6 @@ describe('LevelSelect', () => {
 
     expect(screen.getByText('Как играть:')).toBeInTheDocument();
     expect(screen.getByText(/Выберите башню на панели/)).toBeInTheDocument();
-    expect(screen.getByText(/Кликните на карте/)).toBeInTheDocument();
     expect(screen.getByText(/Начать волну/)).toBeInTheDocument();
     expect(screen.getByText(/Не дайте врагам/)).toBeInTheDocument();
     expect(screen.getByText(/3 уровня башен/)).toBeInTheDocument();

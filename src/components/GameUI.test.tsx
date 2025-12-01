@@ -157,18 +157,6 @@ describe('GameUI', () => {
     expect(onResume).toHaveBeenCalled();
   });
 
-  it('should show hint when tower is selected', () => {
-    render(<GameUI {...defaultProps} selectedTowerLevel={1} />);
-
-    expect(screen.getByText('Кликните на карте, чтобы поставить башню')).toBeInTheDocument();
-  });
-
-  it('should not show hint when no tower is selected', () => {
-    render(<GameUI {...defaultProps} selectedTowerLevel={null} />);
-
-    expect(screen.queryByText('Кликните на карте, чтобы поставить башню')).not.toBeInTheDocument();
-  });
-
   it('should not show control buttons when game is won', () => {
     render(<GameUI {...defaultProps} gameStatus="won" />);
 

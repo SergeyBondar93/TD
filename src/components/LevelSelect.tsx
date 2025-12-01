@@ -33,7 +33,6 @@ export const LevelSelect: React.FC<LevelSelectProps> = ({ onSelectLevel }) => {
         <h3 className="level-select-instructions-title" style={styles.instructionsTitle}>Как играть:</h3>
         <ul className="level-select-instructions-list" style={styles.instructionsList}>
           <li>Выберите башню на панели справа</li>
-          <li>Кликните на карте, чтобы поставить башню</li>
           <li>Нажмите "Начать волну" для спавна врагов</li>
           <li>Не дайте врагам дойти до конца пути!</li>
           <li>У вас 3 уровня башен с разной силой</li>

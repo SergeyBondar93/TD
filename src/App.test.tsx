@@ -108,7 +108,8 @@ describe('App Integration Tests', () => {
       const tower1Button = screen.getByText('Т1').closest('button');
       await user.click(tower1Button!);
 
-      expect(screen.getByText('Кликните на карте, чтобы поставить башню')).toBeInTheDocument();
+      // Tower is selected
+      expect(useUIStore.getState().selectedTowerLevel).toBe(1);
     }, TEST_TIMEOUT);
 
     it('should deduct money when placing a tower', async () => {

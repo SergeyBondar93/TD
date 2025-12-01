@@ -124,11 +124,6 @@ export const GameUI: React.FC<GameUIProps> = ({
           </button>
         )}
       </div>
-
-      {/* Подсказки */}
-      {selectedTowerLevel && (
-        <div className="game-ui-hint" style={styles.hint}>Кликните на карте, чтобы поставить башню</div>
-      )}
     </div>
   );
 };

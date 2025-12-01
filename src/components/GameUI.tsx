@@ -158,7 +158,6 @@ const infoSection: React.CSSProperties = {
 
 const towerSection: React.CSSProperties = {
   display: 'flex',
-  alignItems: 'center',
   flex: 1,
 };
 
@@ -201,7 +200,6 @@ const panelTitle: React.CSSProperties = {
 
 const towerButtons: React.CSSProperties = {
   display: 'flex',
-  flexDirection: 'column',
   gap: '10px',
 };
 

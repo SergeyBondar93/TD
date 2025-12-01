@@ -246,6 +246,16 @@ function App() {
       state.setProjectiles(processedProjectiles.activeProjectiles);
       state.setEnemies(processedProjectiles.updatedEnemies);
 
+      // 5. Проверка победы: все волны пройдены и нет врагов
+      const currentState = useGameStore.getState();
+      const allWavesCompleted = !waveSpawnRef.current && currentState.currentWave >= levelConfig.waves.length;
+      const noEnemiesLeft = currentState.enemies.length === 0;
+      
+      if (allWavesCompleted && noEnemiesLeft && currentState.gameStatus === 'playing') {
+        currentState.setGameStatus('won');
+        return;
+      }
+
       animationFrameId = requestAnimationFrame(gameLoop);
     };
 

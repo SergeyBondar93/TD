@@ -6,10 +6,9 @@ import {
   CANVAS_PADDING,
   GAME_WIDTH,
   GAME_HEIGHT,
-  ENEMY_SIZE,
-  TOWER_SIZE,
   PROJECTILE_SIZE,
   TOWER_STATS,
+  EnemyType,
 } from '../types/game';
 import { DEV_CONFIG } from '../config/dev';
 import { canPlaceTower } from '../utils/pureGameLogic';
@@ -185,7 +184,7 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy) {
   const y = enemy.position.y - size / 2;
 
   // Определяем цвет в зависимости от типа врага
-  const color = enemy.type === 'infantry' ? '#ff6b6b' : '#4a90e2';
+  const color = enemy.type === EnemyType.INFANTRY ? '#ff6b6b' : '#4a90e2';
   ctx.fillStyle = color;
   ctx.fillRect(x, y, size, size);
 

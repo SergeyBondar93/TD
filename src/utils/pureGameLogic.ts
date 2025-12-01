@@ -1,4 +1,5 @@
 import type { Enemy, Tower, Projectile, Position, WaveConfig } from '../types/game';
+import { ENEMY_SIZES } from '../types/game';
 
 /**
  * Чистая игровая логика - функции без побочных эффектов
@@ -333,7 +334,7 @@ export function processWaveSpawn(
     timeSinceLastSpawn >= waveConfig.spawnDelay
   ) {
     // Определяем размер врага в зависимости от типа
-    const enemySize = waveConfig.enemyType === 'infantry' ? 20 : 40;
+    const enemySize = ENEMY_SIZES[waveConfig.enemyType];
     
     const newEnemy: Enemy = {
       id: generateId(),

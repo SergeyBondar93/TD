@@ -7,7 +7,7 @@ import { DebugInfo } from './components/DebugInfo';
 import { useGameStore } from './stores/gameStore';
 import { useUIStore } from './stores/uiStore';
 import type { GameState, Enemy, Tower, Projectile } from './types/game';
-import { TOWER_STATS } from './types/game';
+import { TOWER_STATS, EnemyType, ENEMY_SIZES } from './types/game';
 import { LEVELS, DEFAULT_PATH } from './config/levels';
 import { DEV_CONFIG } from './config/dev';
 import {
@@ -69,18 +69,19 @@ function App() {
       // Создаем тестовых врагов если включен режим отладки
       if (DEV_CONFIG.TEST_ENEMIES) {
         for (let i = 0; i < DEV_CONFIG.TEST_ENEMIES_COUNT; i++) {
-          const enemyType = i % 2 === 0 ? 'infantry' : 'tank';
+          const enemyTypes = [EnemyType.INFANTRY, EnemyType.TANK_SMALL, EnemyType.TANK_MEDIUM, EnemyType.TANK_LARGE];
+          const enemyType = enemyTypes[i % enemyTypes.length];
           const enemy: Enemy = {
             id: `test-${i}`,
             position: { x: 30 + i * DEV_CONFIG.TEST_ENEMIES_DISTANCE, y: 130 },
-            health: enemyType === 'infantry' ? 100 : 300,
-            maxHealth: enemyType === 'infantry' ? 100 : 300,
+            health: enemyType === EnemyType.INFANTRY ? 100 : 300,
+            maxHealth: enemyType === EnemyType.INFANTRY ? 100 : 300,
             speed: 50,
             level: i + 1,
             pathIndex: 0,
             reward: 20,
             type: enemyType,
-            size: enemyType === 'infantry' ? 20 : 40,
+            size: ENEMY_SIZES[enemyType],
           };
           initialEnemies.push(enemy);
         }

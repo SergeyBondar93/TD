@@ -1,5 +1,21 @@
 // Базовые типы для игры Tower Defense
 
+export const EnemyType = {
+  INFANTRY: 'infantry',
+  TANK_SMALL: 'tank_small',
+  TANK_MEDIUM: 'tank_medium',
+  TANK_LARGE: 'tank_large',
+} as const;
+
+export type EnemyType = typeof EnemyType[keyof typeof EnemyType];
+
+export const ENEMY_SIZES: Record<EnemyType, number> = {
+  [EnemyType.INFANTRY]: 15,
+  [EnemyType.TANK_SMALL]: 30,
+  [EnemyType.TANK_MEDIUM]: 40,
+  [EnemyType.TANK_LARGE]: 50,
+};
+
 export interface Position {
   x: number;
   y: number;
@@ -14,7 +30,7 @@ export interface Enemy {
   level: number; // Уровень сложности врага
   pathIndex: number; // Индекс текущей точки на пути
   reward: number; // Награда за уничтожение
-  type: 'infantry' | 'tank'; // Тип врага: пехота или танк
+  type: EnemyType; // Тип врага
   size: number; // Размер врага
 }
 
@@ -66,7 +82,7 @@ export interface WaveConfig {
   enemySpeed: number;
   enemyReward: number;
   spawnDelay: number; // Задержка между спавном врагов (мс)
-  enemyType: 'infantry' | 'tank'; // Тип врагов в этой волне
+  enemyType: EnemyType; // Тип врагов в этой волне
 }
 
 export interface TowerStats {

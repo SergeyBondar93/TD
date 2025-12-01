@@ -1,4 +1,5 @@
 import type { LevelConfig } from '../types/game';
+import { EnemyType } from '../types/game';
 
 // Создаём 10 уровней сложности с прогрессивным увеличением сложности
 export const LEVELS: LevelConfig[] = [
@@ -15,7 +16,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 60,
         enemyReward: 10,
         spawnDelay: 300,
-        enemyType: 'infantry',
+        enemyType: EnemyType.INFANTRY,
       },
       {
         enemyCount: 30,
@@ -24,7 +25,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 40,
         enemyReward: 25,
         spawnDelay: 800,
-        enemyType: 'tank',
+        enemyType: EnemyType.TANK_SMALL,
       },
     ],
   },
@@ -41,7 +42,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 65,
         enemyReward: 15,
         spawnDelay: 300,
-        enemyType: 'infantry',
+        enemyType: EnemyType.INFANTRY,
       },
       {
         enemyCount: 30,
@@ -50,7 +51,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 45,
         enemyReward: 30,
         spawnDelay: 700,
-        enemyType: 'tank',
+        enemyType: EnemyType.TANK_SMALL,
       },
       {
         enemyCount: 30,
@@ -59,7 +60,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 70,
         enemyReward: 18,
         spawnDelay: 400,
-        enemyType: 'infantry',
+        enemyType: EnemyType.INFANTRY,
       },
     ],
   },
@@ -76,7 +77,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 70,
         enemyReward: 20,
         spawnDelay: 300,
-        enemyType: 'infantry',
+        enemyType: EnemyType.INFANTRY,
       },
       {
         enemyCount: 30,
@@ -85,7 +86,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 50,
         enemyReward: 40,
         spawnDelay: 700,
-        enemyType: 'tank',
+        enemyType: EnemyType.TANK_MEDIUM,
       },
       {
         enemyCount: 20,
@@ -94,7 +95,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 55,
         enemyReward: 35,
         spawnDelay: 600,
-        enemyType: 'tank',
+        enemyType: EnemyType.TANK_SMALL,
       },
     ],
   },
@@ -111,7 +112,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 75,
         enemyReward: 25,
         spawnDelay: 250,
-        enemyType: 'infantry',
+        enemyType: EnemyType.INFANTRY,
       },
       {
         enemyCount: 30,
@@ -120,7 +121,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 55,
         enemyReward: 50,
         spawnDelay: 700,
-        enemyType: 'tank',
+        enemyType: EnemyType.TANK_MEDIUM,
       },
       {
         enemyCount: 30,
@@ -129,7 +130,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 80,
         enemyReward: 30,
         spawnDelay: 350,
-        enemyType: 'infantry',
+        enemyType: EnemyType.INFANTRY,
       },
     ],
   },
@@ -146,7 +147,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 80,
         enemyReward: 30,
         spawnDelay: 250,
-        enemyType: 'infantry',
+        enemyType: EnemyType.INFANTRY,
       },
       {
         enemyCount: 30,
@@ -155,7 +156,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 60,
         enemyReward: 60,
         spawnDelay: 650,
-        enemyType: 'tank',
+        enemyType: EnemyType.TANK_MEDIUM,
       },
       {
         enemyCount: 30,
@@ -164,7 +165,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 85,
         enemyReward: 35,
         spawnDelay: 300,
-        enemyType: 'infantry',
+        enemyType: EnemyType.INFANTRY,
       },
       {
         enemyCount: 20,
@@ -173,7 +174,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 65,
         enemyReward: 70,
         spawnDelay: 700,
-        enemyType: 'tank',
+        enemyType: EnemyType.TANK_LARGE,
       },
     ],
   },
@@ -190,7 +191,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 85,
         enemyReward: 35,
         spawnDelay: 250,
-        enemyType: 'infantry',
+        enemyType: EnemyType.INFANTRY,
       },
       {
         enemyCount: 30,
@@ -199,7 +200,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 65,
         enemyReward: 75,
         spawnDelay: 650,
-        enemyType: 'tank',
+        enemyType: EnemyType.TANK_LARGE,
       },
     ],
   },
@@ -216,7 +217,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 90,
         enemyReward: 40,
         spawnDelay: 200,
-        enemyType: 'infantry',
+        enemyType: EnemyType.INFANTRY,
       },
       {
         enemyCount: 30,
@@ -225,7 +226,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 70,
         enemyReward: 85,
         spawnDelay: 600,
-        enemyType: 'tank',
+        enemyType: EnemyType.TANK_LARGE,
       },
       {
         enemyCount: 30,
@@ -234,7 +235,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 95,
         enemyReward: 45,
         spawnDelay: 250,
-        enemyType: 'infantry',
+        enemyType: EnemyType.INFANTRY,
       },
       {
         enemyCount: 20,
@@ -243,7 +244,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 75,
         enemyReward: 95,
         spawnDelay: 650,
-        enemyType: 'tank',
+        enemyType: EnemyType.TANK_LARGE,
       },
     ],
   },
@@ -260,7 +261,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 95,
         enemyReward: 50,
         spawnDelay: 200,
-        enemyType: 'infantry',
+        enemyType: EnemyType.INFANTRY,
       },
       {
         enemyCount: 30,
@@ -269,7 +270,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 75,
         enemyReward: 100,
         spawnDelay: 600,
-        enemyType: 'tank',
+        enemyType: EnemyType.TANK_LARGE,
       },
       {
         enemyCount: 30,
@@ -278,7 +279,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 100,
         enemyReward: 55,
         spawnDelay: 250,
-        enemyType: 'infantry',
+        enemyType: EnemyType.INFANTRY,
       },
     ],
   },
@@ -295,7 +296,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 100,
         enemyReward: 60,
         spawnDelay: 200,
-        enemyType: 'infantry',
+        enemyType: EnemyType.INFANTRY,
       },
       {
         enemyCount: 30,
@@ -304,7 +305,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 80,
         enemyReward: 120,
         spawnDelay: 550,
-        enemyType: 'tank',
+        enemyType: EnemyType.TANK_LARGE,
       },
       {
         enemyCount: 30,
@@ -313,7 +314,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 105,
         enemyReward: 65,
         spawnDelay: 250,
-        enemyType: 'infantry',
+        enemyType: EnemyType.INFANTRY,
       },
       {
         enemyCount: 20,
@@ -322,7 +323,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 85,
         enemyReward: 130,
         spawnDelay: 600,
-        enemyType: 'tank',
+        enemyType: EnemyType.TANK_LARGE,
       },
     ],
   },
@@ -339,7 +340,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 105,
         enemyReward: 70,
         spawnDelay: 150,
-        enemyType: 'infantry',
+        enemyType: EnemyType.INFANTRY,
       },
       {
         enemyCount: 30,
@@ -348,7 +349,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 85,
         enemyReward: 140,
         spawnDelay: 500,
-        enemyType: 'tank',
+        enemyType: EnemyType.TANK_LARGE,
       },
       {
         enemyCount: 30,
@@ -357,7 +358,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 110,
         enemyReward: 80,
         spawnDelay: 200,
-        enemyType: 'infantry',
+        enemyType: EnemyType.INFANTRY,
       },
       {
         enemyCount: 20,
@@ -366,7 +367,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 90,
         enemyReward: 150,
         spawnDelay: 550,
-        enemyType: 'tank',
+        enemyType: EnemyType.TANK_LARGE,
       },
       {
         enemyCount: 1,
@@ -375,7 +376,7 @@ export const LEVELS: LevelConfig[] = [
         enemySpeed: 50,
         enemyReward: 500,
         spawnDelay: 0,
-        enemyType: 'tank',
+        enemyType: EnemyType.TANK_LARGE,
       },
     ],
   },

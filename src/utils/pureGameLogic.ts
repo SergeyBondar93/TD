@@ -1,4 +1,4 @@
-import type { Enemy, Tower, Projectile, Position } from '../types/game';
+import type { Enemy, Tower, Projectile, Position, WaveConfig } from '../types/game';
 
 /**
  * Чистая игровая логика - функции без побочных эффектов
@@ -316,15 +316,6 @@ export interface SpawnResult {
   updatedSpawnState: WaveSpawnState | null;
 }
 
-export interface WaveConfig {
-  enemyCount: number;
-  enemyHealth: number;
-  enemySpeed: number;
-  enemyLevel: number;
-  enemyReward: number;
-  spawnDelay: number;
-}
-
 export function processWaveSpawn(
   spawnState: WaveSpawnState | null,
   waveConfig: WaveConfig,
@@ -341,6 +332,9 @@ export function processWaveSpawn(
     spawnState.enemiesSpawned < waveConfig.enemyCount &&
     timeSinceLastSpawn >= waveConfig.spawnDelay
   ) {
+    // Определяем размер врага в зависимости от типа
+    const enemySize = waveConfig.enemyType === 'infantry' ? 20 : 40;
+    
     const newEnemy: Enemy = {
       id: generateId(),
       position: { ...startPosition },
@@ -350,6 +344,8 @@ export function processWaveSpawn(
       level: waveConfig.enemyLevel,
       pathIndex: 0,
       reward: waveConfig.enemyReward,
+      type: waveConfig.enemyType,
+      size: enemySize,
     };
 
     const updatedSpawnState: WaveSpawnState = {

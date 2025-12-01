@@ -14,6 +14,8 @@ export interface Enemy {
   level: number; // Уровень сложности врага
   pathIndex: number; // Индекс текущей точки на пути
   reward: number; // Награда за уничтожение
+  type: 'infantry' | 'tank'; // Тип врага: пехота или танк
+  size: number; // Размер врага
 }
 
 export interface Tower {
@@ -64,6 +66,7 @@ export interface WaveConfig {
   enemySpeed: number;
   enemyReward: number;
   spawnDelay: number; // Задержка между спавном врагов (мс)
+  enemyType: 'infantry' | 'tank'; // Тип врагов в этой волне
 }
 
 export interface TowerStats {

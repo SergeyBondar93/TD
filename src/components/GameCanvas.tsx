@@ -180,13 +180,13 @@ function drawPath(ctx: CanvasRenderingContext2D, path: { x: number; y: number }[
 
 // Рисование врага (квадратик с уровнем и HP)
 function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy) {
-  const size = ENEMY_SIZE;
+  const size = enemy.size;
   const x = enemy.position.x - size / 2;
   const y = enemy.position.y - size / 2;
 
-  // Определяем цвет в зависимости от уровня
-  const hue = (enemy.level * 25) % 360;
-  ctx.fillStyle = `hsl(${hue}, 70%, 50%)`;
+  // Определяем цвет в зависимости от типа врага
+  const color = enemy.type === 'infantry' ? '#ff6b6b' : '#4a90e2';
+  ctx.fillStyle = color;
   ctx.fillRect(x, y, size, size);
 
   // Обводка

@@ -69,15 +69,18 @@ function App() {
       // Создаем тестовых врагов если включен режим отладки
       if (DEV_CONFIG.TEST_ENEMIES) {
         for (let i = 0; i < DEV_CONFIG.TEST_ENEMIES_COUNT; i++) {
+          const enemyType = i % 2 === 0 ? 'infantry' : 'tank';
           const enemy: Enemy = {
             id: `test-${i}`,
             position: { x: 30 + i * DEV_CONFIG.TEST_ENEMIES_DISTANCE, y: 130 },
-            health: 100,
-            maxHealth: 100,
+            health: enemyType === 'infantry' ? 100 : 300,
+            maxHealth: enemyType === 'infantry' ? 100 : 300,
             speed: 50,
             level: i + 1,
             pathIndex: 0,
             reward: 20,
+            type: enemyType,
+            size: enemyType === 'infantry' ? 20 : 40,
           };
           initialEnemies.push(enemy);
         }

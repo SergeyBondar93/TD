@@ -74,15 +74,34 @@ export function updateEnemyPosition(
   }
 
   const currentTarget = path[enemy.pathIndex + 1];
-  const dx = currentTarget.x - enemy.position.x;
-  const dy = currentTarget.y - enemy.position.y;
-  const dist = Math.sqrt(dx * dx + dy * dy);
+  const currentPos = path[enemy.pathIndex];
+  
+  // Вычисляем направление движения
+  const dx = currentTarget.x - currentPos.x;
+  const dy = currentTarget.y - currentPos.y;
+  const pathLength = Math.sqrt(dx * dx + dy * dy);
+  
+  // Нормализуем направление
+  const dirX = dx / pathLength;
+  const dirY = dy / pathLength;
+  
+  // Перпендикулярное направление (для смещения)
+  const perpX = -dirY;
+  const perpY = dirX;
+  
+  // Целевая позиция с учетом смещения
+  const targetX = currentTarget.x + perpX * enemy.pathOffset;
+  const targetY = currentTarget.y + perpY * enemy.pathOffset;
+  
+  const distX = targetX - enemy.position.x;
+  const distY = targetY - enemy.position.y;
+  const dist = Math.sqrt(distX * distX + distY * distY);
 
   const moveDistance = (enemy.speed * deltaTime) / 1000;
 
   if (dist <= moveDistance) {
     return {
-      position: currentTarget,
+      position: { x: targetX, y: targetY },
       pathIndex: enemy.pathIndex + 1,
       reachedEnd: enemy.pathIndex + 1 >= path.length - 1,
     };
@@ -90,8 +109,8 @@ export function updateEnemyPosition(
     const ratio = moveDistance / dist;
     return {
       position: {
-        x: enemy.position.x + dx * ratio,
-        y: enemy.position.y + dy * ratio,
+        x: enemy.position.x + distX * ratio,
+        y: enemy.position.y + distY * ratio,
       },
       pathIndex: enemy.pathIndex,
       reachedEnd: false,
@@ -336,9 +355,19 @@ export function processWaveSpawn(
     // Определяем размер врага в зависимости от типа
     const enemySize = ENEMY_SIZES[waveConfig.enemyType];
     
+    // Для пехоты добавляем случайное смещение по Y (перпендикулярно пути)
+    let spawnPosition = { ...startPosition };
+    let pathOffset = 0;
+    
+    if (waveConfig.enemyType === 'infantry') {
+      // Смещение от -20 до +20 пикселей для создания эффекта толпы
+      pathOffset = (Math.random() - 0.5) * 40;
+      spawnPosition.y += pathOffset;
+    }
+    
     const newEnemy: Enemy = {
       id: generateId(),
-      position: { ...startPosition },
+      position: spawnPosition,
       health: waveConfig.enemyHealth,
       maxHealth: waveConfig.enemyHealth,
       speed: waveConfig.enemySpeed,
@@ -347,6 +376,7 @@ export function processWaveSpawn(
       reward: waveConfig.enemyReward,
       type: waveConfig.enemyType,
       size: enemySize,
+      pathOffset: pathOffset,
     };
 
     const updatedSpawnState: WaveSpawnState = {

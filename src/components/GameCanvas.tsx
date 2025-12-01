@@ -193,12 +193,14 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy) {
   ctx.lineWidth = 2;
   ctx.strokeRect(x, y, size, size);
 
-  // Уровень врага в центре квадрата
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 14px Arial';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(enemy.level.toString(), enemy.position.x, enemy.position.y);
+  // Уровень врага в центре квадрата (не показываем для уровней до 10)
+  if (enemy.level >= 10) {
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(enemy.level.toString(), enemy.position.x, enemy.position.y);
+  }
 
   // HP полоска над врагом
   const healthBarWidth = size;

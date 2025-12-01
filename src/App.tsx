@@ -82,6 +82,7 @@ function App() {
             reward: 20,
             type: enemyType,
             size: ENEMY_SIZES[enemyType],
+            pathOffset: 0,
           };
           initialEnemies.push(enemy);
         }

@@ -9,21 +9,21 @@ interface GameOverProps {
 
 export const GameOver: React.FC<GameOverProps> = ({ won, currentLevel, onRestart, onMenu }) => {
   return (
-    <div style={styles.overlay}>
-      <div style={styles.modal}>
-        <h1 style={won ? styles.wonTitle : styles.lostTitle}>
+    <div className="game-over-overlay" style={styles.overlay}>
+      <div className="game-over-modal" style={styles.modal}>
+        <h1 className={`game-over-title ${won ? 'won' : 'lost'}`} style={won ? styles.wonTitle : styles.lostTitle}>
           {won ? '🎉 Победа!' : '💀 Поражение!'}
         </h1>
-        <p style={styles.message}>
+        <p className="game-over-message" style={styles.message}>
           {won
             ? `Поздравляем! Вы прошли уровень ${currentLevel}!`
             : `Вы проиграли на уровне ${currentLevel}. Попробуйте ещё раз!`}
         </p>
-        <div style={styles.buttons}>
-          <button onClick={onRestart} style={{ ...styles.button, ...styles.restartButton }}>
+        <div className="game-over-buttons" style={styles.buttons}>
+          <button className="game-over-button game-over-restart-button" onClick={onRestart} style={{ ...styles.button, ...styles.restartButton }}>
             🔄 Попробовать снова
           </button>
-          <button onClick={onMenu} style={{ ...styles.button, ...styles.menuButton }}>
+          <button className="game-over-button game-over-menu-button" onClick={onMenu} style={{ ...styles.button, ...styles.menuButton }}>
             🏠 В меню
           </button>
         </div>

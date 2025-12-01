@@ -284,13 +284,13 @@ function App() {
     enemies.length === 0;
 
   return (
-    <div style={styles.app}>
+    <div className="app-container" style={styles.app}>
       {DEV_CONFIG.SHOW_DEBUG_INFO && (
         <DebugInfo gameState={gameState} onGameSpeedChange={setGameSpeed} />
       )}
       
-      <div style={styles.mainContent}>
-        <div style={styles.gameSection}>
+      <div className="app-main-content" style={styles.mainContent}>
+        <div className="app-game-section" style={styles.gameSection}>
           <GameCanvas gameState={gameState} onCanvasClick={handleCanvasClick} />
           <GameUI
             money={money}

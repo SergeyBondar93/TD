@@ -7,30 +7,31 @@ interface LevelSelectProps {
 
 export const LevelSelect: React.FC<LevelSelectProps> = ({ onSelectLevel }) => {
   return (
-    <div style={styles.container}>
-      <h1 style={styles.title}>🏰 Tower Defense</h1>
-      <p style={styles.subtitle}>Выберите уровень сложности</p>
+    <div className="level-select-container" style={styles.container}>
+      <h1 className="level-select-title" style={styles.title}>🏰 Tower Defense</h1>
+      <p className="level-select-subtitle" style={styles.subtitle}>Выберите уровень сложности</p>
       
-      <div style={styles.levelGrid}>
+      <div className="level-select-grid" style={styles.levelGrid}>
         {LEVELS.map((level) => (
           <button
             key={level.level}
+            className={`level-select-button level-select-level-${level.level}`}
             onClick={() => onSelectLevel(level.level)}
             style={styles.levelButton}
           >
-            <div style={styles.levelNumber}>{level.level}</div>
-            <div style={styles.levelInfo}>
-              <div>💰 {level.startingMoney}</div>
-              <div>❤️ {level.startingLives}</div>
-              <div>🌊 {level.waves.length} волн</div>
+            <div className="level-select-number" style={styles.levelNumber}>{level.level}</div>
+            <div className="level-select-info" style={styles.levelInfo}>
+              <div className="level-select-money">💰 {level.startingMoney}</div>
+              <div className="level-select-lives">❤️ {level.startingLives}</div>
+              <div className="level-select-waves">🌊 {level.waves.length} волн</div>
             </div>
           </button>
         ))}
       </div>
 
-      <div style={styles.instructions}>
-        <h3 style={styles.instructionsTitle}>Как играть:</h3>
-        <ul style={styles.instructionsList}>
+      <div className="level-select-instructions" style={styles.instructions}>
+        <h3 className="level-select-instructions-title" style={styles.instructionsTitle}>Как играть:</h3>
+        <ul className="level-select-instructions-list" style={styles.instructionsList}>
           <li>Выберите башню на панели справа</li>
           <li>Кликните на карте, чтобы поставить башню</li>
           <li>Нажмите "Начать волну" для спавна врагов</li>

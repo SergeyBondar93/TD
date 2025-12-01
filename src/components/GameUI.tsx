@@ -31,35 +31,35 @@ export const GameUI: React.FC<GameUIProps> = ({
   canStartWave,
 }) => {
   return (
-    <div style={styles.container}>
+    <div className="game-ui-container" style={styles.container}>
       {/* Информационная панель */}
-      <div style={styles.infoSection}>
-        <div style={styles.infoItem}>
-          <span style={styles.label}>💰</span>
-          <span style={styles.value}>{money}</span>
+      <div className="game-ui-info-section" style={styles.infoSection}>
+        <div className="game-ui-info-item game-ui-money" style={styles.infoItem}>
+          <span className="game-ui-label" style={styles.label}>💰</span>
+          <span className="game-ui-value" style={styles.value}>{money}</span>
         </div>
-        <div style={styles.separator}></div>
-        <div style={styles.infoItem}>
-          <span style={styles.label}>❤️</span>
-          <span style={styles.value}>{lives}</span>
+        <div className="game-ui-separator" style={styles.separator}></div>
+        <div className="game-ui-info-item game-ui-lives" style={styles.infoItem}>
+          <span className="game-ui-label" style={styles.label}>❤️</span>
+          <span className="game-ui-value" style={styles.value}>{lives}</span>
         </div>
-        <div style={styles.separator}></div>
-        <div style={styles.infoItem}>
-          <span style={styles.label}>🌊</span>
-          <span style={styles.value}>
+        <div className="game-ui-separator" style={styles.separator}></div>
+        <div className="game-ui-info-item game-ui-wave" style={styles.infoItem}>
+          <span className="game-ui-label" style={styles.label}>🌊</span>
+          <span className="game-ui-value" style={styles.value}>
             {currentWave}/{totalWaves}
           </span>
         </div>
-        <div style={styles.separator}></div>
-        <div style={styles.infoItem}>
-          <span style={styles.label}>📊</span>
-          <span style={styles.value}>Ур. {currentLevel}</span>
+        <div className="game-ui-separator" style={styles.separator}></div>
+        <div className="game-ui-info-item game-ui-level" style={styles.infoItem}>
+          <span className="game-ui-label" style={styles.label}>📊</span>
+          <span className="game-ui-value" style={styles.value}>Ур. {currentLevel}</span>
         </div>
       </div>
 
       {/* Панель башен */}
-      <div style={styles.towerSection}>
-        <div style={styles.towerButtons}>
+      <div className="game-ui-tower-section" style={styles.towerSection}>
+        <div className="game-ui-tower-buttons" style={styles.towerButtons}>
           {([1, 2, 3] as const).map((level) => {
             const stats = TOWER_STATS[level];
             const isSelected = selectedTowerLevel === level;
@@ -68,6 +68,7 @@ export const GameUI: React.FC<GameUIProps> = ({
             return (
               <button
                 key={level}
+                className={`game-ui-tower-button game-ui-tower-level-${level} ${isSelected ? 'selected' : ''} ${!canAfford ? 'disabled' : ''}`}
                 onClick={() => onSelectTowerLevel(isSelected ? null : level)}
                 disabled={!canAfford}
                 style={{
@@ -76,12 +77,12 @@ export const GameUI: React.FC<GameUIProps> = ({
                   ...(canAfford ? {} : styles.towerButtonDisabled),
                 }}
               >
-                <div style={styles.towerLevel}>Т{level}</div>
-                <div style={styles.towerStats}>
-                  <div>💰{stats.cost}</div>
-                  <div>⚔️{stats.damage}</div>
-                  <div>🎯{stats.range}</div>
-                  <div>🔥{stats.fireRate}</div>
+                <div className="game-ui-tower-level-text" style={styles.towerLevel}>Т{level}</div>
+                <div className="game-ui-tower-stats" style={styles.towerStats}>
+                  <div className="game-ui-tower-stat game-ui-tower-cost">💰{stats.cost}</div>
+                  <div className="game-ui-tower-stat game-ui-tower-damage">⚔️{stats.damage}</div>
+                  <div className="game-ui-tower-stat game-ui-tower-range">🎯{stats.range}</div>
+                  <div className="game-ui-tower-stat game-ui-tower-firerate">🔥{stats.fireRate}</div>
                 </div>
               </button>
             );
@@ -90,10 +91,11 @@ export const GameUI: React.FC<GameUIProps> = ({
       </div>
 
       {/* Контролы игры */}
-      <div style={styles.controlSection}>
+      <div className="game-ui-control-section" style={styles.controlSection}>
         {gameStatus === 'playing' && (
           <>
             <button
+              className={`game-ui-control-button game-ui-start-wave-button ${!canStartWave ? 'disabled' : ''}`}
               onClick={onStartWave}
               disabled={!canStartWave}
               style={{
@@ -103,13 +105,21 @@ export const GameUI: React.FC<GameUIProps> = ({
             >
               Начать волну
             </button>
-            <button onClick={onPause} style={{ ...styles.controlButton, ...styles.pauseButton }}>
+            <button 
+              className="game-ui-control-button game-ui-pause-button"
+              onClick={onPause} 
+              style={{ ...styles.controlButton, ...styles.pauseButton }}
+            >
               ⏸ Пауза
             </button>
           </>
         )}
         {gameStatus === 'paused' && (
-          <button onClick={onResume} style={{ ...styles.controlButton, ...styles.startButton }}>
+          <button 
+            className="game-ui-control-button game-ui-resume-button"
+            onClick={onResume} 
+            style={{ ...styles.controlButton, ...styles.startButton }}
+          >
             ▶️ Продолжить
           </button>
         )}
@@ -117,13 +127,13 @@ export const GameUI: React.FC<GameUIProps> = ({
 
       {/* Подсказки */}
       {selectedTowerLevel && (
-        <div style={styles.hint}>Кликните на карте, чтобы поставить башню</div>
+        <div className="game-ui-hint" style={styles.hint}>Кликните на карте, чтобы поставить башню</div>
       )}
     </div>
   );
 };
 
-const styles: Record<string, React.CSSProperties> = {
+const styles = {
   container: {
     display: 'flex',
     flexDirection: 'row',
@@ -134,7 +144,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '6px',
     width: '100%',
     maxWidth: '100%',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   infoSection: {
     display: 'flex',
@@ -253,4 +263,4 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '14px',
     color: '#4ecdc4',
   },
-};
+} as Record<string, React.CSSProperties>;

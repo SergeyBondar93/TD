@@ -89,6 +89,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick
   return (
     <canvas
       ref={canvasRef}
+      className="game-canvas"
       width={CANVAS_WIDTH}
       height={CANVAS_HEIGHT}
       onClick={handleClick}

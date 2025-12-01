@@ -170,12 +170,14 @@ export function canPlaceTower(
   path: Position[],
   towerSize: number = 35
 ): boolean {
+  // Проверяем, что башни не накладываются друг на друга (можно ставить впритык)
   for (const tower of towers) {
-    if (distance(position, tower.position) < towerSize * 1.5) {
+    if (distance(position, tower.position) < towerSize) {
       return false;
     }
   }
 
+  // Проверяем, что башня не на дороге
   for (let i = 0; i < path.length - 1; i++) {
     const p1 = path[i];
     const p2 = path[i + 1];

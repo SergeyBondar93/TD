@@ -20,12 +20,13 @@ import './App.css';
 
 function App() {
   // Атомарные состояния вместо монолитного gameState
-  const [currentLevel, setCurrentLevel] = useState<number | null>(null);
+  const [currentLevel, setCurrentLevel] = useState<number | null>(DEV_CONFIG.AUTO_START_LEVEL ? 1 : null);
   const [money, setMoney] = useState(0);
   const [lives, setLives] = useState(0);
   const [currentWave, setCurrentWave] = useState(0);
   const [gameStatus, setGameStatus] = useState<'menu' | 'playing' | 'paused' | 'won' | 'lost'>('menu');
   const [selectedTowerLevel, setSelectedTowerLevel] = useState<1 | 2 | 3 | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   // Игровые сущности
   const [enemies, setEnemies] = useState<Enemy[]>([]);
@@ -76,6 +77,7 @@ function App() {
     setEnemies(initialEnemies);
     waveSpawnRef.current = null;
     lastTimeRef.current = 0;
+    setIsInitialized(true);
 
     // Автоматически стартуем первую волну если нет тестовых врагов
     if (!DEV_CONFIG.TEST_ENEMIES) {
@@ -145,6 +147,13 @@ function App() {
     },
     [selectedTowerLevel, money, towers]
   );
+
+  // Автоматическая инициализация первого уровня в дев режиме
+  useEffect(() => {
+    if (DEV_CONFIG.AUTO_START_LEVEL && currentLevel !== null && !isInitialized) {
+      initializeGame(currentLevel);
+    }
+  }, [currentLevel, isInitialized, initializeGame]);
 
   // Основной игровой цикл
   useEffect(() => {

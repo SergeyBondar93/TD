@@ -19,4 +19,7 @@ export const DEV_CONFIG = {
   
   // Показывать координаты точек пути
   SHOW_PATH_COORDINATES: true,
+  
+  // Автоматически запускать первый уровень при загрузке (для разработки)
+  AUTO_START_LEVEL: true,
 };

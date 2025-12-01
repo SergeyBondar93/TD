@@ -4,6 +4,8 @@ export const WeaponType = {
   PROJECTILE: 'projectile',
   LASER: 'laser',
   ELECTRIC: 'electric',
+  FIRE: 'fire',
+  ICE: 'ice',
 } as const;
 
 export type WeaponType = typeof WeaponType[keyof typeof WeaponType];
@@ -42,12 +44,13 @@ export interface Enemy {
   size: number; // Размер врага
   pathOffset: number; // Смещение относительно центра пути (для пехоты)
   turnPoints?: Position[]; // Точки где был совершен поворот (для отладки)
+  slowEffect?: number; // Замедление от ледяного оружия (0-1, где 0.2 = 20% замедление)
 }
 
 export interface Tower {
   id: string;
   position: Position;
-  level: 1 | 2 | 3; // 3 уровня башенок
+  level: 1 | 2 | 3 | 4 | 5; // 5 уровней башенок
   damage: number;
   range: number;
   fireRate: number; // Выстрелов в секунду
@@ -57,6 +60,9 @@ export interface Tower {
   weaponType: WeaponType; // Тип оружия
   currentTarget?: string; // ID текущей цели (для лазера)
   chainCount?: number; // Количество перескоков для электрического оружия
+  areaRadius?: number; // Радиус области поражения для огненного оружия
+  slowEffect?: number; // Эффект замедления для ледяного оружия
+  slowDuration?: number; // Длительность замедления в мс
 }
 
 export interface Projectile {
@@ -84,6 +90,25 @@ export interface ElectricChain {
   chainCount: number; // Количество перескоков
 }
 
+export interface FireProjectile {
+  id: string;
+  position: Position;
+  targetEnemyId: string;
+  damage: number;
+  speed: number;
+  areaRadius: number; // Радиус области поражения
+}
+
+export interface IceProjectile {
+  id: string;
+  position: Position;
+  targetEnemyId: string;
+  damage: number;
+  speed: number;
+  slowEffect: number; // Эффект замедления (0.2 = 20%)
+  slowDuration: number; // Длительность замедления в мс
+}
+
 export interface GameState {
   money: number;
   lives: number;
@@ -93,9 +118,11 @@ export interface GameState {
   projectiles: Projectile[];
   laserBeams: LaserBeam[];
   electricChains: ElectricChain[];
+  fireProjectiles: FireProjectile[];
+  iceProjectiles: IceProjectile[];
   path: Position[];
   gameStatus: 'menu' | 'playing' | 'paused' | 'won' | 'lost';
-  selectedTowerLevel: 1 | 2 | 3 | null;
+  selectedTowerLevel: 1 | 2 | 3 | 4 | 5 | null;
   currentLevel: number; // 1-10 уровней сложности
   gameSpeed: number; // Скорость игры от 0.05 до 3.0
 }
@@ -118,7 +145,7 @@ export interface WaveConfig {
 }
 
 export interface TowerStats {
-  level: 1 | 2 | 3;
+  level: 1 | 2 | 3 | 4 | 5;
   damage: number;
   range: number;
   fireRate: number;
@@ -126,10 +153,13 @@ export interface TowerStats {
   size: number;
   weaponType: WeaponType;
   chainCount?: number; // Количество перескоков для электрического оружия
+  areaRadius?: number; // Радиус области поражения для огненного оружия
+  slowEffect?: number; // Эффект замедления для ледяного оружия
+  slowDuration?: number; // Длительность замедления в мс
   upgradeCost?: number;
 }
 
-export const TOWER_STATS: Record<1 | 2 | 3, TowerStats> = {
+export const TOWER_STATS: Record<1 | 2 | 3 | 4 | 5, TowerStats> = {
   1: {
     level: 1,
     damage: 10,
@@ -159,6 +189,29 @@ export const TOWER_STATS: Record<1 | 2 | 3, TowerStats> = {
     cost: 350,
     size: 40,
     weaponType: WeaponType.LASER,
+    upgradeCost: 300,
+  },
+  4: {
+    level: 4,
+    damage: 35,
+    range: 110,
+    fireRate: 0.8,
+    cost: 200,
+    size: 35,
+    weaponType: WeaponType.FIRE,
+    areaRadius: 50, // Радиус взрыва
+    upgradeCost: 250,
+  },
+  5: {
+    level: 5,
+    damage: 45,
+    range: 140,
+    fireRate: 1.2,
+    cost: 400,
+    size: 40,
+    weaponType: WeaponType.ICE,
+    slowEffect: 0.2, // 20% замедление
+    slowDuration: 2000, // 2 секунды
   },
 };
 

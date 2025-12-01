@@ -6,7 +6,7 @@ import { GameOver } from './components/GameOver';
 import { DebugInfo } from './components/DebugInfo';
 import { useGameStore } from './stores/gameStore';
 import { useUIStore } from './stores/uiStore';
-import type { GameState, Enemy, Tower, Projectile, LaserBeam, ElectricChain } from './types/game';
+import type { GameState, Enemy, Tower, Projectile, LaserBeam, ElectricChain, FireProjectile, IceProjectile } from './types/game';
 import { TOWER_STATS, EnemyType, ENEMY_SIZES, WeaponType } from './types/game';
 import { LEVELS, DEFAULT_PATH } from './config/levels';
 import { DEV_CONFIG } from './config/dev';
@@ -17,6 +17,8 @@ import {
   processProjectiles,
   processLaserBeams,
   processElectricChains,
+  processFireProjectiles,
+  processIceProjectiles,
   processWaveSpawn,
   type WaveSpawnState,
 } from './utils/pureGameLogic';
@@ -30,6 +32,8 @@ function App() {
     projectiles,
     laserBeams,
     electricChains,
+    fireProjectiles,
+    iceProjectiles,
     money,
     lives,
     currentWave,
@@ -41,11 +45,15 @@ function App() {
     setProjectiles,
     setLaserBeams,
     setElectricChains,
+    setFireProjectiles,
+    setIceProjectiles,
     addEnemy,
     addTower,
     addProjectile,
     addLaserBeam,
     addElectricChain,
+    addFireProjectile,
+    addIceProjectile,
     setMoney,
     setLives,
     setCurrentWave,
@@ -162,6 +170,9 @@ function App() {
         size: towerStats.size,
         weaponType: towerStats.weaponType,
         chainCount: towerStats.chainCount,
+        areaRadius: (towerStats as any).areaRadius,
+        slowEffect: (towerStats as any).slowEffect,
+        slowDuration: (towerStats as any).slowDuration,
       };
 
       addTower(newTower);
@@ -240,6 +251,8 @@ function App() {
       const newProjectiles: Projectile[] = [];
       const newLaserBeams: LaserBeam[] = [];
       const newElectricChains: ElectricChain[] = [];
+      const newFireProjectiles: FireProjectile[] = [];
+      const newIceProjectiles: IceProjectile[] = [];
       const updatedTowers: Tower[] = [];
 
       for (const tower of currentTowers) {
@@ -254,12 +267,20 @@ function App() {
         if (fireResult.electricChain) {
           newElectricChains.push(fireResult.electricChain);
         }
+        if (fireResult.fireProjectile) {
+          newFireProjectiles.push(fireResult.fireProjectile);
+        }
+        if (fireResult.iceProjectile) {
+          newIceProjectiles.push(fireResult.iceProjectile);
+        }
       }
 
       state.setTowers(updatedTowers);
       newProjectiles.forEach((p) => state.addProjectile(p));
       newLaserBeams.forEach((l) => state.addLaserBeam(l));
       newElectricChains.forEach((e) => state.addElectricChain(e));
+      newFireProjectiles.forEach((f) => state.addFireProjectile(f));
+      newIceProjectiles.forEach((i) => state.addIceProjectile(i));
 
       // 4. Обновление снарядов
       const currentProjectiles = useGameStore.getState().projectiles;
@@ -294,7 +315,29 @@ function App() {
       state.setElectricChains(processedElectric.activeElectricChains);
       state.setEnemies(processedElectric.updatedEnemies);
 
-      // 7. Проверка победы: все волны пройдены и нет врагов
+      // 7. Обработка огненных снарядов
+      const currentFireProjectiles = useGameStore.getState().fireProjectiles;
+      const processedFire = processFireProjectiles(
+        currentFireProjectiles,
+        useGameStore.getState().enemies,
+        adjustedDeltaTime
+      );
+
+      state.setFireProjectiles(processedFire.activeFireProjectiles);
+      state.setEnemies(processedFire.updatedEnemies);
+
+      // 8. Обработка ледяных снарядов
+      const currentIceProjectiles = useGameStore.getState().iceProjectiles;
+      const processedIce = processIceProjectiles(
+        currentIceProjectiles,
+        useGameStore.getState().enemies,
+        adjustedDeltaTime
+      );
+
+      state.setIceProjectiles(processedIce.activeIceProjectiles);
+      state.setEnemies(processedIce.updatedEnemies);
+
+      // 9. Проверка победы: все волны пройдены и нет врагов
       const currentState = useGameStore.getState();
       const allWavesCompleted = !waveSpawnRef.current && currentState.currentWave >= levelConfig.waves.length;
       const noEnemiesLeft = currentState.enemies.length === 0;
@@ -329,6 +372,8 @@ function App() {
     projectiles,
     laserBeams,
     electricChains,
+    fireProjectiles,
+    iceProjectiles,
     path: DEFAULT_PATH,
     gameStatus,
     selectedTowerLevel,

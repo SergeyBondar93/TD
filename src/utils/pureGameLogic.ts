@@ -1,4 +1,4 @@
-import type { Enemy, Tower, Projectile, Position, WaveConfig, LaserBeam, ElectricChain } from '../types/game';
+import type { Enemy, Tower, Projectile, Position, WaveConfig, LaserBeam, ElectricChain, FireProjectile, IceProjectile } from '../types/game';
 import { ENEMY_SIZES, WeaponType as WeaponTypeEnum } from '../types/game';
 
 /**
@@ -86,6 +86,9 @@ export function updateEnemyPosition(
   const dirX = dx / pathLength;
   const dirY = dy / pathLength;
   
+  // Применяем эффект замедления от ледяного оружия
+  const effectiveSpeed = enemy.speed * (1 - (enemy.slowEffect || 0));
+  
   // Перпендикулярное направление (для смещения)
   const perpX = -dirY;
   const perpY = dirX;
@@ -111,7 +114,7 @@ export function updateEnemyPosition(
   const distY = targetY - enemy.position.y;
   const dist = Math.sqrt(distX * distX + distY * distY);
 
-  const moveDistance = (enemy.speed * deltaTime) / 1000;
+  const moveDistance = (effectiveSpeed * deltaTime) / 1000;
 
   if (dist <= moveDistance) {
     // Враг достиг точки пути - это поворот
@@ -269,6 +272,8 @@ export interface TowerFireResult {
   projectile: Projectile | null;
   laserBeam: LaserBeam | null;
   electricChain: ElectricChain | null;
+  fireProjectile: FireProjectile | null;
+  iceProjectile: IceProjectile | null;
 }
 
 export function processTowerFire(
@@ -280,13 +285,13 @@ export function processTowerFire(
   const fireInterval = 1000 / tower.fireRate;
 
   if (timeSinceLastFire < fireInterval) {
-    return { updatedTower: tower, projectile: null, laserBeam: null, electricChain: null };
+    return { updatedTower: tower, projectile: null, laserBeam: null, electricChain: null, fireProjectile: null, iceProjectile: null };
   }
 
   const target = findClosestEnemyInRange(tower, enemies);
 
   if (!target) {
-    return { updatedTower: { ...tower, currentTarget: undefined }, projectile: null, laserBeam: null, electricChain: null };
+    return { updatedTower: { ...tower, currentTarget: undefined }, projectile: null, laserBeam: null, electricChain: null, fireProjectile: null, iceProjectile: null };
   }
 
   const updatedTower = { ...tower, lastFireTime: currentTime, currentTarget: target.id };
@@ -310,6 +315,8 @@ export function processTowerFire(
       projectile: null,
       laserBeam: null,
       electricChain,
+      fireProjectile: null,
+      iceProjectile: null,
     };
   }
 
@@ -328,6 +335,51 @@ export function processTowerFire(
       projectile: null,
       laserBeam,
       electricChain: null,
+      fireProjectile: null,
+      iceProjectile: null,
+    };
+  }
+
+  // Огненное оружие - снаряд с областью поражения
+  if (tower.weaponType === WeaponTypeEnum.FIRE) {
+    const fireProjectile: FireProjectile = {
+      id: generateId(),
+      position: { ...tower.position },
+      targetEnemyId: target.id,
+      damage: tower.damage,
+      speed: 250,
+      areaRadius: tower.areaRadius || 40,
+    };
+
+    return {
+      updatedTower,
+      projectile: null,
+      laserBeam: null,
+      electricChain: null,
+      fireProjectile,
+      iceProjectile: null,
+    };
+  }
+
+  // Ледяное оружие - снаряд с замедлением
+  if (tower.weaponType === WeaponTypeEnum.ICE) {
+    const iceProjectile: IceProjectile = {
+      id: generateId(),
+      position: { ...tower.position },
+      targetEnemyId: target.id,
+      damage: tower.damage,
+      speed: 280,
+      slowEffect: tower.slowEffect || 0.2,
+      slowDuration: tower.slowDuration || 2000,
+    };
+
+    return {
+      updatedTower,
+      projectile: null,
+      laserBeam: null,
+      electricChain: null,
+      fireProjectile: null,
+      iceProjectile,
     };
   }
 
@@ -345,6 +397,8 @@ export function processTowerFire(
     projectile,
     laserBeam: null,
     electricChain: null,
+    fireProjectile: null,
+    iceProjectile: null,
   };
 }
 
@@ -417,6 +471,102 @@ export function processProjectiles(
 
   return {
     activeProjectiles,
+    updatedEnemies: Array.from(enemiesMap.values()),
+  };
+}
+
+// ============================================
+// Логика огненных снарядов
+// ============================================
+
+export interface ProcessedFireProjectiles {
+  activeFireProjectiles: FireProjectile[];
+  updatedEnemies: Enemy[];
+}
+
+export function processFireProjectiles(
+  fireProjectiles: FireProjectile[],
+  enemies: Enemy[],
+  deltaTime: number
+): ProcessedFireProjectiles {
+  const activeFireProjectiles: FireProjectile[] = [];
+  const enemiesMap = new Map(enemies.map((e) => [e.id, { ...e }]));
+
+  for (const projectile of fireProjectiles) {
+    const target = enemiesMap.get(projectile.targetEnemyId);
+
+    if (!target) continue;
+
+    const newPosition = updateProjectilePosition(
+      { ...projectile, speed: projectile.speed } as any,
+      target.position,
+      deltaTime
+    );
+
+    if (checkProjectileHit({ position: newPosition } as any, target)) {
+      // Огненный снаряд наносит урон по области
+      for (const enemy of enemiesMap.values()) {
+        const dist = distance(target.position, enemy.position);
+        if (dist <= projectile.areaRadius) {
+          enemy.health -= projectile.damage;
+        }
+      }
+    } else {
+      activeFireProjectiles.push({
+        ...projectile,
+        position: newPosition,
+      });
+    }
+  }
+
+  return {
+    activeFireProjectiles,
+    updatedEnemies: Array.from(enemiesMap.values()),
+  };
+}
+
+// ============================================
+// Логика ледяных снарядов
+// ============================================
+
+export interface ProcessedIceProjectiles {
+  activeIceProjectiles: IceProjectile[];
+  updatedEnemies: Enemy[];
+}
+
+export function processIceProjectiles(
+  iceProjectiles: IceProjectile[],
+  enemies: Enemy[],
+  deltaTime: number
+): ProcessedIceProjectiles {
+  const activeIceProjectiles: IceProjectile[] = [];
+  const enemiesMap = new Map(enemies.map((e) => [e.id, { ...e }]));
+
+  for (const projectile of iceProjectiles) {
+    const target = enemiesMap.get(projectile.targetEnemyId);
+
+    if (!target) continue;
+
+    const newPosition = updateProjectilePosition(
+      { ...projectile, speed: projectile.speed } as any,
+      target.position,
+      deltaTime
+    );
+
+    if (checkProjectileHit({ position: newPosition } as any, target)) {
+      // Ледяной снаряд наносит урон и замедляет
+      target.health -= projectile.damage;
+      target.slowEffect = projectile.slowEffect;
+    } else {
+      activeIceProjectiles.push({
+        ...projectile,
+        position: newPosition,
+      });
+    }
+  }
+
+  return {
+    activeIceProjectiles,
     updatedEnemies: Array.from(enemiesMap.values()),
   };
 }

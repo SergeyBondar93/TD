@@ -8,8 +8,8 @@ interface GameUIProps {
   totalWaves: number;
   currentLevel: number;
   gameStatus: 'menu' | 'playing' | 'paused' | 'won' | 'lost';
-  selectedTowerLevel: 1 | 2 | 3 | null;
-  onSelectTowerLevel: (level: 1 | 2 | 3 | null) => void;
+  selectedTowerLevel: 1 | 2 | 3 | 4 | 5 | null;
+  onSelectTowerLevel: (level: 1 | 2 | 3 | 4 | 5 | null) => void;
   onStartWave: () => void;
   onPause: () => void;
   onResume: () => void;
@@ -60,7 +60,7 @@ export const GameUI: React.FC<GameUIProps> = ({
       {/* Панель башен */}
       <div className="game-ui-tower-section" style={styles.towerSection}>
         <div className="game-ui-tower-buttons" style={styles.towerButtons}>
-          {([1, 2, 3] as const).map((level) => {
+          {([1, 2, 3, 4, 5] as const).map((level) => {
             const stats = TOWER_STATS[level];
             const isSelected = selectedTowerLevel === level;
             const canAfford = money >= stats.cost;
@@ -78,7 +78,13 @@ export const GameUI: React.FC<GameUIProps> = ({
                 }}
               >
                 <div className="game-ui-tower-level-text" style={styles.towerLevel}>
-                  Т{level} {stats.weaponType === WeaponType.LASER ? '⚡' : stats.weaponType === WeaponType.ELECTRIC ? '🌩️' : '🔫'}
+                  Т{level} {
+                    stats.weaponType === WeaponType.LASER ? '⚡' :
+                    stats.weaponType === WeaponType.ELECTRIC ? '🌩️' :
+                    stats.weaponType === WeaponType.FIRE ? '🔥' :
+                    stats.weaponType === WeaponType.ICE ? '❄️' :
+                    '🔫'
+                  }
                 </div>
                 <div className="game-ui-tower-stats" style={styles.towerStats}>
                   <div className="game-ui-tower-stat game-ui-tower-cost">💰{stats.cost}</div>

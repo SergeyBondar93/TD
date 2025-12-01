@@ -17,7 +17,7 @@ import { canPlaceTower } from '../utils/pureGameLogic';
 interface GameCanvasProps {
   gameState: GameState;
   onCanvasClick: (x: number, y: number) => void;
-  selectedTowerLevel: 1 | 2 | 3 | null;
+  selectedTowerLevel: 1 | 2 | 3 | 4 | 5 | null;
   path: { x: number; y: number }[];
 }
 
@@ -56,6 +56,12 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick
 
     // Рисуем снаряды
     gameState.projectiles.forEach((projectile) => drawProjectile(ctx, projectile));
+
+    // Рисуем огненные снаряды
+    gameState.fireProjectiles?.forEach((fireProj) => drawFireProjectile(ctx, fireProj));
+
+    // Рисуем ледяные снаряды
+    gameState.iceProjectiles?.forEach((iceProj) => drawIceProjectile(ctx, iceProj));
 
     // Рисуем лазерные лучи
     gameState.laserBeams?.forEach((laser) => {
@@ -272,10 +278,12 @@ function drawTower(ctx: CanvasRenderingContext2D, tower: Tower) {
   const y = tower.position.y - size / 2;
 
   // Цвет башни в зависимости от уровня и типа оружия
-  const colors = {
+  const colors: Record<number, string> = {
     1: '#4ecdc4',
     2: '#44a5e8',
     3: '#9b59b6',
+    4: '#e67e22',
+    5: '#3498db',
   };
   
   // Особый вид для лазерных башен
@@ -316,6 +324,62 @@ function drawTower(ctx: CanvasRenderingContext2D, tower: Tower) {
     // Добавляем свечение
     ctx.shadowBlur = 10;
     ctx.shadowColor = '#00ffff';
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  } else if (tower.weaponType === WeaponType.FIRE) {
+    // Рисуем основание огненной башни
+    ctx.fillStyle = colors[tower.level];
+    ctx.fillRect(x, y, size, size);
+    
+    // Добавляем визуальный элемент огня
+    const gradient = ctx.createRadialGradient(
+      tower.position.x, tower.position.y, 0,
+      tower.position.x, tower.position.y, size * 0.4
+    );
+    gradient.addColorStop(0, '#ffff00');
+    gradient.addColorStop(0.5, '#ff6600');
+    gradient.addColorStop(1, '#ff0000');
+    
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(tower.position.x, tower.position.y, size * 0.35, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Эффект пламени
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = '#ff6600';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  } else if (tower.weaponType === WeaponType.ICE) {
+    // Рисуем основание ледяной башни
+    ctx.fillStyle = colors[tower.level];
+    ctx.fillRect(x, y, size, size);
+    
+    // Добавляем визуальный элемент льда
+    ctx.fillStyle = '#a0d8ff';
+    const iceSize = size * 0.5;
+    
+    // Рисуем снежинку
+    ctx.strokeStyle = '#d0f0ff';
+    ctx.lineWidth = 2;
+    const centerX = tower.position.x;
+    const centerY = tower.position.y;
+    const radius = iceSize / 2;
+    
+    for (let i = 0; i < 6; i++) {
+      const angle = (i * Math.PI) / 3;
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(
+        centerX + Math.cos(angle) * radius,
+        centerY + Math.sin(angle) * radius
+      );
+      ctx.stroke();
+    }
+    
+    // Эффект свечения
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = '#a0d8ff';
     ctx.stroke();
     ctx.shadowBlur = 0;
   } else {
@@ -363,6 +427,103 @@ function drawProjectile(ctx: CanvasRenderingContext2D, projectile: Projectile) {
   ctx.strokeStyle = '#ff9800';
   ctx.lineWidth = 2;
   ctx.stroke();
+}
+
+// Рисование огненного снаряда
+function drawFireProjectile(ctx: CanvasRenderingContext2D, projectile: any) {
+  // Основной огненный шар
+  const gradient = ctx.createRadialGradient(
+    projectile.position.x, projectile.position.y, 0,
+    projectile.position.x, projectile.position.y, PROJECTILE_SIZE * 1.5
+  );
+  gradient.addColorStop(0, '#ffff00');
+  gradient.addColorStop(0.4, '#ff6600');
+  gradient.addColorStop(1, '#ff0000');
+  
+  ctx.fillStyle = gradient;
+  ctx.globalAlpha = 0.9;
+  ctx.beginPath();
+  ctx.arc(
+    projectile.position.x,
+    projectile.position.y,
+    PROJECTILE_SIZE * 1.2,
+    0,
+    Math.PI * 2
+  );
+  ctx.fill();
+
+  // Внутреннее ядро
+  ctx.fillStyle = '#ffffff';
+  ctx.globalAlpha = 0.7;
+  ctx.beginPath();
+  ctx.arc(
+    projectile.position.x,
+    projectile.position.y,
+    PROJECTILE_SIZE * 0.5,
+    0,
+    Math.PI * 2
+  );
+  ctx.fill();
+
+  // Эффект пламени
+  ctx.shadowBlur = 15;
+  ctx.shadowColor = '#ff6600';
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.globalAlpha = 1;
+}
+
+// Рисование ледяного снаряда
+function drawIceProjectile(ctx: CanvasRenderingContext2D, projectile: any) {
+  // Основной ледяной шар
+  const gradient = ctx.createRadialGradient(
+    projectile.position.x, projectile.position.y, 0,
+    projectile.position.x, projectile.position.y, PROJECTILE_SIZE * 1.3
+  );
+  gradient.addColorStop(0, '#ffffff');
+  gradient.addColorStop(0.5, '#a0d8ff');
+  gradient.addColorStop(1, '#6eb5ff');
+  
+  ctx.fillStyle = gradient;
+  ctx.globalAlpha = 0.8;
+  ctx.beginPath();
+  ctx.arc(
+    projectile.position.x,
+    projectile.position.y,
+    PROJECTILE_SIZE * 1.1,
+    0,
+    Math.PI * 2
+  );
+  ctx.fill();
+
+  // Ледяные кристаллы
+  ctx.strokeStyle = '#d0f0ff';
+  ctx.lineWidth = 1.5;
+  ctx.globalAlpha = 1;
+  
+  for (let i = 0; i < 4; i++) {
+    const angle = (i * Math.PI) / 2;
+    const innerRadius = PROJECTILE_SIZE * 0.3;
+    const outerRadius = PROJECTILE_SIZE * 0.8;
+    
+    ctx.beginPath();
+    ctx.moveTo(
+      projectile.position.x + Math.cos(angle) * innerRadius,
+      projectile.position.y + Math.sin(angle) * innerRadius
+    );
+    ctx.lineTo(
+      projectile.position.x + Math.cos(angle) * outerRadius,
+      projectile.position.y + Math.sin(angle) * outerRadius
+    );
+    ctx.stroke();
+  }
+
+  // Эффект свечения
+  ctx.shadowBlur = 10;
+  ctx.shadowColor = '#a0d8ff';
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  ctx.globalAlpha = 1;
 }
 
 // Рисование лазерного луча
@@ -484,7 +645,7 @@ function drawElectricChain(
 function drawTowerPreview(
   ctx: CanvasRenderingContext2D,
   position: { x: number; y: number },
-  towerLevel: 1 | 2 | 3,
+  towerLevel: 1 | 2 | 3 | 4 | 5,
   existingTowers: Tower[],
   path: { x: number; y: number }[]
 ) {
@@ -496,10 +657,12 @@ function drawTowerPreview(
   const y = position.y - size / 2;
 
   // Цвета башни в зависимости от уровня
-  const colors = {
+  const colors: Record<number, string> = {
     1: '#4ecdc4',
     2: '#44a5e8',
     3: '#9b59b6',
+    4: '#e67e22',
+    5: '#3498db',
   };
 
   // Рисуем радиус действия

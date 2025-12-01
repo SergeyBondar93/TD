@@ -114,8 +114,19 @@ export interface IceProjectile {
   targetEnemyId: string;
   damage: number;
   speed: number;
-  slowEffect: number; // Эффект замедления (0.2 = 20%)
+  slowEffect: number; // Процент замедления (0.0 - 1.0)
   slowDuration: number; // Длительность замедления в мс
+}
+
+export interface IceStream {
+  id: string;
+  towerId: string;
+  targetEnemyIds: string[]; // Враги в конусе льда
+  damage: number; // Урон в секунду
+  slowEffect: number; // Эффект замедления
+  slowDuration: number; // Длительность замедления
+  startTime: number;
+  range: number;
 }
 
 export interface GameState {
@@ -130,6 +141,7 @@ export interface GameState {
   fireProjectiles: FireProjectile[];
   flameStreams: FlameStream[];
   iceProjectiles: IceProjectile[];
+  iceStreams: IceStream[];
   path: Position[];
   gameStatus: 'menu' | 'playing' | 'paused' | 'won' | 'lost';
   selectedTowerLevel: 1 | 2 | 3 | 4 | 5 | null;
@@ -209,19 +221,20 @@ export const TOWER_STATS: Record<1 | 2 | 3 | 4 | 5, TowerStats> = {
     cost: 200,
     size: 35,
     weaponType: WeaponType.FIRE,
-    areaRadius: 60, // Угол конуса огня
+    areaRadius: 42, // Угол конуса огня (уменьшен на 30%)
     upgradeCost: 250,
   },
   5: {
     level: 5,
-    damage: 45,
-    range: 140,
-    fireRate: 1.2,
+    damage: 3, // Очень низкий урон - основная цель замедлять
+    range: 130,
+    fireRate: 8, // Высокая скорострельность для постоянного замедления
     cost: 400,
     size: 40,
     weaponType: WeaponType.ICE,
-    slowEffect: 0.2, // 20% замедление
-    slowDuration: 2000, // 2 секунды
+    slowEffect: 0.35, // 35% замедление (увеличено)
+    slowDuration: 3000, // 3 секунды
+    areaRadius: 50, // Угол конуса льда
   },
 };
 

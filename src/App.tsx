@@ -6,7 +6,7 @@ import { GameOver } from './components/GameOver';
 import { DebugInfo } from './components/DebugInfo';
 import { useGameStore } from './stores/gameStore';
 import { useUIStore } from './stores/uiStore';
-import type { GameState, Enemy, Tower, Projectile, LaserBeam, ElectricChain, FireProjectile, FlameStream, IceProjectile } from './types/game';
+import type { GameState, Enemy, Tower, Projectile, LaserBeam, ElectricChain, FireProjectile, FlameStream, IceProjectile, IceStream } from './types/game';
 import { TOWER_STATS, EnemyType, ENEMY_SIZES, WeaponType } from './types/game';
 import { LEVELS, DEFAULT_PATH } from './config/levels';
 import { DEV_CONFIG } from './config/dev';
@@ -20,6 +20,7 @@ import {
   processFireProjectiles,
   processFlameStreams,
   processIceProjectiles,
+  processIceStreams,
   processWaveSpawn,
   type WaveSpawnState,
 } from './utils/pureGameLogic';
@@ -36,6 +37,7 @@ function App() {
     fireProjectiles,
     flameStreams,
     iceProjectiles,
+    iceStreams,
     money,
     lives,
     currentWave,
@@ -50,6 +52,7 @@ function App() {
     setFireProjectiles,
     setFlameStreams,
     setIceProjectiles,
+    setIceStreams,
     addEnemy,
     addTower,
     addProjectile,
@@ -58,6 +61,7 @@ function App() {
     addFireProjectile,
     addFlameStream,
     addIceProjectile,
+    addIceStream,
     setMoney,
     setLives,
     setCurrentWave,
@@ -258,6 +262,7 @@ function App() {
       const newFireProjectiles: FireProjectile[] = [];
       const newFlameStreams: FlameStream[] = [];
       const newIceProjectiles: IceProjectile[] = [];
+      const newIceStreams: IceStream[] = [];
       const updatedTowers: Tower[] = [];
 
       for (const tower of currentTowers) {
@@ -281,6 +286,9 @@ function App() {
         if (fireResult.iceProjectile) {
           newIceProjectiles.push(fireResult.iceProjectile);
         }
+        if (fireResult.iceStream) {
+          newIceStreams.push(fireResult.iceStream);
+        }
       }
 
       state.setTowers(updatedTowers);
@@ -290,6 +298,7 @@ function App() {
       newFireProjectiles.forEach((f) => state.addFireProjectile(f));
       newFlameStreams.forEach((f) => state.addFlameStream(f));
       newIceProjectiles.forEach((i) => state.addIceProjectile(i));
+      newIceStreams.forEach((i) => state.addIceStream(i));
 
       // 4. Обновление снарядов
       const currentProjectiles = useGameStore.getState().projectiles;
@@ -358,6 +367,18 @@ function App() {
       state.setIceProjectiles(processedIce.activeIceProjectiles);
       state.setEnemies(processedIce.updatedEnemies);
 
+      // 8.5. Обработка потоков льда
+      const currentIceStreams = useGameStore.getState().iceStreams;
+      const processedIceStreams = processIceStreams(
+        currentIceStreams,
+        useGameStore.getState().enemies,
+        adjustedDeltaTime,
+        currentGameTime
+      );
+
+      state.setIceStreams(processedIceStreams.activeIceStreams);
+      state.setEnemies(processedIceStreams.updatedEnemies);
+
       // 9. Проверка победы: все волны пройдены и нет врагов
       const currentState = useGameStore.getState();
       const allWavesCompleted = !waveSpawnRef.current && currentState.currentWave >= levelConfig.waves.length;
@@ -396,6 +417,7 @@ function App() {
     fireProjectiles,
     flameStreams,
     iceProjectiles,
+    iceStreams,
     path: DEFAULT_PATH,
     gameStatus,
     selectedTowerLevel,

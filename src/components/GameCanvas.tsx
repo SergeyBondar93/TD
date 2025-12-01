@@ -65,8 +65,13 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick
       drawFlameStream(ctx, stream, gameState.towers, gameState.enemies)
     );
 
-    // Рисуем ледяные снаряды
+    // Рисуем ледяные снаряды (старые, если есть)
     gameState.iceProjectiles?.forEach((iceProj) => drawIceProjectile(ctx, iceProj));
+
+    // Рисуем потоки льда
+    gameState.iceStreams?.forEach((stream) => 
+      drawIceStream(ctx, stream, gameState.towers, gameState.enemies)
+    );
 
     // Рисуем лазерные лучи
     gameState.laserBeams?.forEach((laser) => {
@@ -571,6 +576,101 @@ function drawFlameStream(ctx: CanvasRenderingContext2D, stream: any, towers: any
       Math.PI * 2
     );
     ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+// Рисование потока льда
+function drawIceStream(ctx: CanvasRenderingContext2D, stream: any, towers: any[], enemies: any[]) {
+  const tower = towers.find(t => t.id === stream.towerId);
+  if (!tower) return;
+
+  // Находим направление к центру целей
+  const targetEnemies = enemies.filter(e => stream.targetEnemyIds.includes(e.id));
+  if (targetEnemies.length === 0) return;
+
+  // Вычисляем центр целей
+  let centerX = 0;
+  let centerY = 0;
+  for (const enemy of targetEnemies) {
+    centerX += enemy.position.x;
+    centerY += enemy.position.y;
+  }
+  centerX /= targetEnemies.length;
+  centerY /= targetEnemies.length;
+
+  const dx = centerX - tower.position.x;
+  const dy = centerY - tower.position.y;
+  const angle = Math.atan2(dy, dx);
+  const coneAngle = (tower.areaRadius || 50) * Math.PI / 180;
+
+  // Рисуем конус льда
+  ctx.save();
+  ctx.globalAlpha = 0.5;
+
+  // Градиент от башни к дальности (голубой → прозрачный)
+  const gradient = ctx.createLinearGradient(
+    tower.position.x,
+    tower.position.y,
+    tower.position.x + Math.cos(angle) * stream.range,
+    tower.position.y + Math.sin(angle) * stream.range
+  );
+  gradient.addColorStop(0, '#a0d8ff');
+  gradient.addColorStop(0.3, '#c0e8ff');
+  gradient.addColorStop(0.7, '#d0f0ff');
+  gradient.addColorStop(1, 'rgba(200, 240, 255, 0.1)');
+
+  ctx.fillStyle = gradient;
+
+  // Рисуем конус
+  ctx.beginPath();
+  ctx.moveTo(tower.position.x, tower.position.y);
+  
+  const leftAngle = angle - coneAngle / 2;
+  const rightAngle = angle + coneAngle / 2;
+  
+  ctx.lineTo(
+    tower.position.x + Math.cos(leftAngle) * stream.range,
+    tower.position.y + Math.sin(leftAngle) * stream.range
+  );
+  
+  ctx.arc(
+    tower.position.x,
+    tower.position.y,
+    stream.range,
+    leftAngle,
+    rightAngle
+  );
+  
+  ctx.lineTo(tower.position.x, tower.position.y);
+  ctx.fill();
+
+  // Добавляем ледяные кристаллы
+  for (let i = 0; i < 5; i++) {
+    const particleAngle = angle + (Math.random() - 0.5) * coneAngle;
+    const distance = stream.range * (0.3 + Math.random() * 0.7);
+    
+    const x = tower.position.x + Math.cos(particleAngle) * distance;
+    const y = tower.position.y + Math.sin(particleAngle) * distance;
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.globalAlpha = 0.6 + Math.random() * 0.3;
+    
+    // Рисуем снежинку
+    const size = 4 + Math.random() * 4;
+    for (let j = 0; j < 6; j++) {
+      const starAngle = (j * Math.PI) / 3;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(
+        x + Math.cos(starAngle) * size,
+        y + Math.sin(starAngle) * size
+      );
+      ctx.strokeStyle = '#d0f0ff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
   }
 
   ctx.restore();

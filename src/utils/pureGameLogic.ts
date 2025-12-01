@@ -1,4 +1,4 @@
-import type { Enemy, Tower, Projectile, Position, WaveConfig, LaserBeam, ElectricChain, FireProjectile, FlameStream, IceProjectile } from '../types/game';
+import type { Enemy, Tower, Projectile, Position, WaveConfig, LaserBeam, ElectricChain, FireProjectile, FlameStream, IceProjectile, IceStream } from '../types/game';
 import { ENEMY_SIZES, WeaponType as WeaponTypeEnum } from '../types/game';
 
 /**
@@ -305,6 +305,7 @@ export interface TowerFireResult {
   fireProjectile: FireProjectile | null;
   flameStream: FlameStream | null;
   iceProjectile: IceProjectile | null;
+  iceStream: IceStream | null;
 }
 
 export function processTowerFire(
@@ -316,13 +317,13 @@ export function processTowerFire(
   const fireInterval = 1000 / tower.fireRate;
 
   if (timeSinceLastFire < fireInterval) {
-    return { updatedTower: tower, projectile: null, laserBeam: null, electricChain: null, fireProjectile: null, flameStream: null, iceProjectile: null };
+    return { updatedTower: tower, projectile: null, laserBeam: null, electricChain: null, fireProjectile: null, flameStream: null, iceProjectile: null, iceStream: null };
   }
 
   const target = findClosestEnemyInRange(tower, enemies);
 
   if (!target) {
-    return { updatedTower: { ...tower, currentTarget: undefined }, projectile: null, laserBeam: null, electricChain: null, fireProjectile: null, flameStream: null, iceProjectile: null };
+    return { updatedTower: { ...tower, currentTarget: undefined }, projectile: null, laserBeam: null, electricChain: null, fireProjectile: null, flameStream: null, iceProjectile: null, iceStream: null };
   }
 
   const updatedTower = { ...tower, lastFireTime: currentTime, currentTarget: target.id };
@@ -349,6 +350,7 @@ export function processTowerFire(
       fireProjectile: null,
       flameStream: null,
       iceProjectile: null,
+      iceStream: null,
     };
   }
 
@@ -370,6 +372,7 @@ export function processTowerFire(
       fireProjectile: null,
       flameStream: null,
       iceProjectile: null,
+      iceStream: null,
     };
   }
 
@@ -401,19 +404,30 @@ export function processTowerFire(
       fireProjectile: null,
       flameStream,
       iceProjectile: null,
+      iceStream: null,
     };
   }
 
-  // Ледяное оружие - снаряд с замедлением
+  // Ледяное оружие - поток льда для замедления
   if (tower.weaponType === WeaponTypeEnum.ICE) {
-    const iceProjectile: IceProjectile = {
+    // Находим всех врагов в конусе льда
+    const enemiesInCone = findEnemiesInCone(
+      tower.position,
+      target.position,
+      enemies,
+      tower.range,
+      tower.areaRadius || 50 // Угол конуса в градусах
+    );
+
+    const iceStream: IceStream = {
       id: generateId(),
-      position: { ...tower.position },
-      targetEnemyId: target.id,
-      damage: tower.damage,
-      speed: 280,
-      slowEffect: tower.slowEffect || 0.2,
-      slowDuration: tower.slowDuration || 2000,
+      towerId: tower.id,
+      targetEnemyIds: enemiesInCone.map(e => e.id),
+      damage: tower.damage, // Низкий урон в секунду
+      slowEffect: tower.slowEffect || 0.35,
+      slowDuration: tower.slowDuration || 3000,
+      startTime: currentTime,
+      range: tower.range,
     };
 
     return {
@@ -423,7 +437,8 @@ export function processTowerFire(
       electricChain: null,
       fireProjectile: null,
       flameStream: null,
-      iceProjectile,
+      iceProjectile: null,
+      iceStream,
     };
   }
 
@@ -444,6 +459,7 @@ export function processTowerFire(
     fireProjectile: null,
     flameStream: null,
     iceProjectile: null,
+    iceStream: null,
   };
 }
 
@@ -654,6 +670,50 @@ export function processIceProjectiles(
 
   return {
     activeIceProjectiles,
+    updatedEnemies: Array.from(enemiesMap.values()),
+  };
+}
+
+// ============================================
+// Логика потоков льда
+// ============================================
+
+export interface ProcessedIceStreams {
+  activeIceStreams: IceStream[];
+  updatedEnemies: Enemy[];
+}
+
+export function processIceStreams(
+  iceStreams: IceStream[],
+  enemies: Enemy[],
+  deltaTime: number,
+  currentTime: number
+): ProcessedIceStreams {
+  const activeIceStreams: IceStream[] = [];
+  const enemiesMap = new Map(enemies.map((e) => [e.id, { ...e }]));
+
+  for (const stream of iceStreams) {
+    // Поток льда существует только 100мс (один кадр)
+    const duration = currentTime - stream.startTime;
+    if (duration > 100) continue;
+
+    // Наносим небольшой урон и замедляем всех врагов в конусе
+    const damagePerTick = (stream.damage * deltaTime) / 1000;
+
+    for (const enemyId of stream.targetEnemyIds) {
+      const enemy = enemiesMap.get(enemyId);
+      if (enemy) {
+        enemy.health -= damagePerTick;
+        // Применяем эффект замедления
+        enemy.slowEffect = stream.slowEffect;
+      }
+    }
+
+    activeIceStreams.push(stream);
+  }
+
+  return {
+    activeIceStreams,
     updatedEnemies: Array.from(enemiesMap.values()),
   };
 }

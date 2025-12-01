@@ -32,31 +32,33 @@ export const GameUI: React.FC<GameUIProps> = ({
 }) => {
   return (
     <div style={styles.container}>
-      {/* Верхняя панель - информация */}
-      <div style={styles.topBar}>
+      {/* Информационная панель */}
+      <div style={styles.infoSection}>
         <div style={styles.infoItem}>
-          <span style={styles.label}>💰 Деньги:</span>
+          <span style={styles.label}>💰</span>
           <span style={styles.value}>{money}</span>
         </div>
+        <div style={styles.separator}></div>
         <div style={styles.infoItem}>
-          <span style={styles.label}>❤️ Жизни:</span>
+          <span style={styles.label}>❤️</span>
           <span style={styles.value}>{lives}</span>
         </div>
+        <div style={styles.separator}></div>
         <div style={styles.infoItem}>
-          <span style={styles.label}>🌊 Волна:</span>
+          <span style={styles.label}>🌊</span>
           <span style={styles.value}>
             {currentWave}/{totalWaves}
           </span>
         </div>
+        <div style={styles.separator}></div>
         <div style={styles.infoItem}>
-          <span style={styles.label}>📊 Уровень:</span>
-          <span style={styles.value}>{currentLevel}</span>
+          <span style={styles.label}>📊</span>
+          <span style={styles.value}>Ур. {currentLevel}</span>
         </div>
       </div>
 
       {/* Панель башен */}
-      <div style={styles.towerPanel}>
-        <h3 style={styles.panelTitle}>Башни</h3>
+      <div style={styles.towerSection}>
         <div style={styles.towerButtons}>
           {([1, 2, 3] as const).map((level) => {
             const stats = TOWER_STATS[level];
@@ -74,12 +76,12 @@ export const GameUI: React.FC<GameUIProps> = ({
                   ...(canAfford ? {} : styles.towerButtonDisabled),
                 }}
               >
-                <div style={styles.towerLevel}>Башня {level}</div>
+                <div style={styles.towerLevel}>Т{level}</div>
                 <div style={styles.towerStats}>
-                  <div>💰 {stats.cost}</div>
-                  <div>⚔️ {stats.damage}</div>
-                  <div>🎯 {stats.range}</div>
-                  <div>🔥 {stats.fireRate}/s</div>
+                  <div>💰{stats.cost}</div>
+                  <div>⚔️{stats.damage}</div>
+                  <div>🎯{stats.range}</div>
+                  <div>🔥{stats.fireRate}</div>
                 </div>
               </button>
             );
@@ -88,7 +90,7 @@ export const GameUI: React.FC<GameUIProps> = ({
       </div>
 
       {/* Контролы игры */}
-      <div style={styles.controls}>
+      <div style={styles.controlSection}>
         {gameStatus === 'playing' && (
           <>
             <button
@@ -123,25 +125,45 @@ export const GameUI: React.FC<GameUIProps> = ({
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    padding: '20px',
+    display: 'flex',
+    flexDirection: 'row',
+    gap: '15px',
+    padding: '10px',
     backgroundColor: '#16213e',
     color: '#fff',
-    borderRadius: '8px',
-    minWidth: '300px',
+    borderRadius: '6px',
+    width: '100%',
+    maxWidth: '100%',
+    alignItems: 'center',
   },
-  topBar: {
+  infoSection: {
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'row',
     gap: '10px',
-    marginBottom: '20px',
-    padding: '15px',
+    padding: '8px 12px',
     backgroundColor: '#0f3460',
     borderRadius: '6px',
+    alignItems: 'center',
+  },
+  towerSection: {
+    display: 'flex',
+    alignItems: 'center',
+    flex: 1,
+  },
+  controlSection: {
+    display: 'flex',
+    gap: '8px',
   },
   infoItem: {
     display: 'flex',
-    justifyContent: 'space-between',
-    fontSize: '16px',
+    gap: '6px',
+    alignItems: 'center',
+    fontSize: '15px',
+  },
+  separator: {
+    width: '1px',
+    height: '20px',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
   },
   label: {
     fontWeight: 'normal',

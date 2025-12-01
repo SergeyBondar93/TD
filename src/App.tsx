@@ -351,22 +351,26 @@ function App() {
 
   return (
     <div style={styles.app}>
-      <div style={styles.gameContainer}>
-        <GameCanvas gameState={gameState} onCanvasClick={handleCanvasClick} />
-        <GameUI
-          money={money}
-          lives={lives}
-          currentWave={currentWave}
-          totalWaves={levelConfig.waves.length}
-          currentLevel={currentLevel}
-          gameStatus={gameStatus}
-          selectedTowerLevel={selectedTowerLevel}
-          onSelectTowerLevel={setSelectedTowerLevel}
-          onStartWave={startWave}
-          onPause={() => setGameStatus('paused')}
-          onResume={() => setGameStatus('playing')}
-          canStartWave={canStartWave}
-        />
+      <DebugInfo gameState={gameState} />
+      
+      <div style={styles.mainContent}>
+        <div style={styles.gameSection}>
+          <GameCanvas gameState={gameState} onCanvasClick={handleCanvasClick} />
+          <GameUI
+            money={money}
+            lives={lives}
+            currentWave={currentWave}
+            totalWaves={levelConfig.waves.length}
+            currentLevel={currentLevel}
+            gameStatus={gameStatus}
+            selectedTowerLevel={selectedTowerLevel}
+            onSelectTowerLevel={setSelectedTowerLevel}
+            onStartWave={startWave}
+            onPause={() => setGameStatus('paused')}
+            onResume={() => setGameStatus('playing')}
+            canStartWave={canStartWave}
+          />
+        </div>
       </div>
 
       {(gameStatus === 'won' || gameStatus === 'lost') && (
@@ -377,8 +381,6 @@ function App() {
           onMenu={() => setCurrentLevel(null)}
         />
       )}
-
-      <DebugInfo gameState={gameState} />
     </div>
   );
 }
@@ -388,13 +390,21 @@ const styles: Record<string, React.CSSProperties> = {
     minHeight: '100vh',
     backgroundColor: '#1a1a2e',
     display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: '20px',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    padding: '10px',
+    gap: '10px',
   },
-  gameContainer: {
+  mainContent: {
     display: 'flex',
-    gap: '20px',
+    flexDirection: 'column',
+    gap: '10px',
+    flex: 1,
+  },
+  gameSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
     alignItems: 'flex-start',
   },
 };

@@ -1,5 +1,13 @@
 // Базовые типы для игры Tower Defense
 
+export const WeaponType = {
+  PROJECTILE: 'projectile',
+  LASER: 'laser',
+  ELECTRIC: 'electric',
+} as const;
+
+export type WeaponType = typeof WeaponType[keyof typeof WeaponType];
+
 export const EnemyType = {
   INFANTRY: 'infantry',
   TANK_SMALL: 'tank_small',
@@ -46,6 +54,9 @@ export interface Tower {
   lastFireTime: number;
   cost: number;
   size: number;
+  weaponType: WeaponType; // Тип оружия
+  currentTarget?: string; // ID текущей цели (для лазера)
+  chainCount?: number; // Количество перескоков для электрического оружия
 }
 
 export interface Projectile {
@@ -56,6 +67,23 @@ export interface Projectile {
   speed: number;
 }
 
+export interface LaserBeam {
+  id: string;
+  towerId: string;
+  targetEnemyId: string;
+  damage: number;
+  startTime: number;
+}
+
+export interface ElectricChain {
+  id: string;
+  towerId: string;
+  targetEnemyIds: string[]; // Цепь врагов
+  damage: number;
+  startTime: number;
+  chainCount: number; // Количество перескоков
+}
+
 export interface GameState {
   money: number;
   lives: number;
@@ -63,6 +91,8 @@ export interface GameState {
   enemies: Enemy[];
   towers: Tower[];
   projectiles: Projectile[];
+  laserBeams: LaserBeam[];
+  electricChains: ElectricChain[];
   path: Position[];
   gameStatus: 'menu' | 'playing' | 'paused' | 'won' | 'lost';
   selectedTowerLevel: 1 | 2 | 3 | null;
@@ -94,6 +124,8 @@ export interface TowerStats {
   fireRate: number;
   cost: number;
   size: number;
+  weaponType: WeaponType;
+  chainCount?: number; // Количество перескоков для электрического оружия
   upgradeCost?: number;
 }
 
@@ -105,6 +137,7 @@ export const TOWER_STATS: Record<1 | 2 | 3, TowerStats> = {
     fireRate: 1, // 1 выстрел в секунду
     cost: 50,
     size: 30,
+    weaponType: WeaponType.PROJECTILE,
     upgradeCost: 100,
   },
   2: {
@@ -114,6 +147,8 @@ export const TOWER_STATS: Record<1 | 2 | 3, TowerStats> = {
     fireRate: 1.5,
     cost: 150,
     size: 35,
+    weaponType: WeaponType.ELECTRIC,
+    chainCount: 3, // Бьет по 3 врагам
     upgradeCost: 200,
   },
   3: {
@@ -123,6 +158,7 @@ export const TOWER_STATS: Record<1 | 2 | 3, TowerStats> = {
     fireRate: 2,
     cost: 350,
     size: 40,
+    weaponType: WeaponType.LASER,
   },
 };
 

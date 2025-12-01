@@ -6,8 +6,8 @@ import { GameOver } from './components/GameOver';
 import { DebugInfo } from './components/DebugInfo';
 import { useGameStore } from './stores/gameStore';
 import { useUIStore } from './stores/uiStore';
-import type { GameState, Enemy, Tower, Projectile } from './types/game';
-import { TOWER_STATS, EnemyType, ENEMY_SIZES } from './types/game';
+import type { GameState, Enemy, Tower, Projectile, LaserBeam, ElectricChain } from './types/game';
+import { TOWER_STATS, EnemyType, ENEMY_SIZES, WeaponType } from './types/game';
 import { LEVELS, DEFAULT_PATH } from './config/levels';
 import { DEV_CONFIG } from './config/dev';
 import {
@@ -15,6 +15,8 @@ import {
   processEnemies,
   processTowerFire,
   processProjectiles,
+  processLaserBeams,
+  processElectricChains,
   processWaveSpawn,
   type WaveSpawnState,
 } from './utils/pureGameLogic';
@@ -26,6 +28,8 @@ function App() {
     enemies,
     towers,
     projectiles,
+    laserBeams,
+    electricChains,
     money,
     lives,
     currentWave,
@@ -35,9 +39,13 @@ function App() {
     setEnemies,
     setTowers,
     setProjectiles,
+    setLaserBeams,
+    setElectricChains,
     addEnemy,
     addTower,
     addProjectile,
+    addLaserBeam,
+    addElectricChain,
     setMoney,
     setLives,
     setCurrentWave,
@@ -152,6 +160,8 @@ function App() {
         lastFireTime: 0,
         cost: towerStats.cost,
         size: towerStats.size,
+        weaponType: towerStats.weaponType,
+        chainCount: towerStats.chainCount,
       };
 
       addTower(newTower);
@@ -228,6 +238,8 @@ function App() {
       const currentGameTime = gameTimeRef.current;
       const currentTowers = useGameStore.getState().towers;
       const newProjectiles: Projectile[] = [];
+      const newLaserBeams: LaserBeam[] = [];
+      const newElectricChains: ElectricChain[] = [];
       const updatedTowers: Tower[] = [];
 
       for (const tower of currentTowers) {
@@ -236,10 +248,18 @@ function App() {
         if (fireResult.projectile) {
           newProjectiles.push(fireResult.projectile);
         }
+        if (fireResult.laserBeam) {
+          newLaserBeams.push(fireResult.laserBeam);
+        }
+        if (fireResult.electricChain) {
+          newElectricChains.push(fireResult.electricChain);
+        }
       }
 
       state.setTowers(updatedTowers);
       newProjectiles.forEach((p) => state.addProjectile(p));
+      newLaserBeams.forEach((l) => state.addLaserBeam(l));
+      newElectricChains.forEach((e) => state.addElectricChain(e));
 
       // 4. Обновление снарядов
       const currentProjectiles = useGameStore.getState().projectiles;
@@ -252,7 +272,29 @@ function App() {
       state.setProjectiles(processedProjectiles.activeProjectiles);
       state.setEnemies(processedProjectiles.updatedEnemies);
 
-      // 5. Проверка победы: все волны пройдены и нет врагов
+      // 5. Обработка лазерных лучей
+      const currentLaserBeams = useGameStore.getState().laserBeams;
+      const processedLasers = processLaserBeams(
+        currentLaserBeams,
+        useGameStore.getState().enemies,
+        currentGameTime
+      );
+
+      state.setLaserBeams(processedLasers.activeLaserBeams);
+      state.setEnemies(processedLasers.updatedEnemies);
+
+      // 6. Обработка электрических разрядов
+      const currentElectricChains = useGameStore.getState().electricChains;
+      const processedElectric = processElectricChains(
+        currentElectricChains,
+        useGameStore.getState().enemies,
+        currentGameTime
+      );
+
+      state.setElectricChains(processedElectric.activeElectricChains);
+      state.setEnemies(processedElectric.updatedEnemies);
+
+      // 7. Проверка победы: все волны пройдены и нет врагов
       const currentState = useGameStore.getState();
       const allWavesCompleted = !waveSpawnRef.current && currentState.currentWave >= levelConfig.waves.length;
       const noEnemiesLeft = currentState.enemies.length === 0;
@@ -285,6 +327,8 @@ function App() {
     enemies,
     towers,
     projectiles,
+    laserBeams,
+    electricChains,
     path: DEFAULT_PATH,
     gameStatus,
     selectedTowerLevel,

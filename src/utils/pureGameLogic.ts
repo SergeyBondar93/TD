@@ -1,5 +1,5 @@
-import type { Enemy, Tower, Projectile, Position, WaveConfig } from '../types/game';
-import { ENEMY_SIZES } from '../types/game';
+import type { Enemy, Tower, Projectile, Position, WaveConfig, LaserBeam, ElectricChain } from '../types/game';
+import { ENEMY_SIZES, WeaponType as WeaponTypeEnum } from '../types/game';
 
 /**
  * Чистая игровая логика - функции без побочных эффектов
@@ -203,6 +203,40 @@ export function findClosestEnemyInRange(
   return closestEnemy;
 }
 
+// Находит цепочку врагов для электрического оружия
+export function findEnemyChain(
+  startEnemy: Enemy,
+  enemies: Enemy[],
+  maxChainCount: number,
+  chainRange: number = 100
+): Enemy[] {
+  const chain: Enemy[] = [startEnemy];
+  const used = new Set<string>([startEnemy.id]);
+
+  for (let i = 0; i < maxChainCount - 1; i++) {
+    const lastEnemy = chain[chain.length - 1];
+    let nearestEnemy: Enemy | null = null;
+    let minDist = Infinity;
+
+    for (const enemy of enemies) {
+      if (used.has(enemy.id)) continue;
+
+      const dist = distance(lastEnemy.position, enemy.position);
+      if (dist <= chainRange && dist < minDist) {
+        minDist = dist;
+        nearestEnemy = enemy;
+      }
+    }
+
+    if (!nearestEnemy) break;
+
+    chain.push(nearestEnemy);
+    used.add(nearestEnemy.id);
+  }
+
+  return chain;
+}
+
 export function canPlaceTower(
   position: Position,
   towers: Tower[],
@@ -233,6 +267,8 @@ export function canPlaceTower(
 export interface TowerFireResult {
   updatedTower: Tower;
   projectile: Projectile | null;
+  laserBeam: LaserBeam | null;
+  electricChain: ElectricChain | null;
 }
 
 export function processTowerFire(
@@ -244,15 +280,58 @@ export function processTowerFire(
   const fireInterval = 1000 / tower.fireRate;
 
   if (timeSinceLastFire < fireInterval) {
-    return { updatedTower: tower, projectile: null };
+    return { updatedTower: tower, projectile: null, laserBeam: null, electricChain: null };
   }
 
   const target = findClosestEnemyInRange(tower, enemies);
 
   if (!target) {
-    return { updatedTower: tower, projectile: null };
+    return { updatedTower: { ...tower, currentTarget: undefined }, projectile: null, laserBeam: null, electricChain: null };
   }
 
+  const updatedTower = { ...tower, lastFireTime: currentTime, currentTarget: target.id };
+
+  // Электрическое оружие - цепная молния
+  if (tower.weaponType === WeaponTypeEnum.ELECTRIC) {
+    const chainCount = tower.chainCount || 3;
+    const enemyChain = findEnemyChain(target, enemies, chainCount);
+
+    const electricChain: ElectricChain = {
+      id: generateId(),
+      towerId: tower.id,
+      targetEnemyIds: enemyChain.map(e => e.id),
+      damage: tower.damage,
+      startTime: currentTime,
+      chainCount: enemyChain.length,
+    };
+
+    return {
+      updatedTower,
+      projectile: null,
+      laserBeam: null,
+      electricChain,
+    };
+  }
+
+  // Лазерное оружие - мгновенный урон
+  if (tower.weaponType === WeaponTypeEnum.LASER) {
+    const laserBeam: LaserBeam = {
+      id: generateId(),
+      towerId: tower.id,
+      targetEnemyId: target.id,
+      damage: tower.damage,
+      startTime: currentTime,
+    };
+
+    return {
+      updatedTower,
+      projectile: null,
+      laserBeam,
+      electricChain: null,
+    };
+  }
+
+  // Снарядное оружие
   const projectile: Projectile = {
     id: generateId(),
     position: { ...tower.position },
@@ -262,8 +341,10 @@ export function processTowerFire(
   };
 
   return {
-    updatedTower: { ...tower, lastFireTime: currentTime },
+    updatedTower,
     projectile,
+    laserBeam: null,
+    electricChain: null,
   };
 }
 
@@ -336,6 +417,104 @@ export function processProjectiles(
 
   return {
     activeProjectiles,
+    updatedEnemies: Array.from(enemiesMap.values()),
+  };
+}
+
+// ============================================
+// Логика электрических разрядов
+// ============================================
+
+export interface ProcessedElectricChains {
+  activeElectricChains: ElectricChain[];
+  updatedEnemies: Enemy[];
+}
+
+export function processElectricChains(
+  electricChains: ElectricChain[],
+  enemies: Enemy[],
+  currentTime: number,
+  chainDuration: number = 150 // Длительность визуализации цепи в мс
+): ProcessedElectricChains {
+  const activeElectricChains: ElectricChain[] = [];
+  const enemiesMap = new Map(enemies.map((e) => [e.id, { ...e }]));
+  const damagedChains = new Set<string>();
+
+  for (const chain of electricChains) {
+    const chainAge = currentTime - chain.startTime;
+
+    // Удаляем старые цепи
+    if (chainAge > chainDuration) {
+      continue;
+    }
+
+    // Применяем урон только один раз за цепь
+    if (!damagedChains.has(chain.id)) {
+      for (const enemyId of chain.targetEnemyIds) {
+        const enemy = enemiesMap.get(enemyId);
+        if (enemy) {
+          enemy.health -= chain.damage;
+        }
+      }
+      damagedChains.add(chain.id);
+    }
+
+    // Оставляем цепь активной для визуализации
+    const allTargetsExist = chain.targetEnemyIds.every(id => enemiesMap.has(id));
+    if (allTargetsExist) {
+      activeElectricChains.push(chain);
+    }
+  }
+
+  return {
+    activeElectricChains,
+    updatedEnemies: Array.from(enemiesMap.values()),
+  };
+}
+
+// ============================================
+// Логика лазерных лучей
+// ============================================
+
+export interface ProcessedLaserBeams {
+  activeLaserBeams: LaserBeam[];
+  updatedEnemies: Enemy[];
+}
+
+export function processLaserBeams(
+  laserBeams: LaserBeam[],
+  enemies: Enemy[],
+  currentTime: number,
+  beamDuration: number = 100 // Длительность лазерного луча в мс
+): ProcessedLaserBeams {
+  const activeLaserBeams: LaserBeam[] = [];
+  const enemiesMap = new Map(enemies.map((e) => [e.id, { ...e }]));
+  const damagedEnemies = new Set<string>();
+
+  for (const beam of laserBeams) {
+    const beamAge = currentTime - beam.startTime;
+
+    // Удаляем старые лучи
+    if (beamAge > beamDuration) {
+      continue;
+    }
+
+    const target = enemiesMap.get(beam.targetEnemyId);
+
+    // Применяем урон только один раз за луч
+    if (target && !damagedEnemies.has(target.id)) {
+      target.health -= beam.damage;
+      damagedEnemies.add(target.id);
+    }
+
+    // Оставляем луч активным для визуализации
+    if (target) {
+      activeLaserBeams.push(beam);
+    }
+  }
+
+  return {
+    activeLaserBeams,
     updatedEnemies: Array.from(enemiesMap.values()),
   };
 }

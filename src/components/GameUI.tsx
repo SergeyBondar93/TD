@@ -1,5 +1,5 @@
 import React from 'react';
-import { TOWER_STATS } from '../types/game';
+import { TOWER_STATS, WeaponType } from '../types/game';
 
 interface GameUIProps {
   money: number;
@@ -77,7 +77,9 @@ export const GameUI: React.FC<GameUIProps> = ({
                   ...(canAfford ? {} : styles.towerButtonDisabled),
                 }}
               >
-                <div className="game-ui-tower-level-text" style={styles.towerLevel}>Т{level}</div>
+                <div className="game-ui-tower-level-text" style={styles.towerLevel}>
+                  Т{level} {stats.weaponType === WeaponType.LASER ? '⚡' : stats.weaponType === WeaponType.ELECTRIC ? '🌩️' : '🔫'}
+                </div>
                 <div className="game-ui-tower-stats" style={styles.towerStats}>
                   <div className="game-ui-tower-stat game-ui-tower-cost">💰{stats.cost}</div>
                   <div className="game-ui-tower-stat game-ui-tower-damage">⚔️{stats.damage}</div>

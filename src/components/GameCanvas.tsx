@@ -9,6 +9,7 @@ import {
   PROJECTILE_SIZE,
   TOWER_STATS,
   EnemyType,
+  WeaponType,
 } from '../types/game';
 import { DEV_CONFIG } from '../config/dev';
 import { canPlaceTower } from '../utils/pureGameLogic';
@@ -55,6 +56,27 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick
 
     // Рисуем снаряды
     gameState.projectiles.forEach((projectile) => drawProjectile(ctx, projectile));
+
+    // Рисуем лазерные лучи
+    gameState.laserBeams?.forEach((laser) => {
+      const tower = gameState.towers.find(t => t.id === laser.towerId);
+      const enemy = gameState.enemies.find(e => e.id === laser.targetEnemyId);
+      if (tower && enemy) {
+        drawLaserBeam(ctx, tower.position, enemy.position);
+      }
+    });
+
+    // Рисуем электрические разряды
+    gameState.electricChains?.forEach((chain) => {
+      const tower = gameState.towers.find(t => t.id === chain.towerId);
+      const chainEnemies = chain.targetEnemyIds
+        .map(id => gameState.enemies.find(e => e.id === id))
+        .filter((e): e is Enemy => e !== undefined);
+      
+      if (tower && chainEnemies.length > 0) {
+        drawElectricChain(ctx, tower.position, chainEnemies.map(e => e.position));
+      }
+    });
 
     // Отладочная информация на canvas
     if (DEV_CONFIG.SHOW_DEBUG_INFO) {
@@ -249,14 +271,58 @@ function drawTower(ctx: CanvasRenderingContext2D, tower: Tower) {
   const x = tower.position.x - size / 2;
   const y = tower.position.y - size / 2;
 
-  // Цвет башни в зависимости от уровня
+  // Цвет башни в зависимости от уровня и типа оружия
   const colors = {
     1: '#4ecdc4',
     2: '#44a5e8',
     3: '#9b59b6',
   };
-  ctx.fillStyle = colors[tower.level];
-  ctx.fillRect(x, y, size, size);
+  
+  // Особый вид для лазерных башен
+  if (tower.weaponType === WeaponType.LASER) {
+    // Рисуем основание лазерной башни
+    ctx.fillStyle = colors[tower.level];
+    ctx.fillRect(x, y, size, size);
+    
+    // Добавляем визуальный элемент лазера
+    ctx.fillStyle = '#ff0000';
+    const laserSize = size * 0.4;
+    const laserX = tower.position.x - laserSize / 2;
+    const laserY = tower.position.y - laserSize / 2;
+    ctx.fillRect(laserX, laserY, laserSize, laserSize);
+    
+    // Обводка внутреннего элемента
+    ctx.strokeStyle = '#ffff00';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(laserX, laserY, laserSize, laserSize);
+  } else if (tower.weaponType === WeaponType.ELECTRIC) {
+    // Рисуем основание электрической башни
+    ctx.fillStyle = colors[tower.level];
+    ctx.fillRect(x, y, size, size);
+    
+    // Добавляем визуальный элемент молнии
+    ctx.fillStyle = '#00ffff';
+    const electricSize = size * 0.5;
+    
+    // Рисуем зигзаг
+    ctx.strokeStyle = '#00ffff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(tower.position.x - electricSize/3, tower.position.y - electricSize/3);
+    ctx.lineTo(tower.position.x, tower.position.y);
+    ctx.lineTo(tower.position.x + electricSize/3, tower.position.y + electricSize/3);
+    ctx.stroke();
+    
+    // Добавляем свечение
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#00ffff';
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  } else {
+    // Обычная башня со снарядами
+    ctx.fillStyle = colors[tower.level];
+    ctx.fillRect(x, y, size, size);
+  }
 
   // Обводка
   ctx.strokeStyle = '#000';
@@ -297,6 +363,121 @@ function drawProjectile(ctx: CanvasRenderingContext2D, projectile: Projectile) {
   ctx.strokeStyle = '#ff9800';
   ctx.lineWidth = 2;
   ctx.stroke();
+}
+
+// Рисование лазерного луча
+function drawLaserBeam(
+  ctx: CanvasRenderingContext2D,
+  from: { x: number; y: number },
+  to: { x: number; y: number }
+) {
+  // Основной луч
+  ctx.strokeStyle = '#ff0000';
+  ctx.lineWidth = 3;
+  ctx.globalAlpha = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(from.x, from.y);
+  ctx.lineTo(to.x, to.y);
+  ctx.stroke();
+
+  // Внутренний яркий луч
+  ctx.strokeStyle = '#ffff00';
+  ctx.lineWidth = 1.5;
+  ctx.globalAlpha = 1;
+  ctx.beginPath();
+  ctx.moveTo(from.x, from.y);
+  ctx.lineTo(to.x, to.y);
+  ctx.stroke();
+
+  // Свечение на конце луча
+  const gradient = ctx.createRadialGradient(to.x, to.y, 0, to.x, to.y, 15);
+  gradient.addColorStop(0, 'rgba(255, 0, 0, 0.8)');
+  gradient.addColorStop(0.5, 'rgba(255, 100, 0, 0.4)');
+  gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+  
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(to.x, to.y, 15, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.globalAlpha = 1;
+}
+
+// Рисование электрической цепи
+function drawElectricChain(
+  ctx: CanvasRenderingContext2D,
+  towerPos: { x: number; y: number },
+  enemyPositions: { x: number; y: number }[]
+) {
+  if (enemyPositions.length === 0) return;
+
+  // Рисуем цепь от башни к первому врагу и между врагами
+  const positions = [towerPos, ...enemyPositions];
+
+  for (let i = 0; i < positions.length - 1; i++) {
+    const from = positions[i];
+    const to = positions[i + 1];
+
+    // Создаем эффект молнии с зигзагами
+    ctx.strokeStyle = '#00ffff';
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.9;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#00ffff';
+
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+
+    // Добавляем случайные зигзаги для эффекта молнии
+    const segments = 5;
+    for (let j = 1; j <= segments; j++) {
+      const t = j / segments;
+      const x = from.x + (to.x - from.x) * t;
+      const y = from.y + (to.y - from.y) * t;
+      
+      // Добавляем случайное смещение
+      const offset = (Math.random() - 0.5) * 20;
+      const perpX = -(to.y - from.y);
+      const perpY = (to.x - from.x);
+      const len = Math.sqrt(perpX * perpX + perpY * perpY);
+      
+      if (j === segments) {
+        ctx.lineTo(to.x, to.y);
+      } else {
+        ctx.lineTo(x + (perpX / len) * offset, y + (perpY / len) * offset);
+      }
+    }
+
+    ctx.stroke();
+
+    // Внутренний яркий луч
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 5;
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    ctx.lineTo(to.x, to.y);
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+  }
+
+  // Свечение на каждом пораженном враге
+  enemyPositions.forEach((pos) => {
+    const gradient = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, 12);
+    gradient.addColorStop(0, 'rgba(0, 255, 255, 0.8)');
+    gradient.addColorStop(0.5, 'rgba(0, 200, 255, 0.4)');
+    gradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
+    
+    ctx.fillStyle = gradient;
+    ctx.globalAlpha = 0.8;
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, 12, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  ctx.globalAlpha = 1;
 }
 
 // Рисование превью башни при размещении

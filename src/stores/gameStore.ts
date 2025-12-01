@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Enemy, Tower, Projectile } from '../types/game';
+import type { Enemy, Tower, Projectile, LaserBeam, ElectricChain } from '../types/game';
 import { DEV_CONFIG } from '../config/dev';
 
 export interface GameState {
@@ -7,6 +7,9 @@ export interface GameState {
   enemies: Enemy[];
   towers: Tower[];
   projectiles: Projectile[];
+  laserBeams: LaserBeam[];
+  electricChains: ElectricChain[];
+  laserBeams: LaserBeam[];
   
   // Игровая информация
   money: number;
@@ -22,9 +25,13 @@ export interface GameState {
   setEnemies: (enemies: Enemy[] | ((prev: Enemy[]) => Enemy[])) => void;
   setTowers: (towers: Tower[] | ((prev: Tower[]) => Tower[])) => void;
   setProjectiles: (projectiles: Projectile[] | ((prev: Projectile[]) => Projectile[])) => void;
+  setLaserBeams: (laserBeams: LaserBeam[] | ((prev: LaserBeam[]) => LaserBeam[])) => void;
+  setElectricChains: (electricChains: ElectricChain[] | ((prev: ElectricChain[]) => ElectricChain[])) => void;
   addEnemy: (enemy: Enemy) => void;
   addTower: (tower: Tower) => void;
   addProjectile: (projectile: Projectile) => void;
+  addLaserBeam: (laserBeam: LaserBeam) => void;
+  addElectricChain: (electricChain: ElectricChain) => void;
   
   setMoney: (money: number | ((prev: number) => number)) => void;
   setLives: (lives: number | ((prev: number) => number)) => void;
@@ -43,6 +50,8 @@ export const useGameStore = create<GameState>((set) => ({
   enemies: [],
   towers: [],
   projectiles: [],
+  laserBeams: [],
+  electricChains: [],
   money: 0,
   lives: 0,
   currentWave: 0,
@@ -66,6 +75,16 @@ export const useGameStore = create<GameState>((set) => ({
       projectiles: typeof projectiles === 'function' ? projectiles(state.projectiles) : projectiles,
     })),
   
+  setLaserBeams: (laserBeams) =>
+    set((state) => ({
+      laserBeams: typeof laserBeams === 'function' ? laserBeams(state.laserBeams) : laserBeams,
+    })),
+  
+  setElectricChains: (electricChains) =>
+    set((state) => ({
+      electricChains: typeof electricChains === 'function' ? electricChains(state.electricChains) : electricChains,
+    })),
+  
   addEnemy: (enemy) =>
     set((state) => ({
       enemies: [...state.enemies, enemy],
@@ -79,6 +98,16 @@ export const useGameStore = create<GameState>((set) => ({
   addProjectile: (projectile) =>
     set((state) => ({
       projectiles: [...state.projectiles, projectile],
+    })),
+  
+  addLaserBeam: (laserBeam) =>
+    set((state) => ({
+      laserBeams: [...state.laserBeams, laserBeam],
+    })),
+  
+  addElectricChain: (electricChain) =>
+    set((state) => ({
+      electricChains: [...state.electricChains, electricChain],
     })),
   
   // Setters для примитивов
@@ -108,6 +137,8 @@ export const useGameStore = create<GameState>((set) => ({
       enemies: [],
       towers: [],
       projectiles: [],
+      laserBeams: [],
+      electricChains: [],
     }),
   
   resetGame: () =>
@@ -115,6 +146,8 @@ export const useGameStore = create<GameState>((set) => ({
       enemies: [],
       towers: [],
       projectiles: [],
+      laserBeams: [],
+      electricChains: [],
       money: 0,
       lives: 0,
       currentWave: 0,

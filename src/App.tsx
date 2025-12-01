@@ -285,7 +285,9 @@ function App() {
 
   return (
     <div style={styles.app}>
-      <DebugInfo gameState={gameState} onGameSpeedChange={setGameSpeed} />
+      {DEV_CONFIG.SHOW_DEBUG_INFO && (
+        <DebugInfo gameState={gameState} onGameSpeedChange={setGameSpeed} />
+      )}
       
       <div style={styles.mainContent}>
         <div style={styles.gameSection}>

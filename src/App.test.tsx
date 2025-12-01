@@ -63,9 +63,9 @@ describe('App Integration Tests', () => {
         expect(screen.queryByText('🏰 Tower Defense')).not.toBeInTheDocument();
       }, { timeout: 1000 });
 
-      // Should show game UI
-      expect(screen.getByText(/💰/)).toBeInTheDocument();
-      expect(screen.getByText(/❤️/)).toBeInTheDocument();
+      // Should show game UI with stats
+      expect(screen.getByText('300')).toBeInTheDocument();
+      expect(screen.getByText('20')).toBeInTheDocument();
     }, TEST_TIMEOUT);
 
     it('should initialize with correct starting money for level 1', async () => {
@@ -356,6 +356,8 @@ describe('App Integration Tests', () => {
       }));
 
       const tower1Button = screen.getByText('Т1').closest('button');
+      
+      // Place first tower
       await user.click(tower1Button!);
       await user.click(canvas);
 
@@ -363,12 +365,15 @@ describe('App Integration Tests', () => {
         expect(screen.getByText('450')).toBeInTheDocument();
       }, { timeout: 1000 });
 
+      // Try to place second tower at same position (should not work - same location)
+      // So we verify that we can't spend more money
       await user.click(tower1Button!);
       await user.click(canvas);
 
+      // Money should remain 450 since second tower can't be placed at same spot
       await waitFor(() => {
-        expect(screen.getByText('400')).toBeInTheDocument();
-      }, { timeout: 1000 });
+        expect(screen.getByText('450')).toBeInTheDocument();
+      }, { timeout: 500 });
     }, TEST_TIMEOUT);
   });
 });

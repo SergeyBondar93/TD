@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import type { GameState, Enemy, Tower, Projectile } from '../types/game';
 import {
   CANVAS_WIDTH,
@@ -9,16 +9,21 @@ import {
   ENEMY_SIZE,
   TOWER_SIZE,
   PROJECTILE_SIZE,
+  TOWER_STATS,
 } from '../types/game';
 import { DEV_CONFIG } from '../config/dev';
+import { canPlaceTower } from '../utils/pureGameLogic';
 
 interface GameCanvasProps {
   gameState: GameState;
   onCanvasClick: (x: number, y: number) => void;
+  selectedTowerLevel: 1 | 2 | 3 | null;
+  path: { x: number; y: number }[];
 }
 
-export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick }) => {
+export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick, selectedTowerLevel, path }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -71,9 +76,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick
       ctx.fillText(`(${CANVAS_PADDING + GAME_WIDTH}, ${CANVAS_PADDING + GAME_HEIGHT})`, CANVAS_PADDING + GAME_WIDTH - 95, CANVAS_PADDING + GAME_HEIGHT - 5);
     }
 
-    // Рисуем радиус действия выбранной башни (при наведении)
-    // Это можно добавить позже для улучшения UX
-  }, [gameState]);
+    // Рисуем превью башни при выборе
+    if (selectedTowerLevel && mousePos) {
+      drawTowerPreview(ctx, mousePos, selectedTowerLevel, gameState.towers, path);
+    }
+  }, [gameState, selectedTowerLevel, mousePos, path]);
 
   const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -86,6 +93,26 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick
     onCanvasClick(x, y);
   };
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!selectedTowerLevel) {
+      setMousePos(null);
+      return;
+    }
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    setMousePos({ x, y });
+  };
+
+  const handleMouseLeave = () => {
+    setMousePos(null);
+  };
+
   return (
     <canvas
       ref={canvasRef}
@@ -93,9 +120,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick
       width={CANVAS_WIDTH}
       height={CANVAS_HEIGHT}
       onClick={handleClick}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
       style={{
         border: '2px solid #0f3460',
-        cursor: gameState.selectedTowerLevel ? 'crosshair' : 'default',
+        cursor: selectedTowerLevel ? 'crosshair' : 'default',
         display: 'block',
       }}
     />
@@ -260,4 +289,68 @@ function drawProjectile(ctx: CanvasRenderingContext2D, projectile: Projectile) {
   ctx.strokeStyle = '#ff9800';
   ctx.lineWidth = 2;
   ctx.stroke();
+}
+
+// Рисование превью башни при размещении
+function drawTowerPreview(
+  ctx: CanvasRenderingContext2D,
+  position: { x: number; y: number },
+  towerLevel: 1 | 2 | 3,
+  existingTowers: Tower[],
+  path: { x: number; y: number }[]
+) {
+  const towerStats = TOWER_STATS[towerLevel];
+  const canPlace = canPlaceTower(position, existingTowers, path);
+  
+  const size = TOWER_SIZE;
+  const x = position.x - size / 2;
+  const y = position.y - size / 2;
+
+  // Цвета башни в зависимости от уровня
+  const colors = {
+    1: '#4ecdc4',
+    2: '#44a5e8',
+    3: '#9b59b6',
+  };
+
+  // Рисуем радиус действия
+  ctx.strokeStyle = canPlace ? colors[towerLevel] : '#ff0000';
+  ctx.globalAlpha = 0.3;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(position.x, position.y, towerStats.range, 0, Math.PI * 2);
+  ctx.stroke();
+  
+  // Заливка круга радиуса
+  ctx.fillStyle = canPlace ? colors[towerLevel] : '#ff0000';
+  ctx.globalAlpha = 0.1;
+  ctx.beginPath();
+  ctx.arc(position.x, position.y, towerStats.range, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Рисуем саму башню
+  ctx.fillStyle = canPlace ? colors[towerLevel] : '#ff0000';
+  ctx.globalAlpha = canPlace ? 0.6 : 0.5;
+  ctx.fillRect(x, y, size, size);
+  ctx.globalAlpha = 1;
+
+  // Обводка башни
+  ctx.strokeStyle = canPlace ? '#000' : '#ff0000';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x, y, size, size);
+
+  // Уровень башни
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 16px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(towerLevel.toString(), position.x, position.y);
+
+  // Показываем текст "нельзя поставить" если позиция недопустима
+  if (!canPlace) {
+    ctx.fillStyle = '#ff0000';
+    ctx.font = 'bold 12px Arial';
+    ctx.fillText('НЕЛЬЗЯ', position.x, position.y + size / 2 + 15);
+  }
 }

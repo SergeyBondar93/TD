@@ -301,7 +301,12 @@ function App() {
       
       <div className="app-main-content" style={styles.mainContent}>
         <div className="app-game-section" style={styles.gameSection}>
-          <GameCanvas gameState={gameState} onCanvasClick={handleCanvasClick} />
+          <GameCanvas 
+            gameState={gameState} 
+            onCanvasClick={handleCanvasClick} 
+            selectedTowerLevel={selectedTowerLevel}
+            path={DEFAULT_PATH}
+          />
           <GameUI
             money={money}
             lives={lives}

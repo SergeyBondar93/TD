@@ -173,6 +173,7 @@ export const DebugInfo: React.FC<DebugInfoProps> = ({ gameState, onGameSpeedChan
                 <div className="debug-info-subsection-title" style={styles.subsectionTitle}>Детали (топ 5):</div>
                 {gameState.enemies.slice(0, 5).map((enemy, idx) => {
                   const healthPercent = ((enemy.health / enemy.maxHealth) * 100).toFixed(0);
+                  const turnCount = enemy.turnPoints?.length || 0;
                   return (
                     <div key={enemy.id} className="debug-info-entity-card debug-info-enemy-card" style={styles.entityCard}>
                       <div className="debug-info-entity-header" style={styles.entityHeader}>#{idx + 1} [L{enemy.level}]</div>
@@ -182,6 +183,14 @@ export const DebugInfo: React.FC<DebugInfoProps> = ({ gameState, onGameSpeedChan
                         <div>Награда: {enemy.reward}</div>
                         <div>Путь: {enemy.pathIndex}/{gameState.path.length - 1}</div>
                         <div>Поз: ({Math.round(enemy.position.x)}, {Math.round(enemy.position.y)})</div>
+                        <div style={{color: '#ff0'}}>Поворотов: {turnCount}</div>
+                        {enemy.turnPoints && enemy.turnPoints.length > 0 && (
+                          <div style={{fontSize: '8px', color: '#888', marginTop: '2px'}}>
+                            {enemy.turnPoints.map((tp, tpIdx) => (
+                              <div key={tpIdx}>#{tpIdx + 1}: ({Math.round(tp.x)}, {Math.round(tp.y)})</div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   );

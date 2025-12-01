@@ -14,13 +14,13 @@ export const LEVELS: LevelConfig[] = [
   // Уровень 1 - Обучение
   {
     level: 1,
-    startingMoney: 300,
+    startingMoney: 3000,
     startingLives: 20,
     waves: [
       {
         enemyCount: 60,
         enemyLevel: 1,
-        enemyHealth: 50,
+        enemyHealth: 10,
         enemySpeed: 60,
         enemyReward: 10,
         spawnDelay: SPAWN_DELAY.INFANTRY,

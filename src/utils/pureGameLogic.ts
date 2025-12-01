@@ -58,6 +58,7 @@ export interface EnemyUpdateResult {
   position: Position;
   pathIndex: number;
   reachedEnd: boolean;
+  turnPoints?: Position[];
 }
 
 export function updateEnemyPosition(
@@ -90,8 +91,8 @@ export function updateEnemyPosition(
   const perpY = dirX;
   
   // Целевая позиция с учетом смещения
-  const targetX = currentTarget.x + perpX * enemy.pathOffset;
-  const targetY = currentTarget.y + perpY * enemy.pathOffset;
+  const targetX = currentTarget.x + perpX * enemy.pathOffset + dirX * enemy.pathOffset;
+  const targetY = currentTarget.y + perpY * enemy.pathOffset + dirY * enemy.pathOffset;
   
   const distX = targetX - enemy.position.x;
   const distY = targetY - enemy.position.y;
@@ -100,10 +101,15 @@ export function updateEnemyPosition(
   const moveDistance = (enemy.speed * deltaTime) / 1000;
 
   if (dist <= moveDistance) {
+    // Враг достиг точки пути - это поворот
+    const turnPoints = enemy.turnPoints || [];
+    turnPoints.push({ x: targetX, y: targetY });
+    
     return {
       position: { x: targetX, y: targetY },
       pathIndex: enemy.pathIndex + 1,
       reachedEnd: enemy.pathIndex + 1 >= path.length - 1,
+      turnPoints,
     };
   } else {
     const ratio = moveDistance / dist;
@@ -140,7 +146,6 @@ export function processEnemies(
     }
 
     const updated = updateEnemyPosition(enemy, path, deltaTime);
-
     if (updated.reachedEnd) {
       lostLives++;
     } else {
@@ -148,6 +153,7 @@ export function processEnemies(
         ...enemy,
         position: updated.position,
         pathIndex: updated.pathIndex,
+        turnPoints: updated.turnPoints || enemy.turnPoints,
       });
     }
   }
@@ -355,16 +361,17 @@ export function processWaveSpawn(
     // Определяем размер врага в зависимости от типа
     const enemySize = ENEMY_SIZES[waveConfig.enemyType];
     
-    // Для пехоты добавляем случайное смещение по Y (перпендикулярно пути)
+    // Для пехоты добавляем случайное смещение (перпендикулярно и вдоль пути)
     let spawnPosition = { ...startPosition };
     let pathOffset = 0;
     
     if (waveConfig.enemyType === 'infantry') {
       // Смещение от -20 до +20 пикселей для создания эффекта толпы
       pathOffset = (Math.random() - 0.5) * 40;
+      // Смещение применяется как перпендикулярно, так и вдоль направления движения
+      spawnPosition.x += pathOffset;
       spawnPosition.y += pathOffset;
     }
-    
     const newEnemy: Enemy = {
       id: generateId(),
       position: spawnPosition,
@@ -377,6 +384,7 @@ export function processWaveSpawn(
       type: waveConfig.enemyType,
       size: enemySize,
       pathOffset: pathOffset,
+      turnPoints: [],
     };
 
     const updatedSpawnState: WaveSpawnState = {

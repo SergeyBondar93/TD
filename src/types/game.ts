@@ -33,6 +33,7 @@ export interface Enemy {
   type: EnemyType; // Тип врага
   size: number; // Размер врага
   pathOffset: number; // Смещение относительно центра пути (для пехоты)
+  turnPoints?: Position[]; // Точки где был совершен поворот (для отладки)
 }
 
 export interface Tower {

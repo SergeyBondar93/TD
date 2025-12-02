@@ -450,6 +450,32 @@ function drawTower(ctx: CanvasRenderingContext2D, tower: Tower) {
   ctx.textBaseline = 'middle';
   ctx.fillText(tower.level.toString(), tower.position.x, tower.position.y);
 
+  // Индикатор строительства/улучшения
+  if (tower.buildTimeRemaining > 0) {
+    const progress = 1 - (tower.buildTimeRemaining / (DEV_CONFIG.BASE_BUILD_TIME * 1000 * tower.level));
+    
+    // Полупрозрачный серый оверлей
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.fillRect(x, y, size, size);
+    
+    // Прогресс-бар
+    const barHeight = 4;
+    const barY = y + size + 5;
+    
+    // Фон бара
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.fillRect(x, barY, size, barHeight);
+    
+    // Заполнение бара
+    ctx.fillStyle = tower.upgradeQueue > 0 ? '#ffd700' : '#4ecdc4';
+    ctx.fillRect(x, barY, size * progress, barHeight);
+    
+    // Обводка бара
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, barY, size, barHeight);
+  }
+
   // Радиус атаки (полупрозрачный круг)
   ctx.strokeStyle = colors[tower.level];
   ctx.globalAlpha = 0.2;

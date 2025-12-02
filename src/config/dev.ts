@@ -27,4 +27,10 @@ export const DEV_CONFIG = {
   
   // Скрывать цифры HP у пехоты
   HIDE_INFANTRY_HP: true,
+
+  // Время строительства башни в секундах (базовое для уровня 1)
+  BASE_BUILD_TIME: 3,
+  
+  // Время улучшения башни в секундах (базовое)
+  BASE_UPGRADE_TIME: 2,
 };

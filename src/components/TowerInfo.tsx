@@ -19,9 +19,11 @@ const MAX_UPGRADES = 5;
 export const TowerInfo: React.FC<TowerInfoProps> = ({ tower, money, onUpgrade, onClose }) => {
   if (!tower) return null;
 
-  const canUpgrade = tower.upgradeLevel < MAX_UPGRADES;
-  const upgradeCost = canUpgrade ? Math.round(tower.cost * Math.pow(UPGRADE_COST_MULTIPLIER, tower.upgradeLevel + 1)) : 0;
+  const totalUpgradeLevel = tower.upgradeLevel + tower.upgradeQueue;
+  const canUpgrade = totalUpgradeLevel < MAX_UPGRADES;
+  const upgradeCost = canUpgrade ? Math.round(tower.cost * Math.pow(UPGRADE_COST_MULTIPLIER, totalUpgradeLevel + 1)) : 0;
   const canAffordUpgrade = money >= upgradeCost;
+  const isBuilding = tower.buildTimeRemaining > 0;
 
   const getWeaponTypeName = (type: WeaponType): string => {
     switch (type) {
@@ -148,6 +150,17 @@ export const TowerInfo: React.FC<TowerInfoProps> = ({ tower, money, onUpgrade, o
         <div style={styles.value}>{getWeaponTypeName(tower.weaponType)}</div>
       </div>
 
+      {isBuilding && (
+        <div style={styles.section}>
+          <div style={styles.label}>
+            {tower.upgradeQueue > 0 ? 'Улучшение...' : 'Строительство...'}
+          </div>
+          <div style={styles.value}>
+            {(tower.buildTimeRemaining / 1000).toFixed(1)}с
+          </div>
+        </div>
+      )}
+
       <div style={styles.statsGrid}>
         <div style={styles.section}>
           <div style={styles.label}>Урон</div>
@@ -170,6 +183,7 @@ export const TowerInfo: React.FC<TowerInfoProps> = ({ tower, money, onUpgrade, o
       <div style={styles.upgradeSection}>
         <div style={styles.upgradeLevel}>
           Улучшение: {tower.upgradeLevel}/{MAX_UPGRADES}
+          {tower.upgradeQueue > 0 && ` (+${tower.upgradeQueue} в очереди)`}
         </div>
         
         {canUpgrade ? (

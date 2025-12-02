@@ -349,6 +349,11 @@ export function processTowerFire(
   enemies: Enemy[],
   currentTime: number
 ): TowerFireResult {
+  // Башня не может атаковать во время строительства или улучшения
+  if (tower.buildTimeRemaining > 0) {
+    return { updatedTower: tower, projectile: null, laserBeam: null, electricChain: null, fireProjectile: null, flameStream: null, iceProjectile: null, iceStream: null };
+  }
+
   const timeSinceLastFire = currentTime - tower.lastFireTime;
   const fireInterval = 1000 / tower.fireRate;
 
@@ -887,7 +892,12 @@ export function processLaserBeams(
 export function updateTowerRotations(
   towers: Tower[],
   deltaTime: number,
-  rotationSpeed: number = 5 // радиан в секунду
+  rotationSpeed: number = 5, // радиан в секунду
+  upgradeMultipliers?: {
+    damageMultiplier: number;
+    rangeMultiplier: number;
+    fireRateMultiplier: number;
+  }
 ): Tower[] {
   return towers.map(tower => {
     const currentRotation = tower.rotation ?? 0;
@@ -896,10 +906,26 @@ export function updateTowerRotations(
     // Плавно поворачиваем к целевому углу
     const newRotation = lerpAngle(currentRotation, targetRotation, rotationSpeed, deltaTime);
 
-    return {
+    // Обновляем время строительства/улучшения
+    let updatedTower = {
       ...tower,
       rotation: newRotation,
+      buildTimeRemaining: Math.max(0, tower.buildTimeRemaining - deltaTime),
     };
+
+    // Если завершилось улучшение, применяем его
+    if (tower.buildTimeRemaining > 0 && updatedTower.buildTimeRemaining === 0 && tower.upgradeQueue > 0 && upgradeMultipliers) {
+      updatedTower = {
+        ...updatedTower,
+        upgradeLevel: tower.upgradeLevel + tower.upgradeQueue,
+        damage: tower.damage * Math.pow(upgradeMultipliers.damageMultiplier, tower.upgradeQueue),
+        range: tower.range * Math.pow(upgradeMultipliers.rangeMultiplier, tower.upgradeQueue),
+        fireRate: tower.fireRate * Math.pow(upgradeMultipliers.fireRateMultiplier, tower.upgradeQueue),
+        upgradeQueue: 0,
+      };
+    }
+
+    return updatedTower;
   });
 }
 

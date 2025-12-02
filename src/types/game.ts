@@ -70,6 +70,8 @@ export interface Tower {
   baseDamage: number; // Базовый урон (для расчета апгрейдов)
   baseRange: number; // Базовая дальность
   baseFireRate: number; // Базовая скорострельность
+  buildTimeRemaining: number; // Оставшееся время строительства/улучшения в мс
+  upgradeQueue: number; // Количество улучшений в очереди
 }
 
 export interface Projectile {

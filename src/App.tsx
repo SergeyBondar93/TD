@@ -169,6 +169,7 @@ function App() {
       if (!canPlaceTower(position, towers, DEFAULT_PATH)) return;
 
       const newTowerId = `tower-${Date.now()}`;
+      const buildTime = DEV_CONFIG.BASE_BUILD_TIME * 1000 * selectedTowerLevel; // Время строительства зависит от уровня башни
       const newTower: Tower = {
         id: newTowerId,
         position,
@@ -190,6 +191,8 @@ function App() {
         baseDamage: towerStats.damage,
         baseRange: towerStats.range,
         baseFireRate: towerStats.fireRate,
+        buildTimeRemaining: buildTime,
+        upgradeQueue: 0,
       };
 
       addTower(newTower);
@@ -217,19 +220,19 @@ function App() {
     if (!selectedTowerId) return;
     
     const tower = towers.find(t => t.id === selectedTowerId);
-    if (!tower || tower.upgradeLevel >= 5) return;
+    if (!tower || tower.upgradeLevel + tower.upgradeQueue >= 5) return;
 
-    const upgradeCost = Math.round(tower.cost * Math.pow(UPGRADE_COST_MULTIPLIER, tower.upgradeLevel + 1));
+    const upgradeCost = Math.round(tower.cost * Math.pow(UPGRADE_COST_MULTIPLIER, tower.upgradeLevel + tower.upgradeQueue + 1));
     if (money < upgradeCost) return;
+
+    const upgradeTime = DEV_CONFIG.BASE_UPGRADE_TIME * 1000 * (tower.upgradeLevel + tower.upgradeQueue + 1);
 
     const updatedTowers = towers.map(t => {
       if (t.id === selectedTowerId) {
         return {
           ...t,
-          upgradeLevel: t.upgradeLevel + 1,
-          damage: t.damage * UPGRADE_DAMAGE_MULTIPLIER,
-          range: t.range * UPGRADE_RANGE_MULTIPLIER,
-          fireRate: t.fireRate * UPGRADE_FIRE_RATE_MULTIPLIER,
+          upgradeQueue: t.upgradeQueue + 1,
+          buildTimeRemaining: t.buildTimeRemaining + upgradeTime,
         };
       }
       return t;
@@ -349,10 +352,16 @@ function App() {
       newIceProjectiles.forEach((i) => state.addIceProjectile(i));
       newIceStreams.forEach((i) => state.addIceStream(i));
 
-      // 3.5. Обновление вращения башен (плавная интерполяция)
+      // 3.5. Обновление вращения башен (плавная интерполяция) и времени строительства/улучшения
       const rotatedTowers = updateTowerRotations(
         useGameStore.getState().towers,
-        adjustedDeltaTime
+        adjustedDeltaTime,
+        5, // rotation speed
+        {
+          damageMultiplier: UPGRADE_DAMAGE_MULTIPLIER,
+          rangeMultiplier: UPGRADE_RANGE_MULTIPLIER,
+          fireRateMultiplier: UPGRADE_FIRE_RATE_MULTIPLIER,
+        }
       );
       state.setTowers(rotatedTowers);
 

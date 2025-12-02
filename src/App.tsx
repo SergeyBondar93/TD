@@ -242,6 +242,33 @@ function App() {
     setMoney(money - upgradeCost);
   }, [selectedTowerId, towers, money, setTowers, setMoney]);
 
+  // Продажа башни
+  const handleTowerSell = useCallback(() => {
+    if (!selectedTowerId) return;
+    
+    const tower = towers.find(t => t.id === selectedTowerId);
+    if (!tower) return;
+
+    // Рассчитываем стоимость завершенных улучшений
+    const completedUpgrades = Array.from({ length: tower.upgradeLevel }, (_, i) => 
+      Math.round(tower.cost * Math.pow(UPGRADE_COST_MULTIPLIER, i + 1))
+    ).reduce((sum, cost) => sum + cost, 0);
+
+    // Рассчитываем стоимость улучшений в очереди
+    const queuedUpgrades = Array.from({ length: tower.upgradeQueue || 0 }, (_, i) => 
+      Math.round(tower.cost * Math.pow(UPGRADE_COST_MULTIPLIER, tower.upgradeLevel + i + 1))
+    ).reduce((sum, cost) => sum + cost, 0);
+    
+    // Общая инвестиция = базовая стоимость + завершенные + в очереди
+    const totalInvested = tower.cost + completedUpgrades + queuedUpgrades;
+    const sellValue = Math.round(totalInvested * 0.7);
+
+    // Удаляем башню и возвращаем деньги
+    setTowers(towers.filter(t => t.id !== selectedTowerId));
+    setMoney(money + sellValue);
+    setSelectedTowerId(null);
+  }, [selectedTowerId, towers, money, setTowers, setMoney, setSelectedTowerId]);
+
   // Автоматическая инициализация первого уровня в дев режиме
   useEffect(() => {
     if (DEV_CONFIG.AUTO_START_LEVEL && currentLevel !== null && !isInitialized) {
@@ -531,6 +558,7 @@ function App() {
               tower={towers.find(t => t.id === selectedTowerId)!}
               money={money}
               onUpgrade={handleTowerUpgrade}
+              onSell={handleTowerSell}
               onClose={() => setSelectedTowerId(null)}
             />
           )}

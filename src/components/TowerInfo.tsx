@@ -6,6 +6,7 @@ interface TowerInfoProps {
   tower: Tower | null;
   money: number;
   onUpgrade: () => void;
+  onSell: () => void;
   onClose: () => void;
 }
 
@@ -16,7 +17,7 @@ const UPGRADE_RANGE_MULTIPLIER = 1.15;
 const UPGRADE_FIRE_RATE_MULTIPLIER = 1.2;
 const MAX_UPGRADES = 5;
 
-export const TowerInfo: React.FC<TowerInfoProps> = ({ tower, money, onUpgrade, onClose }) => {
+export const TowerInfo: React.FC<TowerInfoProps> = ({ tower, money, onUpgrade, onSell, onClose }) => {
   if (!tower) return null;
 
   const totalUpgradeLevel = tower.upgradeLevel + tower.upgradeQueue;
@@ -24,6 +25,18 @@ export const TowerInfo: React.FC<TowerInfoProps> = ({ tower, money, onUpgrade, o
   const upgradeCost = canUpgrade ? Math.round(tower.cost * Math.pow(UPGRADE_COST_MULTIPLIER, totalUpgradeLevel + 1)) : 0;
   const canAffordUpgrade = money >= upgradeCost;
   const isBuilding = tower.buildTimeRemaining > 0;
+  
+  // Расчет стоимости продажи (70% от базовой стоимости + все улучшения + улучшения в очереди)
+  const completedUpgrades = Array.from({ length: tower.upgradeLevel }, (_, i) => 
+    Math.round(tower.cost * Math.pow(UPGRADE_COST_MULTIPLIER, i + 1))
+  ).reduce((sum, cost) => sum + cost, 0);
+  
+  const queuedUpgrades = Array.from({ length: tower.upgradeQueue }, (_, i) => 
+    Math.round(tower.cost * Math.pow(UPGRADE_COST_MULTIPLIER, tower.upgradeLevel + i + 1))
+  ).reduce((sum, cost) => sum + cost, 0);
+  
+  const totalInvested = tower.cost + completedUpgrades + queuedUpgrades;
+  const sellValue = Math.round(totalInvested * 0.7);
 
   const getWeaponTypeName = (type: WeaponType): string => {
     switch (type) {
@@ -116,6 +129,10 @@ export const TowerInfo: React.FC<TowerInfoProps> = ({ tower, money, onUpgrade, o
       backgroundColor: '#555',
       color: '#888',
       cursor: 'not-allowed',
+    },
+    sellButton: {
+      backgroundColor: '#e74c3c',
+      color: '#fff',
     },
     upgradeInfo: {
       fontSize: '11px',
@@ -219,6 +236,28 @@ export const TowerInfo: React.FC<TowerInfoProps> = ({ tower, money, onUpgrade, o
             Максимальный уровень!
           </div>
         )}
+      </div>
+
+      {/* Кнопка продажи */}
+      <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #4a90e2' }}>
+        <button
+          style={{
+            ...styles.upgradeButton,
+            ...styles.sellButton,
+          }}
+          onClick={onSell}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#c0392b';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#e74c3c';
+          }}
+        >
+          Продать за ${sellValue}
+        </button>
+        <div style={{ ...styles.upgradeInfo, textAlign: 'center' as const }}>
+          70% от вложенных средств
+        </div>
       </div>
     </div>
   );

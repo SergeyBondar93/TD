@@ -17,11 +17,12 @@ import { canPlaceTower } from '../utils/pureGameLogic';
 interface GameCanvasProps {
   gameState: GameState;
   onCanvasClick: (x: number, y: number) => void;
+  onTowerClick: (towerId: string) => void;
   selectedTowerLevel: 1 | 2 | 3 | 4 | 5 | null;
   path: { x: number; y: number }[];
 }
 
-export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick, selectedTowerLevel, path }) => {
+export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick, onTowerClick, selectedTowerLevel, path }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
 
@@ -126,6 +127,18 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+
+    // Проверяем клик по башне
+    for (const tower of gameState.towers) {
+      const dx = x - tower.position.x;
+      const dy = y - tower.position.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      if (dist <= tower.size / 2) {
+        onTowerClick(tower.id);
+        return;
+      }
+    }
 
     onCanvasClick(x, y);
   };

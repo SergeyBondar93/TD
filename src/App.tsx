@@ -4,6 +4,7 @@ import { GameUI } from './components/GameUI';
 import { LevelSelect } from './components/LevelSelect';
 import { GameOver } from './components/GameOver';
 import { DebugInfo } from './components/DebugInfo';
+import { TowerInfo } from './components/TowerInfo';
 import { useGameStore } from './stores/gameStore';
 import { useUIStore } from './stores/uiStore';
 import type { GameState, Enemy, Tower, Projectile, LaserBeam, ElectricChain, FireProjectile, FlameStream, IceProjectile, IceStream } from './types/game';
@@ -72,7 +73,7 @@ function App() {
     initializeGame: initializeGameStore,
   } = useGameStore();
 
-  const { selectedTowerLevel, isInitialized, setSelectedTowerLevel, setIsInitialized } = useUIStore();
+  const { selectedTowerLevel, selectedTowerId, isInitialized, setSelectedTowerLevel, setSelectedTowerId, setIsInitialized } = useUIStore();
 
   // Refs для игрового цикла
   const lastTimeRef = useRef<number>(0);
@@ -184,6 +185,10 @@ function App() {
         slowDuration: (towerStats as any).slowDuration,
         rotation: 0,
         targetRotation: 0,
+        upgradeLevel: 0,
+        baseDamage: towerStats.damage,
+        baseRange: towerStats.range,
+        baseFireRate: towerStats.fireRate,
       };
 
       addTower(newTower);
@@ -192,6 +197,45 @@ function App() {
     },
     [selectedTowerLevel, money, towers, addTower, setMoney, setSelectedTowerLevel]
   );
+
+  // Обработка клика по башне
+  const handleTowerClick = useCallback((towerId: string) => {
+    setSelectedTowerId(towerId);
+    setSelectedTowerLevel(null); // Отменяем выбор для постройки новой башни
+  }, [setSelectedTowerId, setSelectedTowerLevel]);
+
+  // Константы для расчета апгрейдов
+  const UPGRADE_COST_MULTIPLIER = 2.5;
+  const UPGRADE_DAMAGE_MULTIPLIER = 1.8;
+  const UPGRADE_RANGE_MULTIPLIER = 1.15;
+  const UPGRADE_FIRE_RATE_MULTIPLIER = 1.2;
+
+  // Апгрейд башни
+  const handleTowerUpgrade = useCallback(() => {
+    if (!selectedTowerId) return;
+    
+    const tower = towers.find(t => t.id === selectedTowerId);
+    if (!tower || tower.upgradeLevel >= 5) return;
+
+    const upgradeCost = Math.round(tower.cost * Math.pow(UPGRADE_COST_MULTIPLIER, tower.upgradeLevel + 1));
+    if (money < upgradeCost) return;
+
+    const updatedTowers = towers.map(t => {
+      if (t.id === selectedTowerId) {
+        return {
+          ...t,
+          upgradeLevel: t.upgradeLevel + 1,
+          damage: t.damage * UPGRADE_DAMAGE_MULTIPLIER,
+          range: t.range * UPGRADE_RANGE_MULTIPLIER,
+          fireRate: t.fireRate * UPGRADE_FIRE_RATE_MULTIPLIER,
+        };
+      }
+      return t;
+    });
+
+    setTowers(updatedTowers);
+    setMoney(money - upgradeCost);
+  }, [selectedTowerId, towers, money, setTowers, setMoney]);
 
   // Автоматическая инициализация первого уровня в дев режиме
   useEffect(() => {
@@ -452,7 +496,8 @@ function App() {
         <div className="app-game-section" style={styles.gameSection}>
           <GameCanvas 
             gameState={gameState} 
-            onCanvasClick={handleCanvasClick} 
+            onCanvasClick={handleCanvasClick}
+            onTowerClick={handleTowerClick}
             selectedTowerLevel={selectedTowerLevel}
             path={DEFAULT_PATH}
           />
@@ -470,6 +515,14 @@ function App() {
             onResume={() => setGameStatus('playing')}
             canStartWave={canStartWave}
           />
+          {selectedTowerId && (
+            <TowerInfo
+              tower={towers.find(t => t.id === selectedTowerId)!}
+              money={money}
+              onUpgrade={handleTowerUpgrade}
+              onClose={() => setSelectedTowerId(null)}
+            />
+          )}
         </div>
       </div>
 

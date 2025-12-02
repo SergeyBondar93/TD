@@ -66,6 +66,10 @@ export interface Tower {
   slowDuration?: number; // Длительность замедления в мс
   rotation?: number; // Угол поворота башни в радианах
   targetRotation?: number; // Целевой угол поворота для плавного вращения
+  upgradeLevel: number; // Уровень улучшения (0-5)
+  baseDamage: number; // Базовый урон (для расчета апгрейдов)
+  baseRange: number; // Базовая дальность
+  baseFireRate: number; // Базовая скорострельность
 }
 
 export interface Projectile {

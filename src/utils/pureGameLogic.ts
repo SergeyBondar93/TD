@@ -37,6 +37,35 @@ export function distanceToSegment(point: Position, a: Position, b: Position): nu
   return distance(point, projection);
 }
 
+// Функция для плавной интерполяции угла (учитывает переход через 0/2π)
+export function lerpAngle(current: number, target: number, speed: number, deltaTime: number): number {
+  // Нормализуем углы в диапазон [0, 2π]
+  const normalizeAngle = (angle: number) => {
+    while (angle < 0) angle += Math.PI * 2;
+    while (angle >= Math.PI * 2) angle -= Math.PI * 2;
+    return angle;
+  };
+
+  const currentNorm = normalizeAngle(current);
+  const targetNorm = normalizeAngle(target);
+
+  // Вычисляем кратчайший путь поворота
+  let diff = targetNorm - currentNorm;
+  if (diff > Math.PI) {
+    diff -= Math.PI * 2;
+  } else if (diff < -Math.PI) {
+    diff += Math.PI * 2;
+  }
+
+  // Интерполируем
+  const maxRotation = speed * (deltaTime / 1000);
+  if (Math.abs(diff) <= maxRotation) {
+    return targetNorm;
+  }
+
+  return normalizeAngle(currentNorm + Math.sign(diff) * maxRotation);
+}
+
 // ============================================
 // ID генерация
 // ============================================
@@ -326,7 +355,35 @@ export function processTowerFire(
     return { updatedTower: { ...tower, currentTarget: undefined }, projectile: null, laserBeam: null, electricChain: null, fireProjectile: null, flameStream: null, iceProjectile: null, iceStream: null };
   }
 
-  const updatedTower = { ...tower, lastFireTime: currentTime, currentTarget: target.id };
+  // Вычисляем целевой угол поворота к цели
+  const dx = target.position.x - tower.position.x;
+  const dy = target.position.y - tower.position.y;
+  const targetRotation = Math.atan2(dy, dx);
+
+  // Проверяем, повернулась ли башня достаточно близко к цели
+  const currentRotation = tower.rotation ?? 0;
+  const rotationThreshold = 0.1; // ~5.7 градусов - допустимое отклонение
+  
+  // Вычисляем разницу углов (кратчайший путь)
+  let angleDiff = targetRotation - currentRotation;
+  while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+  while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+  
+  // Если башня еще не довернулась к цели, обновляем только targetRotation без выстрела
+  if (Math.abs(angleDiff) > rotationThreshold) {
+    return { 
+      updatedTower: { ...tower, currentTarget: target.id, targetRotation },
+      projectile: null, 
+      laserBeam: null, 
+      electricChain: null, 
+      fireProjectile: null, 
+      flameStream: null, 
+      iceProjectile: null, 
+      iceStream: null 
+    };
+  }
+
+  const updatedTower = { ...tower, lastFireTime: currentTime, currentTarget: target.id, targetRotation };
 
   // Электрическое оружие - цепная молния
   if (tower.weaponType === WeaponTypeEnum.ELECTRIC) {
@@ -814,6 +871,29 @@ export function processLaserBeams(
     activeLaserBeams,
     updatedEnemies: Array.from(enemiesMap.values()),
   };
+}
+
+// ============================================
+// Логика поворота башен
+// ============================================
+
+export function updateTowerRotations(
+  towers: Tower[],
+  deltaTime: number,
+  rotationSpeed: number = 5 // радиан в секунду
+): Tower[] {
+  return towers.map(tower => {
+    const currentRotation = tower.rotation ?? 0;
+    const targetRotation = tower.targetRotation ?? currentRotation;
+
+    // Плавно поворачиваем к целевому углу
+    const newRotation = lerpAngle(currentRotation, targetRotation, rotationSpeed, deltaTime);
+
+    return {
+      ...tower,
+      rotation: newRotation,
+    };
+  });
 }
 
 // ============================================

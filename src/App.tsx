@@ -22,6 +22,7 @@ import {
   processIceProjectiles,
   processIceStreams,
   processWaveSpawn,
+  updateTowerRotations,
   type WaveSpawnState,
 } from './utils/pureGameLogic';
 import './App.css';
@@ -181,6 +182,8 @@ function App() {
         areaRadius: (towerStats as any).areaRadius,
         slowEffect: (towerStats as any).slowEffect,
         slowDuration: (towerStats as any).slowDuration,
+        rotation: 0,
+        targetRotation: 0,
       };
 
       addTower(newTower);
@@ -299,6 +302,13 @@ function App() {
       newFlameStreams.forEach((f) => state.addFlameStream(f));
       newIceProjectiles.forEach((i) => state.addIceProjectile(i));
       newIceStreams.forEach((i) => state.addIceStream(i));
+
+      // 3.5. Обновление вращения башен (плавная интерполяция)
+      const rotatedTowers = updateTowerRotations(
+        useGameStore.getState().towers,
+        adjustedDeltaTime
+      );
+      state.setTowers(rotatedTowers);
 
       // 4. Обновление снарядов
       const currentProjectiles = useGameStore.getState().projectiles;

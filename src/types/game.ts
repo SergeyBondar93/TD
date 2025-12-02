@@ -63,6 +63,8 @@ export interface Tower {
   areaRadius?: number; // Радиус области поражения для огненного оружия
   slowEffect?: number; // Эффект замедления для ледяного оружия
   slowDuration?: number; // Длительность замедления в мс
+  rotation?: number; // Угол поворота башни в радианах
+  targetRotation?: number; // Целевой угол поворота для плавного вращения
 }
 
 export interface Projectile {

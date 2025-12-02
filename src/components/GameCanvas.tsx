@@ -418,6 +418,33 @@ function drawTower(ctx: CanvasRenderingContext2D, tower: Tower) {
   ctx.arc(tower.position.x, tower.position.y, tower.range, 0, Math.PI * 2);
   ctx.stroke();
   ctx.globalAlpha = 1;
+
+  // Рисуем стрелку направления
+  const rotation = tower.rotation ?? 0;
+  const arrowLength = size * 0.6;
+  const arrowWidth = size * 0.25;
+  
+  ctx.save();
+  ctx.translate(tower.position.x, tower.position.y);
+  ctx.rotate(rotation);
+  
+  // Стрелка
+  ctx.fillStyle = '#ffffff';
+  ctx.globalAlpha = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(arrowLength, 0); // Кончик стрелки
+  ctx.lineTo(0, -arrowWidth);
+  ctx.lineTo(0, arrowWidth);
+  ctx.closePath();
+  ctx.fill();
+  
+  // Обводка стрелки
+  ctx.strokeStyle = '#000000';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  
+  ctx.globalAlpha = 1;
+  ctx.restore();
 }
 
 // Рисование снаряда

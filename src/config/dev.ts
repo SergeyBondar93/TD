@@ -29,8 +29,8 @@ export const DEV_CONFIG = {
   HIDE_INFANTRY_HP: true,
 
   // Время строительства башни в секундах (базовое для уровня 1)
-  BASE_BUILD_TIME: 3,
+  BASE_BUILD_TIME: 2,
   
   // Время улучшения башни в секундах (базовое)
-  BASE_UPGRADE_TIME: 2,
+  BASE_UPGRADE_TIME: 1.5,
 };

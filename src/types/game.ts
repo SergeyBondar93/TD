@@ -196,49 +196,49 @@ export const TOWER_STATS: Record<1 | 2 | 3 | 4 | 5, TowerStats> = {
     damage: 10,
     range: 100,
     fireRate: 1, // 1 выстрел в секунду
-    cost: 50,
+    cost: 5,
     size: 30,
     weaponType: WeaponType.PROJECTILE,
-    upgradeCost: 100,
+    upgradeCost: 10,
   },
   2: {
     level: 2,
     damage: 25,
     range: 120,
     fireRate: 1.5,
-    cost: 150,
+    cost: 15,
     size: 35,
     weaponType: WeaponType.ELECTRIC,
     chainCount: 3, // Бьет по 3 врагам
-    upgradeCost: 200,
+    upgradeCost: 20,
   },
   3: {
     level: 3,
     damage: 50,
     range: 150,
     fireRate: 2,
-    cost: 350,
+    cost: 35,
     size: 40,
     weaponType: WeaponType.LASER,
-    upgradeCost: 300,
+    upgradeCost: 30,
   },
   4: {
     level: 4,
     damage: 8, // Маленький урон в секунду, но постоянный
     range: 120,
     fireRate: 10, // 10 тиков в секунду для плавного урона
-    cost: 200,
+    cost: 20,
     size: 35,
     weaponType: WeaponType.FIRE,
     areaRadius: 42, // Угол конуса огня (уменьшен на 30%)
-    upgradeCost: 250,
+    upgradeCost: 25,
   },
   5: {
     level: 5,
     damage: 3, // Очень низкий урон - основная цель замедлять
     range: 130,
     fireRate: 8, // Высокая скорострельность для постоянного замедления
-    cost: 400,
+    cost: 40,
     size: 40,
     weaponType: WeaponType.ICE,
     slowEffect: 0.35, // 35% замедление (увеличено)

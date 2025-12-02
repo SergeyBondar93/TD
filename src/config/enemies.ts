@@ -29,7 +29,7 @@ export const LEVEL_1_ENEMIES: EnemyClass[] = [
     type: EnemyType.INFANTRY,
     baseHealth: 10,
     baseSpeed: 60,
-    baseReward: 10,
+    baseReward: 1,
     spawnDelay: SPAWN_DELAY.INFANTRY,
   },
   {
@@ -38,7 +38,7 @@ export const LEVEL_1_ENEMIES: EnemyClass[] = [
     type: EnemyType.INFANTRY,
     baseHealth: 15,
     baseSpeed: 55,
-    baseReward: 12,
+    baseReward: 1,
     spawnDelay: SPAWN_DELAY.INFANTRY,
   },
   {
@@ -47,7 +47,7 @@ export const LEVEL_1_ENEMIES: EnemyClass[] = [
     type: EnemyType.INFANTRY,
     baseHealth: 8,
     baseSpeed: 70,
-    baseReward: 11,
+    baseReward: 1,
     spawnDelay: SPAWN_DELAY.INFANTRY,
   },
   {
@@ -56,7 +56,7 @@ export const LEVEL_1_ENEMIES: EnemyClass[] = [
     type: EnemyType.INFANTRY,
     baseHealth: 20,
     baseSpeed: 50,
-    baseReward: 15,
+    baseReward: 1,
     spawnDelay: SPAWN_DELAY.INFANTRY,
   },
   {
@@ -65,7 +65,7 @@ export const LEVEL_1_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_SMALL,
     baseHealth: 150,
     baseSpeed: 40,
-    baseReward: 25,
+    baseReward: 2,
     spawnDelay: SPAWN_DELAY.TANK_SMALL,
   },
 ];
@@ -80,7 +80,7 @@ export const LEVEL_2_ENEMIES: EnemyClass[] = [
     type: EnemyType.INFANTRY,
     baseHealth: 80,
     baseSpeed: 65,
-    baseReward: 15,
+    baseReward: 1,
     spawnDelay: SPAWN_DELAY.INFANTRY,
   },
   {
@@ -89,7 +89,7 @@ export const LEVEL_2_ENEMIES: EnemyClass[] = [
     type: EnemyType.INFANTRY,
     baseHealth: 100,
     baseSpeed: 70,
-    baseReward: 18,
+    baseReward: 1,
     spawnDelay: SPAWN_DELAY.INFANTRY,
   },
   {
@@ -98,7 +98,7 @@ export const LEVEL_2_ENEMIES: EnemyClass[] = [
     type: EnemyType.INFANTRY,
     baseHealth: 70,
     baseSpeed: 80,
-    baseReward: 17,
+    baseReward: 1,
     spawnDelay: SPAWN_DELAY.INFANTRY,
   },
   {
@@ -107,7 +107,7 @@ export const LEVEL_2_ENEMIES: EnemyClass[] = [
     type: EnemyType.INFANTRY,
     baseHealth: 120,
     baseSpeed: 60,
-    baseReward: 20,
+    baseReward: 2,
     spawnDelay: SPAWN_DELAY.INFANTRY,
   },
   {
@@ -116,7 +116,7 @@ export const LEVEL_2_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_SMALL,
     baseHealth: 200,
     baseSpeed: 45,
-    baseReward: 30,
+    baseReward: 3,
     spawnDelay: SPAWN_DELAY.TANK_SMALL,
   },
   {
@@ -125,7 +125,7 @@ export const LEVEL_2_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_SMALL,
     baseHealth: 180,
     baseSpeed: 50,
-    baseReward: 28,
+    baseReward: 2,
     spawnDelay: SPAWN_DELAY.TANK_SMALL,
   },
 ];
@@ -140,7 +140,7 @@ export const LEVEL_3_ENEMIES: EnemyClass[] = [
     type: EnemyType.INFANTRY,
     baseHealth: 120,
     baseSpeed: 70,
-    baseReward: 20,
+    baseReward: 2,
     spawnDelay: SPAWN_DELAY.INFANTRY,
   },
   {
@@ -149,7 +149,7 @@ export const LEVEL_3_ENEMIES: EnemyClass[] = [
     type: EnemyType.INFANTRY,
     baseHealth: 140,
     baseSpeed: 75,
-    baseReward: 22,
+    baseReward: 2,
     spawnDelay: SPAWN_DELAY.INFANTRY,
   },
   {
@@ -158,7 +158,7 @@ export const LEVEL_3_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_SMALL,
     baseHealth: 180,
     baseSpeed: 55,
-    baseReward: 35,
+    baseReward: 3,
     spawnDelay: SPAWN_DELAY.TANK_SMALL,
   },
   {
@@ -167,7 +167,7 @@ export const LEVEL_3_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 300,
     baseSpeed: 50,
-    baseReward: 40,
+    baseReward: 4,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -176,7 +176,7 @@ export const LEVEL_3_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 280,
     baseSpeed: 55,
-    baseReward: 42,
+    baseReward: 4,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -185,7 +185,7 @@ export const LEVEL_3_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 320,
     baseSpeed: 48,
-    baseReward: 38,
+    baseReward: 3,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -194,7 +194,7 @@ export const LEVEL_3_ENEMIES: EnemyClass[] = [
     type: EnemyType.INFANTRY,
     baseHealth: 100,
     baseSpeed: 85,
-    baseReward: 25,
+    baseReward: 2,
     spawnDelay: SPAWN_DELAY.INFANTRY,
   },
 ];
@@ -209,7 +209,7 @@ export const LEVEL_4_ENEMIES: EnemyClass[] = [
     type: EnemyType.INFANTRY,
     baseHealth: 150,
     baseSpeed: 75,
-    baseReward: 25,
+    baseReward: 2,
     spawnDelay: SPAWN_DELAY.INFANTRY,
   },
   {
@@ -218,7 +218,7 @@ export const LEVEL_4_ENEMIES: EnemyClass[] = [
     type: EnemyType.INFANTRY,
     baseHealth: 130,
     baseSpeed: 90,
-    baseReward: 28,
+    baseReward: 2,
     spawnDelay: SPAWN_DELAY.INFANTRY,
   },
   {
@@ -227,7 +227,7 @@ export const LEVEL_4_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_SMALL,
     baseHealth: 250,
     baseSpeed: 60,
-    baseReward: 40,
+    baseReward: 4,
     spawnDelay: SPAWN_DELAY.TANK_SMALL,
   },
   {
@@ -236,7 +236,7 @@ export const LEVEL_4_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 400,
     baseSpeed: 55,
-    baseReward: 50,
+    baseReward: 5,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -245,7 +245,7 @@ export const LEVEL_4_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 450,
     baseSpeed: 50,
-    baseReward: 48,
+    baseReward: 4,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -254,7 +254,7 @@ export const LEVEL_4_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 350,
     baseSpeed: 60,
-    baseReward: 52,
+    baseReward: 5,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -263,7 +263,7 @@ export const LEVEL_4_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 600,
     baseSpeed: 45,
-    baseReward: 65,
+    baseReward: 6,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -272,7 +272,7 @@ export const LEVEL_4_ENEMIES: EnemyClass[] = [
     type: EnemyType.INFANTRY,
     baseHealth: 200,
     baseSpeed: 80,
-    baseReward: 30,
+    baseReward: 3,
     spawnDelay: SPAWN_DELAY.INFANTRY,
   },
 ];
@@ -287,7 +287,7 @@ export const LEVEL_5_ENEMIES: EnemyClass[] = [
     type: EnemyType.INFANTRY,
     baseHealth: 200,
     baseSpeed: 80,
-    baseReward: 30,
+    baseReward: 3,
     spawnDelay: SPAWN_DELAY.INFANTRY,
   },
   {
@@ -305,7 +305,7 @@ export const LEVEL_5_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 500,
     baseSpeed: 60,
-    baseReward: 60,
+    baseReward: 6,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -314,7 +314,7 @@ export const LEVEL_5_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 450,
     baseSpeed: 65,
-    baseReward: 58,
+    baseReward: 5,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -323,7 +323,7 @@ export const LEVEL_5_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 700,
     baseSpeed: 50,
-    baseReward: 70,
+    baseReward: 7,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -332,7 +332,7 @@ export const LEVEL_5_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 800,
     baseSpeed: 48,
-    baseReward: 75,
+    baseReward: 7,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -341,7 +341,7 @@ export const LEVEL_5_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 750,
     baseSpeed: 52,
-    baseReward: 72,
+    baseReward: 7,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -350,7 +350,7 @@ export const LEVEL_5_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 480,
     baseSpeed: 58,
-    baseReward: 55,
+    baseReward: 5,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -359,7 +359,7 @@ export const LEVEL_5_ENEMIES: EnemyClass[] = [
     type: EnemyType.INFANTRY,
     baseHealth: 180,
     baseSpeed: 95,
-    baseReward: 35,
+    baseReward: 3,
     spawnDelay: SPAWN_DELAY.INFANTRY,
   },
 ];
@@ -383,7 +383,7 @@ export const LEVEL_6_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_SMALL,
     baseHealth: 280,
     baseSpeed: 75,
-    baseReward: 42,
+    baseReward: 4,
     spawnDelay: SPAWN_DELAY.TANK_SMALL,
   },
   {
@@ -392,7 +392,7 @@ export const LEVEL_6_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 550,
     baseSpeed: 62,
-    baseReward: 65,
+    baseReward: 6,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -401,7 +401,7 @@ export const LEVEL_6_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 600,
     baseSpeed: 58,
-    baseReward: 68,
+    baseReward: 6,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -410,7 +410,7 @@ export const LEVEL_6_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 520,
     baseSpeed: 68,
-    baseReward: 62,
+    baseReward: 6,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -419,7 +419,7 @@ export const LEVEL_6_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 900,
     baseSpeed: 55,
-    baseReward: 80,
+    baseReward: 8,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -428,7 +428,7 @@ export const LEVEL_6_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 1000,
     baseSpeed: 52,
-    baseReward: 85,
+    baseReward: 8,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -437,7 +437,7 @@ export const LEVEL_6_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 950,
     baseSpeed: 50,
-    baseReward: 82,
+    baseReward: 8,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -446,7 +446,7 @@ export const LEVEL_6_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 850,
     baseSpeed: 58,
-    baseReward: 78,
+    baseReward: 7,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -455,7 +455,7 @@ export const LEVEL_6_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 1100,
     baseSpeed: 48,
-    baseReward: 88,
+    baseReward: 8,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -464,7 +464,7 @@ export const LEVEL_6_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 580,
     baseSpeed: 65,
-    baseReward: 70,
+    baseReward: 7,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -473,7 +473,7 @@ export const LEVEL_6_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_SMALL,
     baseHealth: 320,
     baseSpeed: 80,
-    baseReward: 48,
+    baseReward: 4,
     spawnDelay: SPAWN_DELAY.TANK_SMALL,
   },
 ];
@@ -488,7 +488,7 @@ export const LEVEL_7_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_SMALL,
     baseHealth: 350,
     baseSpeed: 85,
-    baseReward: 50,
+    baseReward: 5,
     spawnDelay: SPAWN_DELAY.TANK_SMALL,
   },
   {
@@ -497,7 +497,7 @@ export const LEVEL_7_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_SMALL,
     baseHealth: 330,
     baseSpeed: 90,
-    baseReward: 52,
+    baseReward: 5,
     spawnDelay: SPAWN_DELAY.TANK_SMALL,
   },
   {
@@ -506,7 +506,7 @@ export const LEVEL_7_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 650,
     baseSpeed: 70,
-    baseReward: 75,
+    baseReward: 7,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -515,7 +515,7 @@ export const LEVEL_7_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 700,
     baseSpeed: 68,
-    baseReward: 78,
+    baseReward: 7,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -524,7 +524,7 @@ export const LEVEL_7_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 680,
     baseSpeed: 72,
-    baseReward: 76,
+    baseReward: 7,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -533,7 +533,7 @@ export const LEVEL_7_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 720,
     baseSpeed: 65,
-    baseReward: 80,
+    baseReward: 8,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -542,7 +542,7 @@ export const LEVEL_7_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 1200,
     baseSpeed: 60,
-    baseReward: 95,
+    baseReward: 9,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -551,7 +551,7 @@ export const LEVEL_7_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 1300,
     baseSpeed: 58,
-    baseReward: 100,
+    baseReward: 10,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -560,7 +560,7 @@ export const LEVEL_7_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 1250,
     baseSpeed: 62,
-    baseReward: 98,
+    baseReward: 9,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -569,7 +569,7 @@ export const LEVEL_7_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 1150,
     baseSpeed: 65,
-    baseReward: 92,
+    baseReward: 9,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -578,7 +578,7 @@ export const LEVEL_7_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 1400,
     baseSpeed: 55,
-    baseReward: 105,
+    baseReward: 10,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -587,7 +587,7 @@ export const LEVEL_7_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 1350,
     baseSpeed: 57,
-    baseReward: 102,
+    baseReward: 10,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -596,7 +596,7 @@ export const LEVEL_7_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 750,
     baseSpeed: 70,
-    baseReward: 82,
+    baseReward: 8,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -605,7 +605,7 @@ export const LEVEL_7_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_SMALL,
     baseHealth: 380,
     baseSpeed: 95,
-    baseReward: 55,
+    baseReward: 5,
     spawnDelay: SPAWN_DELAY.TANK_SMALL,
   },
 ];
@@ -620,7 +620,7 @@ export const LEVEL_8_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_SMALL,
     baseHealth: 400,
     baseSpeed: 95,
-    baseReward: 58,
+    baseReward: 5,
     spawnDelay: SPAWN_DELAY.TANK_SMALL,
   },
   {
@@ -629,7 +629,7 @@ export const LEVEL_8_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_SMALL,
     baseHealth: 420,
     baseSpeed: 100,
-    baseReward: 60,
+    baseReward: 6,
     spawnDelay: SPAWN_DELAY.TANK_SMALL,
   },
   {
@@ -638,7 +638,7 @@ export const LEVEL_8_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_SMALL,
     baseHealth: 380,
     baseSpeed: 105,
-    baseReward: 62,
+    baseReward: 6,
     spawnDelay: SPAWN_DELAY.TANK_SMALL,
   },
   {
@@ -647,7 +647,7 @@ export const LEVEL_8_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 800,
     baseSpeed: 75,
-    baseReward: 88,
+    baseReward: 8,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -656,7 +656,7 @@ export const LEVEL_8_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 850,
     baseSpeed: 72,
-    baseReward: 90,
+    baseReward: 9,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -665,7 +665,7 @@ export const LEVEL_8_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 820,
     baseSpeed: 78,
-    baseReward: 92,
+    baseReward: 9,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -674,7 +674,7 @@ export const LEVEL_8_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 780,
     baseSpeed: 80,
-    baseReward: 85,
+    baseReward: 8,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -683,7 +683,7 @@ export const LEVEL_8_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 900,
     baseSpeed: 70,
-    baseReward: 95,
+    baseReward: 9,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -692,7 +692,7 @@ export const LEVEL_8_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 1500,
     baseSpeed: 65,
-    baseReward: 110,
+    baseReward: 11,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -701,7 +701,7 @@ export const LEVEL_8_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 1600,
     baseSpeed: 63,
-    baseReward: 115,
+    baseReward: 11,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -710,7 +710,7 @@ export const LEVEL_8_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 1550,
     baseSpeed: 68,
-    baseReward: 112,
+    baseReward: 11,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -719,7 +719,7 @@ export const LEVEL_8_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 1700,
     baseSpeed: 60,
-    baseReward: 120,
+    baseReward: 12,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -728,7 +728,7 @@ export const LEVEL_8_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 1650,
     baseSpeed: 62,
-    baseReward: 118,
+    baseReward: 11,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -737,7 +737,7 @@ export const LEVEL_8_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 1800,
     baseSpeed: 58,
-    baseReward: 125,
+    baseReward: 12,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -746,7 +746,7 @@ export const LEVEL_8_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 1750,
     baseSpeed: 65,
-    baseReward: 122,
+    baseReward: 12,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -755,7 +755,7 @@ export const LEVEL_8_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 950,
     baseSpeed: 75,
-    baseReward: 98,
+    baseReward: 9,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
 ];
@@ -770,7 +770,7 @@ export const LEVEL_9_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_SMALL,
     baseHealth: 450,
     baseSpeed: 105,
-    baseReward: 65,
+    baseReward: 6,
     spawnDelay: SPAWN_DELAY.TANK_SMALL,
   },
   {
@@ -779,7 +779,7 @@ export const LEVEL_9_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_SMALL,
     baseHealth: 480,
     baseSpeed: 110,
-    baseReward: 68,
+    baseReward: 6,
     spawnDelay: SPAWN_DELAY.TANK_SMALL,
   },
   {
@@ -788,7 +788,7 @@ export const LEVEL_9_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_SMALL,
     baseHealth: 420,
     baseSpeed: 115,
-    baseReward: 70,
+    baseReward: 7,
     spawnDelay: SPAWN_DELAY.TANK_SMALL,
   },
   {
@@ -797,7 +797,7 @@ export const LEVEL_9_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 1000,
     baseSpeed: 80,
-    baseReward: 105,
+    baseReward: 10,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -806,7 +806,7 @@ export const LEVEL_9_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 1050,
     baseSpeed: 78,
-    baseReward: 108,
+    baseReward: 10,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -815,7 +815,7 @@ export const LEVEL_9_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 980,
     baseSpeed: 85,
-    baseReward: 102,
+    baseReward: 10,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -824,7 +824,7 @@ export const LEVEL_9_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 1100,
     baseSpeed: 75,
-    baseReward: 110,
+    baseReward: 11,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -833,7 +833,7 @@ export const LEVEL_9_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 1020,
     baseSpeed: 82,
-    baseReward: 106,
+    baseReward: 10,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -842,7 +842,7 @@ export const LEVEL_9_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 1150,
     baseSpeed: 72,
-    baseReward: 112,
+    baseReward: 11,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -851,7 +851,7 @@ export const LEVEL_9_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 2000,
     baseSpeed: 70,
-    baseReward: 130,
+    baseReward: 13,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -860,7 +860,7 @@ export const LEVEL_9_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 2100,
     baseSpeed: 68,
-    baseReward: 135,
+    baseReward: 13,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -869,7 +869,7 @@ export const LEVEL_9_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 2050,
     baseSpeed: 72,
-    baseReward: 132,
+    baseReward: 13,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -878,7 +878,7 @@ export const LEVEL_9_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 2200,
     baseSpeed: 65,
-    baseReward: 140,
+    baseReward: 14,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -887,7 +887,7 @@ export const LEVEL_9_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 2150,
     baseSpeed: 67,
-    baseReward: 138,
+    baseReward: 13,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -896,7 +896,7 @@ export const LEVEL_9_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 2300,
     baseSpeed: 63,
-    baseReward: 145,
+    baseReward: 14,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -905,7 +905,7 @@ export const LEVEL_9_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 2250,
     baseSpeed: 70,
-    baseReward: 142,
+    baseReward: 14,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -914,7 +914,7 @@ export const LEVEL_9_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 2400,
     baseSpeed: 62,
-    baseReward: 150,
+    baseReward: 15,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -923,7 +923,7 @@ export const LEVEL_9_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 2350,
     baseSpeed: 68,
-    baseReward: 148,
+    baseReward: 14,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
 ];
@@ -938,7 +938,7 @@ export const LEVEL_10_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_SMALL,
     baseHealth: 500,
     baseSpeed: 115,
-    baseReward: 75,
+    baseReward: 7,
     spawnDelay: SPAWN_DELAY.TANK_SMALL,
   },
   {
@@ -947,7 +947,7 @@ export const LEVEL_10_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_SMALL,
     baseHealth: 520,
     baseSpeed: 120,
-    baseReward: 78,
+    baseReward: 7,
     spawnDelay: SPAWN_DELAY.TANK_SMALL,
   },
   {
@@ -956,7 +956,7 @@ export const LEVEL_10_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_SMALL,
     baseHealth: 480,
     baseSpeed: 125,
-    baseReward: 80,
+    baseReward: 8,
     spawnDelay: SPAWN_DELAY.TANK_SMALL,
   },
   {
@@ -965,7 +965,7 @@ export const LEVEL_10_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 1200,
     baseSpeed: 85,
-    baseReward: 120,
+    baseReward: 12,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -974,7 +974,7 @@ export const LEVEL_10_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 1250,
     baseSpeed: 82,
-    baseReward: 125,
+    baseReward: 12,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -983,7 +983,7 @@ export const LEVEL_10_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 1180,
     baseSpeed: 88,
-    baseReward: 118,
+    baseReward: 11,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -992,7 +992,7 @@ export const LEVEL_10_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 1300,
     baseSpeed: 80,
-    baseReward: 128,
+    baseReward: 12,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -1001,7 +1001,7 @@ export const LEVEL_10_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 1220,
     baseSpeed: 86,
-    baseReward: 122,
+    baseReward: 12,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -1010,7 +1010,7 @@ export const LEVEL_10_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_MEDIUM,
     baseHealth: 1350,
     baseSpeed: 78,
-    baseReward: 130,
+    baseReward: 13,
     spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
   },
   {
@@ -1019,7 +1019,7 @@ export const LEVEL_10_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 2500,
     baseSpeed: 75,
-    baseReward: 160,
+    baseReward: 16,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -1028,7 +1028,7 @@ export const LEVEL_10_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 2600,
     baseSpeed: 73,
-    baseReward: 165,
+    baseReward: 16,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -1037,7 +1037,7 @@ export const LEVEL_10_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 2550,
     baseSpeed: 77,
-    baseReward: 162,
+    baseReward: 16,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -1046,7 +1046,7 @@ export const LEVEL_10_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 2700,
     baseSpeed: 70,
-    baseReward: 170,
+    baseReward: 17,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -1055,7 +1055,7 @@ export const LEVEL_10_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 2650,
     baseSpeed: 72,
-    baseReward: 168,
+    baseReward: 16,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -1064,7 +1064,7 @@ export const LEVEL_10_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 2800,
     baseSpeed: 68,
-    baseReward: 175,
+    baseReward: 17,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -1073,7 +1073,7 @@ export const LEVEL_10_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 2750,
     baseSpeed: 75,
-    baseReward: 172,
+    baseReward: 17,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -1082,7 +1082,7 @@ export const LEVEL_10_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 2900,
     baseSpeed: 67,
-    baseReward: 180,
+    baseReward: 18,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -1091,7 +1091,7 @@ export const LEVEL_10_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 2850,
     baseSpeed: 73,
-    baseReward: 178,
+    baseReward: 17,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   {
@@ -1100,7 +1100,7 @@ export const LEVEL_10_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 3000,
     baseSpeed: 70,
-    baseReward: 185,
+    baseReward: 18,
     spawnDelay: SPAWN_DELAY.TANK_LARGE,
   },
   // ФИНАЛЬНЫЙ БОСС
@@ -1110,7 +1110,7 @@ export const LEVEL_10_ENEMIES: EnemyClass[] = [
     type: EnemyType.TANK_LARGE,
     baseHealth: 10000,
     baseSpeed: 50,
-    baseReward: 1000,
+    baseReward: 100,
     spawnDelay: 0,
   },
 ];

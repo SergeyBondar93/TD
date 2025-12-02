@@ -19,7 +19,7 @@ export const LEVELS: LevelConfig[] = [
   // Уровень 1 - Обучение (только пехота)
   {
     level: 1,
-    startingMoney: 3000,
+    startingMoney: 300,
     startingLives: 20,
     waves: [
       createWave(ENEMY_CLASSES_BY_LEVEL[1][0], 50, 1), // Рекрут
@@ -32,7 +32,7 @@ export const LEVELS: LevelConfig[] = [
   // Уровень 2 (больше пехоты, появляются танки)
   {
     level: 2,
-    startingMoney: 350,
+    startingMoney: 35,
     startingLives: 20,
     waves: [
       createWave(ENEMY_CLASSES_BY_LEVEL[2][0], 50, 2), // Штурмовик
@@ -46,7 +46,7 @@ export const LEVELS: LevelConfig[] = [
   // Уровень 3 (баланс пехоты и танков)
   {
     level: 3,
-    startingMoney: 400,
+    startingMoney: 40,
     startingLives: 18,
     waves: [
       createWave(ENEMY_CLASSES_BY_LEVEL[3][0], 45, 3), // Тяжелая пехота
@@ -61,7 +61,7 @@ export const LEVELS: LevelConfig[] = [
   // Уровень 4 (больше танков)
   {
     level: 4,
-    startingMoney: 450,
+    startingMoney: 45,
     startingLives: 18,
     waves: [
       createWave(ENEMY_CLASSES_BY_LEVEL[4][0], 40, 4), // Ударная группа
@@ -77,7 +77,7 @@ export const LEVELS: LevelConfig[] = [
   // Уровень 5 (еще больше танков)
   {
     level: 5,
-    startingMoney: 500,
+    startingMoney: 50,
     startingLives: 15,
     waves: [
       createWave(ENEMY_CLASSES_BY_LEVEL[5][0], 35, 5), // Отряд спецназа
@@ -94,7 +94,7 @@ export const LEVELS: LevelConfig[] = [
   // Уровень 6 (только танки)
   {
     level: 6,
-    startingMoney: 550,
+    startingMoney: 55,
     startingLives: 15,
     waves: [
       createWave(ENEMY_CLASSES_BY_LEVEL[6][0], 30, 6), // Штурмовой раннер
@@ -114,7 +114,7 @@ export const LEVELS: LevelConfig[] = [
   // Уровень 7 (только танки)
   {
     level: 7,
-    startingMoney: 600,
+    startingMoney: 60,
     startingLives: 12,
     waves: [
       createWave(ENEMY_CLASSES_BY_LEVEL[7][0], 28, 7), // Легкий разведчик
@@ -136,7 +136,7 @@ export const LEVELS: LevelConfig[] = [
   // Уровень 8 (только танки)
   {
     level: 8,
-    startingMoney: 650,
+    startingMoney: 65,
     startingLives: 12,
     waves: [
       createWave(ENEMY_CLASSES_BY_LEVEL[8][0], 26, 8), // Элитный разведчик
@@ -160,7 +160,7 @@ export const LEVELS: LevelConfig[] = [
   // Уровень 9 (только танки)
   {
     level: 9,
-    startingMoney: 700,
+    startingMoney: 70,
     startingLives: 10,
     waves: [
       createWave(ENEMY_CLASSES_BY_LEVEL[9][0], 24, 9), // Гипер-разведчик
@@ -186,7 +186,7 @@ export const LEVELS: LevelConfig[] = [
   // Уровень 10 - Финальный уровень + БОСС
   {
     level: 10,
-    startingMoney: 750,
+    startingMoney: 75,
     startingLives: 10,
     waves: [
       createWave(ENEMY_CLASSES_BY_LEVEL[10][0], 22, 10), // Финальный разведчик

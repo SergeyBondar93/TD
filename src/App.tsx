@@ -168,8 +168,9 @@ function App() {
       const position = { x, y };
       if (!canPlaceTower(position, towers, DEFAULT_PATH)) return;
 
+      const newTowerId = `tower-${Date.now()}`;
       const newTower: Tower = {
-        id: `tower-${Date.now()}`,
+        id: newTowerId,
         position,
         level: selectedTowerLevel,
         damage: towerStats.damage,
@@ -194,8 +195,9 @@ function App() {
       addTower(newTower);
       setMoney(money - towerStats.cost);
       setSelectedTowerLevel(null);
+      setSelectedTowerId(newTowerId); // Устанавливаем фокус на новую башню
     },
-    [selectedTowerLevel, money, towers, addTower, setMoney, setSelectedTowerLevel]
+    [selectedTowerLevel, money, towers, addTower, setMoney, setSelectedTowerLevel, setSelectedTowerId]
   );
 
   // Обработка клика по башне

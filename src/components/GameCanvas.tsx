@@ -279,6 +279,33 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy) {
       y + size + 12
     );
   }
+
+  // Рисуем стрелку направления движения
+  const rotation = enemy.rotation ?? 0;
+  const arrowLength = size * 0.5;
+  const arrowWidth = size * 0.2;
+  
+  ctx.save();
+  ctx.translate(enemy.position.x, enemy.position.y);
+  ctx.rotate(rotation);
+  
+  // Стрелка
+  ctx.fillStyle = '#ffff00';
+  ctx.globalAlpha = 0.9;
+  ctx.beginPath();
+  ctx.moveTo(arrowLength, 0); // Кончик стрелки
+  ctx.lineTo(0, -arrowWidth);
+  ctx.lineTo(0, arrowWidth);
+  ctx.closePath();
+  ctx.fill();
+  
+  // Обводка стрелки
+  ctx.strokeStyle = '#000000';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  
+  ctx.globalAlpha = 1;
+  ctx.restore();
 }
 
 // Рисование башни (квадратик с уровнем)

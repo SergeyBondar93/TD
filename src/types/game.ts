@@ -45,6 +45,7 @@ export interface Enemy {
   pathOffset: number; // Смещение относительно центра пути (для пехоты)
   turnPoints?: Position[]; // Точки где был совершен поворот (для отладки)
   slowEffect?: number; // Замедление от ледяного оружия (0-1, где 0.2 = 20% замедление)
+  rotation?: number; // Угол направления движения в радианах
 }
 
 export interface Tower {

@@ -88,6 +88,7 @@ export interface EnemyUpdateResult {
   pathIndex: number;
   reachedEnd: boolean;
   turnPoints?: Position[];
+  rotation?: number;
 }
 
 export function updateEnemyPosition(
@@ -143,6 +144,9 @@ export function updateEnemyPosition(
   const distY = targetY - enemy.position.y;
   const dist = Math.sqrt(distX * distX + distY * distY);
 
+  // Вычисляем угол направления движения
+  const rotation = Math.atan2(distY, distX);
+
   const moveDistance = (effectiveSpeed * deltaTime) / 1000;
 
   if (dist <= moveDistance) {
@@ -155,6 +159,7 @@ export function updateEnemyPosition(
       pathIndex: enemy.pathIndex + 1,
       reachedEnd: enemy.pathIndex + 1 >= path.length - 1,
       turnPoints,
+      rotation,
     };
   } else {
     const ratio = moveDistance / dist;
@@ -165,6 +170,7 @@ export function updateEnemyPosition(
       },
       pathIndex: enemy.pathIndex,
       reachedEnd: false,
+      rotation,
     };
   }
 }
@@ -199,6 +205,7 @@ export function processEnemies(
         position: updated.position,
         pathIndex: updated.pathIndex,
         turnPoints: updated.turnPoints || enemy.turnPoints,
+        rotation: updated.rotation ?? enemy.rotation ?? 0,
       });
     }
   }

@@ -159,7 +159,7 @@ export interface GameState {
   path: Position[];
   gameStatus: 'menu' | 'playing' | 'paused' | 'won' | 'lost';
   selectedTowerLevel: 1 | 2 | 3 | 4 | 5 | null;
-  currentLevel: number; // 1-10 уровней сложности
+  currentLevel: number | null; // 1-10 уровней сложности или null если не начата
   gameSpeed: number; // Скорость игры от 0.05 до 3.0
 }
 

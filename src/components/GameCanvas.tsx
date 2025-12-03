@@ -51,7 +51,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick
     ctx.fillRect(CANVAS_PADDING, CANVAS_PADDING, GAME_WIDTH, GAME_HEIGHT);
 
     // Рисуем путь
-    drawPath(ctx, gameState.path);
+    if (gameState.path && gameState.path.length > 0) {
+      drawPath(ctx, gameState.path);
+    }
 
     // Рисуем границу игрового поля поверх всего
     ctx.strokeStyle = '#0f3460';

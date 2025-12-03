@@ -20,7 +20,7 @@ import type {
   IceProjectile,
   IceStream,
 } from "./types/game";
-import { EnemyType, ENEMY_SIZES, WeaponType } from "./types/game";
+import { EnemyType, ENEMY_SIZES } from "./types/game";
 import { TOWER_STATS, createTowerFromStats } from "./config/gameData/towers";
 import { LEVELS, DEFAULT_PATH } from "./config/gameData/levels";
 import { DEV_CONFIG } from "./config/dev";
@@ -504,7 +504,6 @@ function App() {
       const processedFlames = processFlameStreams(
         currentFlameStreams,
         processedFire.updatedEnemies,
-        adjustedDeltaTime,
         currentGameTime
       );
 
@@ -527,7 +526,6 @@ function App() {
       const processedIceStreams = processIceStreams(
         currentIceStreams,
         processedIce.updatedEnemies,
-        adjustedDeltaTime,
         currentGameTime
       );
 

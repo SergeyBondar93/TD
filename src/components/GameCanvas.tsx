@@ -11,6 +11,7 @@ import {
   WeaponType,
 } from '../types/game';
 import { DEV_CONFIG } from '../config/dev';
+import { GAME_SETTINGS } from '../config/settings';
 import { canPlaceTower } from '../utils/pureGameLogic';
 import { getEnemy3DManager } from './Enemy3DRenderer';
 import { TOWER_STATS } from '../config/gameData/towers';
@@ -253,8 +254,8 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, deltaTime: numbe
     if (enemy.isDying && enemy.deathStartTime) {
       const is3DDying = enemy3DManager.isEnemyDying(enemy.id);
       if (!is3DDying) {
-        // Передаем направление движения в момент смерти
-        enemy3DManager.startDeathAnimation(enemy.id, enemy.deathStartTime, enemy.rotation);
+        // Передаем только ID врага и время смерти
+        enemy3DManager.startDeathAnimation(enemy.id, enemy.deathStartTime);
       }
     }
     
@@ -474,7 +475,7 @@ function drawTower(ctx: CanvasRenderingContext2D, tower: Tower) {
   // Индикатор строительства/улучшения
   if (tower.buildTimeRemaining > 0) {
     // Вычисляем общее время всех обновлений/постройки
-    const singleUpgradeTime = DEV_CONFIG.BASE_UPGRADE_TIME * 1000;
+    const singleUpgradeTime = (DEV_CONFIG.DEV_BUILD_TIME || GAME_SETTINGS.BASE_UPGRADE_TIME) * 1000;
     let totalTime: number;
     
     if (tower.upgradeQueue > 0) {
@@ -482,7 +483,7 @@ function drawTower(ctx: CanvasRenderingContext2D, tower: Tower) {
       totalTime = singleUpgradeTime * tower.upgradeQueue;
     } else {
       // Для постройки: используем полное время постройки
-      totalTime = DEV_CONFIG.BASE_BUILD_TIME * 1000 * tower.level;
+      totalTime = (DEV_CONFIG.DEV_BUILD_TIME || GAME_SETTINGS.BASE_BUILD_TIME) * 1000 * tower.level;
     }
     
     // Прогресс = сколько времени уже прошло от общего

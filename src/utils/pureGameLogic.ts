@@ -1,5 +1,5 @@
 import type { Enemy, Tower, Projectile, Position, WaveConfig, LaserBeam, ElectricChain, FireProjectile, FlameStream, IceProjectile, IceStream } from '../types/game';
-import { ENEMY_SIZES, WeaponType as WeaponTypeEnum, EnemyType } from '../types/game';
+import { ENEMY_SIZES, WeaponType as WeaponTypeEnum } from '../types/game';
 import { TOWER_STATS } from '../config/gameData/towers';
 import { GAME_SETTINGS } from '../config/settings';
 
@@ -483,6 +483,7 @@ export function processTowerFire(
         targetEnemyIds: enemyChain.map(e => e.id),
         damage: 0, // Урон уже нанесен выше
         startTime: shotTime,
+        chainCount: updatedTower.chainCount || 3,
       });
     }
   } else if (updatedTower.weaponType === WeaponTypeEnum.LASER) {
@@ -527,7 +528,6 @@ export function processTowerFire(
         id: generateId(),
         towerId: updatedTower.id,
         targetEnemyIds: enemiesInCone.map(e => e.id),
-        targetPosition: target.position,
         damage: 0, // Урон уже нанесен выше
         startTime: shotTime,
         range: updatedTower.range,
@@ -569,16 +569,12 @@ export function processTowerFire(
     // Снарядное оружие - создаем снаряды с уроном
     // Для снарядов мы не можем нанести урон сразу, т.к. они летят до цели
     for (let i = 0; i < visualShotsToShow; i++) {
-      const shotTime = tower.lastFireTime + fireInterval * (i + 1);
       projectiles.push({
         id: generateId(),
         position: { ...updatedTower.position },
         targetEnemyId: target.id,
         speed: GAME_SETTINGS.PROJECTILE_SPEED,
         damage: updatedTower.damage,
-        startTime: shotTime,
-        towerId: updatedTower.id,
-        areaRadius: updatedTower.areaRadius,
       });
     }
   }
@@ -731,12 +727,10 @@ export interface ProcessedFlameStreams {
 export function processFlameStreams(
   flameStreams: FlameStream[],
   enemies: Enemy[],
-  deltaTime: number,
   currentTime: number
 ): ProcessedFlameStreams {
   const activeFlameStreams: FlameStream[] = [];
   const enemiesMap = new Map(enemies.map((e) => [e.id, { ...e }]));
-  const damagedStreams = new Set<string>();
 
   for (const stream of flameStreams) {
     // Поток огня существует только один кадр
@@ -812,12 +806,10 @@ export interface ProcessedIceStreams {
 export function processIceStreams(
   iceStreams: IceStream[],
   enemies: Enemy[],
-  deltaTime: number,
   currentTime: number
 ): ProcessedIceStreams {
   const activeIceStreams: IceStream[] = [];
   const enemiesMap = new Map(enemies.map((e) => [e.id, { ...e }]));
-  const damagedStreams = new Set<string>();
 
   for (const stream of iceStreams) {
     // Поток льда существует только один кадр
@@ -852,7 +844,6 @@ export function processElectricChains(
 ): ProcessedElectricChains {
   const activeElectricChains: ElectricChain[] = [];
   const enemiesMap = new Map(enemies.map((e) => [e.id, { ...e }]));
-  const damagedChains = new Set<string>();
 
   for (const chain of electricChains) {
     const chainAge = currentTime - chain.startTime;
@@ -894,7 +885,6 @@ export function processLaserBeams(
 ): ProcessedLaserBeams {
   const activeLaserBeams: LaserBeam[] = [];
   const enemiesMap = new Map(enemies.map((e) => [e.id, { ...e }]));
-  const damagedEnemies = new Set<string>();
 
   for (const beam of laserBeams) {
     const beamAge = currentTime - beam.startTime;

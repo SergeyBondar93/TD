@@ -33,7 +33,7 @@ function generateTowerUpgrades(baseTower: TowerStats, maxUpgrades: number = 5): 
       range: baseTower.range * Math.pow(UPGRADE_RANGE_MULTIPLIER, i),
       fireRate: baseTower.fireRate * Math.pow(UPGRADE_FIRE_RATE_MULTIPLIER, i),
       upgradeCost: i < maxUpgrades ? baseTower.upgradeCost! * Math.pow(UPGRADE_COST_MULTIPLIER, i) : undefined,
-      buildTime: i === 0 ? baseTower.buildTime : BASE_UPGRADE_TIME * 1000, // Базовое строительство или фиксированное время улучшения
+      buildTime: i === 0 ? baseTower.buildTime : (DEV_CONFIG.DEV_BUILD_TIME || BASE_UPGRADE_TIME) * 1000, // Базовое строительство или фиксированное время улучшения
     });
   }
   

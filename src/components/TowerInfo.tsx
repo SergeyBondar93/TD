@@ -2,7 +2,6 @@ import React from 'react';
 import type { Tower } from '../types/game';
 import { WeaponType } from '../types/game';
 import { TOWER_STATS } from '../config/gameData/towers';
-import { DEV_CONFIG } from '../config/dev';
 
 interface TowerInfoProps {
   tower: Tower | null;

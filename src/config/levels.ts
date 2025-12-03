@@ -11,6 +11,7 @@ function createWave(enemyClass: EnemyClass, count: number, level: number): WaveC
     enemyReward: enemyClass.baseReward,
     spawnDelay: enemyClass.spawnDelay,
     enemyType: enemyClass.type,
+    modelConfig: enemyClass.modelConfig, // Передаем конфиг модели
   };
 }
 
@@ -150,7 +151,7 @@ export const LEVELS: LevelConfig[] = [
   // Уровень 10 - Финальный уровень + БОСС
   {
     level: 10,
-    startingMoney: 75,
+    startingMoney: 7500,
     startingLives: 10,
     waves: [
       createWave(ENEMY_CLASSES_BY_LEVEL[10][0], 25, 10), // Скоростной танк

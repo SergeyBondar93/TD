@@ -178,6 +178,7 @@ export interface WaveConfig {
   enemyReward: number;
   spawnDelay: number; // Задержка между спавном врагов (мс)
   enemyType: EnemyType; // Тип врагов в этой волне
+  modelConfig: EnemyModelConfig; // Конфигурация 3D модели врага
 }
 
 export interface TowerStats {

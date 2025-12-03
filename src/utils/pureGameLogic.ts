@@ -1,28 +1,6 @@
 import type { Enemy, Tower, Projectile, Position, WaveConfig, LaserBeam, ElectricChain, FireProjectile, FlameStream, IceProjectile, IceStream } from '../types/game';
 import { ENEMY_SIZES, WeaponType as WeaponTypeEnum, EnemyType } from '../types/game';
 
-// Импортируем дефолтную модель паука для всех врагов
-const DEFAULT_MODEL_CONFIG = {
-  modelType: 'spider' as const,
-  scale: 0.02,
-  rotationOffset: Math.PI,
-  animations: {
-    walk: {
-      bobAmount: 0.05,
-      swayAmount: 0.02,
-      tiltAmount: 0.05,
-      speed: 8,
-    },
-    death: {
-      duration: 2.0,
-      fadeOutDuration: 1.0,
-      flipOver: true,
-      explode: false,
-      shrink: false,
-    },
-  },
-};
-
 /**
  * Чистая игровая логика - функции без побочных эффектов
  * Все функции принимают данные и возвращают новые данные
@@ -1033,7 +1011,7 @@ export function processWaveSpawn(
       size: enemySize,
       pathOffset: pathOffset,
       turnPoints: [],
-      modelConfig: DEFAULT_MODEL_CONFIG, // Используем дефолтную модель паука
+      modelConfig: waveConfig.modelConfig, // Используем конфиг из waveConfig
     };
 
     const updatedSpawnState: WaveSpawnState = {

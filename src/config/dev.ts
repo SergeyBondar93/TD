@@ -23,7 +23,7 @@ export const DEV_CONFIG = {
   // Автоматически запускать первый уровень при загрузке (для разработки)
   // AUTO_START_LEVEL: 10,
 
-  GAME_SPEED: 0.05,
+  GAME_SPEED: .05,
   // GAME_SPEED: 1.05,
   
   // Скрывать цифры HP у пехоты
@@ -33,8 +33,11 @@ export const DEV_CONFIG = {
   SHOW_ENEMY_LEVEL: false,
 
   // Время строительства башни в секундах (базовое для уровня 1)
-  BASE_BUILD_TIME: 0.01,
+  BASE_BUILD_TIME: 0.000001,
   
   // Время улучшения башни в секундах (базовое)
   BASE_UPGRADE_TIME: 1.5,
+  
+  // Автоматически создавать базовые башни при старте уровня
+  AUTO_PLACE_TOWERS: true,
 };

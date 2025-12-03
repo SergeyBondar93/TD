@@ -1,17 +1,28 @@
-import { useEffect, useCallback, useRef } from 'react';
-import { GameCanvas } from './components/GameCanvas';
-import { GameUI } from './components/GameUI';
-import { LevelSelect } from './components/LevelSelect';
-import { GameOver } from './components/GameOver';
-import { DebugInfo } from './components/DebugInfo';
-import { TowerInfo } from './components/TowerInfo';
-import { getEnemy3DManager } from './components/Enemy3DRenderer';
-import { useGameStore } from './stores/gameStore';
-import { useUIStore } from './stores/uiStore';
-import type { GameState, Enemy, Tower, Projectile, LaserBeam, ElectricChain, FireProjectile, FlameStream, IceProjectile, IceStream } from './types/game';
-import { TOWER_STATS, EnemyType, ENEMY_SIZES, WeaponType } from './types/game';
-import { LEVELS, DEFAULT_PATH } from './config/levels';
-import { DEV_CONFIG } from './config/dev';
+import { useEffect, useCallback, useRef } from "react";
+import { GameCanvas } from "./components/GameCanvas";
+import { GameUI } from "./components/GameUI";
+import { LevelSelect } from "./components/LevelSelect";
+import { GameOver } from "./components/GameOver";
+import { DebugInfo } from "./components/DebugInfo";
+import { TowerInfo } from "./components/TowerInfo";
+import { getEnemy3DManager } from "./components/Enemy3DRenderer";
+import { useGameStore } from "./stores/gameStore";
+import { useUIStore } from "./stores/uiStore";
+import type {
+  GameState,
+  Enemy,
+  Tower,
+  Projectile,
+  LaserBeam,
+  ElectricChain,
+  FireProjectile,
+  FlameStream,
+  IceProjectile,
+  IceStream,
+} from "./types/game";
+import { TOWER_STATS, EnemyType, ENEMY_SIZES, WeaponType } from "./types/game";
+import { LEVELS, DEFAULT_PATH } from "./config/levels";
+import { DEV_CONFIG } from "./config/dev";
 import {
   canPlaceTower,
   processEnemies,
@@ -26,8 +37,8 @@ import {
   processWaveSpawn,
   updateTowerRotations,
   type WaveSpawnState,
-} from './utils/pureGameLogic';
-import './App.css';
+} from "./utils/pureGameLogic";
+import "./App.css";
 
 function App() {
   // Zustand stores
@@ -74,7 +85,14 @@ function App() {
     initializeGame: initializeGameStore,
   } = useGameStore();
 
-  const { selectedTowerLevel, selectedTowerId, isInitialized, setSelectedTowerLevel, setSelectedTowerId, setIsInitialized } = useUIStore();
+  const {
+    selectedTowerLevel,
+    selectedTowerId,
+    isInitialized,
+    setSelectedTowerLevel,
+    setSelectedTowerId,
+    setIsInitialized,
+  } = useUIStore();
 
   // Refs для игрового цикла
   const lastTimeRef = useRef<number>(0);
@@ -88,7 +106,11 @@ function App() {
       if (!levelConfig) return;
 
       // Инициализируем store
-      initializeGameStore(levelNumber, levelConfig.startingMoney, levelConfig.startingLives);
+      initializeGameStore(
+        levelNumber,
+        levelConfig.startingMoney,
+        levelConfig.startingLives
+      );
       setSelectedTowerLevel(null);
 
       let initialEnemies: Enemy[] = [];
@@ -96,7 +118,12 @@ function App() {
       // Создаем тестовых врагов если включен режим отладки
       if (DEV_CONFIG.TEST_ENEMIES) {
         for (let i = 0; i < DEV_CONFIG.TEST_ENEMIES_COUNT; i++) {
-          const enemyTypes = [EnemyType.INFANTRY, EnemyType.TANK_SMALL, EnemyType.TANK_MEDIUM, EnemyType.TANK_LARGE];
+          const enemyTypes = [
+            EnemyType.INFANTRY,
+            EnemyType.TANK_SMALL,
+            EnemyType.TANK_MEDIUM,
+            EnemyType.TANK_LARGE,
+          ];
           const enemyType = enemyTypes[i % enemyTypes.length];
           const enemy: Enemy = {
             id: `test-${i}`,
@@ -121,6 +148,61 @@ function App() {
       gameTimeRef.current = 0;
       setIsInitialized(true);
 
+      // Автоматически размещаем башни если включен флаг
+      if (DEV_CONFIG.AUTO_PLACE_TOWERS) {
+        const selectedTowerLevel = 3;
+        const towerStats = TOWER_STATS[selectedTowerLevel];
+        const tower1: Tower = {
+          id: "dasdasdas2121",
+          position: { x: 275, y: 250 },
+          level: 3,
+          damage: towerStats.damage,
+          range: towerStats.range,
+          fireRate: towerStats.fireRate,
+          lastFireTime: 0,
+          cost: towerStats.cost,
+          size: towerStats.size,
+          weaponType: towerStats.weaponType,
+          chainCount: towerStats.chainCount,
+          areaRadius: (towerStats as any).areaRadius,
+          slowEffect: (towerStats as any).slowEffect,
+          slowDuration: (towerStats as any).slowDuration,
+          rotation: 0,
+          targetRotation: 0,
+          upgradeLevel: 0,
+          baseDamage: towerStats.damage,
+          baseRange: towerStats.range,
+          baseFireRate: towerStats.fireRate,
+          buildTimeRemaining: 0,
+          upgradeQueue: 0,
+        };
+        const tower2: Tower = {
+          id: "dasdasdas2121",
+          position: { x: 631, y: 247 },
+          level: 3,
+          damage: towerStats.damage,
+          range: towerStats.range,
+          fireRate: towerStats.fireRate,
+          lastFireTime: 0,
+          cost: towerStats.cost,
+          size: towerStats.size,
+          weaponType: towerStats.weaponType,
+          chainCount: towerStats.chainCount,
+          areaRadius: (towerStats as any).areaRadius,
+          slowEffect: (towerStats as any).slowEffect,
+          slowDuration: (towerStats as any).slowDuration,
+          rotation: 0,
+          targetRotation: 0,
+          upgradeLevel: 0,
+          baseDamage: towerStats.damage,
+          baseRange: towerStats.range,
+          baseFireRate: towerStats.fireRate,
+          buildTimeRemaining: 0,
+          upgradeQueue: 0,
+        };
+        setTowers([tower1, tower2]);
+      }
+
       // Автоматически стартуем первую волну если нет тестовых врагов
       if (!DEV_CONFIG.TEST_ENEMIES) {
         setTimeout(() => {
@@ -133,7 +215,13 @@ function App() {
         }, 100);
       }
     },
-    [initializeGameStore, setSelectedTowerLevel, setEnemies, setCurrentWave, setIsInitialized]
+    [
+      initializeGameStore,
+      setSelectedTowerLevel,
+      setEnemies,
+      setCurrentWave,
+      setIsInitialized,
+    ]
   );
 
   // Начало новой волны
@@ -144,7 +232,7 @@ function App() {
     const nextWaveIndex = currentWave;
 
     if (nextWaveIndex >= levelConfig.waves.length) {
-      setGameStatus('won');
+      setGameStatus("won");
       return;
     }
 
@@ -201,14 +289,25 @@ function App() {
       setSelectedTowerLevel(null);
       setSelectedTowerId(newTowerId); // Устанавливаем фокус на новую башню
     },
-    [selectedTowerLevel, money, towers, addTower, setMoney, setSelectedTowerLevel, setSelectedTowerId]
+    [
+      selectedTowerLevel,
+      money,
+      towers,
+      addTower,
+      setMoney,
+      setSelectedTowerLevel,
+      setSelectedTowerId,
+    ]
   );
 
   // Обработка клика по башне
-  const handleTowerClick = useCallback((towerId: string) => {
-    setSelectedTowerId(towerId);
-    setSelectedTowerLevel(null); // Отменяем выбор для постройки новой башни
-  }, [setSelectedTowerId, setSelectedTowerLevel]);
+  const handleTowerClick = useCallback(
+    (towerId: string) => {
+      setSelectedTowerId(towerId);
+      setSelectedTowerLevel(null); // Отменяем выбор для постройки новой башни
+    },
+    [setSelectedTowerId, setSelectedTowerLevel]
+  );
 
   // Константы для расчета апгрейдов
   const UPGRADE_COST_MULTIPLIER = 2.5;
@@ -219,16 +318,25 @@ function App() {
   // Апгрейд башни
   const handleTowerUpgrade = useCallback(() => {
     if (!selectedTowerId) return;
-    
-    const tower = towers.find(t => t.id === selectedTowerId);
+
+    const tower = towers.find((t) => t.id === selectedTowerId);
     if (!tower || tower.upgradeLevel + tower.upgradeQueue >= 5) return;
 
-    const upgradeCost = Math.round(tower.cost * Math.pow(UPGRADE_COST_MULTIPLIER, tower.upgradeLevel + tower.upgradeQueue + 1));
+    const upgradeCost = Math.round(
+      tower.cost *
+        Math.pow(
+          UPGRADE_COST_MULTIPLIER,
+          tower.upgradeLevel + tower.upgradeQueue + 1
+        )
+    );
     if (money < upgradeCost) return;
 
-    const upgradeTime = DEV_CONFIG.BASE_UPGRADE_TIME * 1000 * (tower.upgradeLevel + tower.upgradeQueue + 1);
+    const upgradeTime =
+      DEV_CONFIG.BASE_UPGRADE_TIME *
+      1000 *
+      (tower.upgradeLevel + tower.upgradeQueue + 1);
 
-    const updatedTowers = towers.map(t => {
+    const updatedTowers = towers.map((t) => {
       if (t.id === selectedTowerId) {
         return {
           ...t,
@@ -246,26 +354,33 @@ function App() {
   // Продажа башни
   const handleTowerSell = useCallback(() => {
     if (!selectedTowerId) return;
-    
-    const tower = towers.find(t => t.id === selectedTowerId);
+
+    const tower = towers.find((t) => t.id === selectedTowerId);
     if (!tower) return;
 
     // Рассчитываем стоимость завершенных улучшений
-    const completedUpgrades = Array.from({ length: tower.upgradeLevel }, (_, i) => 
-      Math.round(tower.cost * Math.pow(UPGRADE_COST_MULTIPLIER, i + 1))
+    const completedUpgrades = Array.from(
+      { length: tower.upgradeLevel },
+      (_, i) =>
+        Math.round(tower.cost * Math.pow(UPGRADE_COST_MULTIPLIER, i + 1))
     ).reduce((sum, cost) => sum + cost, 0);
 
     // Рассчитываем стоимость улучшений в очереди
-    const queuedUpgrades = Array.from({ length: tower.upgradeQueue || 0 }, (_, i) => 
-      Math.round(tower.cost * Math.pow(UPGRADE_COST_MULTIPLIER, tower.upgradeLevel + i + 1))
+    const queuedUpgrades = Array.from(
+      { length: tower.upgradeQueue || 0 },
+      (_, i) =>
+        Math.round(
+          tower.cost *
+            Math.pow(UPGRADE_COST_MULTIPLIER, tower.upgradeLevel + i + 1)
+        )
     ).reduce((sum, cost) => sum + cost, 0);
-    
+
     // Общая инвестиция = базовая стоимость + завершенные + в очереди
     const totalInvested = tower.cost + completedUpgrades + queuedUpgrades;
     const sellValue = Math.round(totalInvested * 0.7);
 
     // Удаляем башню и возвращаем деньги
-    setTowers(towers.filter(t => t.id !== selectedTowerId));
+    setTowers(towers.filter((t) => t.id !== selectedTowerId));
     setMoney(money + sellValue);
     setSelectedTowerId(null);
   }, [selectedTowerId, towers, money, setTowers, setMoney, setSelectedTowerId]);
@@ -279,7 +394,7 @@ function App() {
 
   // Основной игровой цикл
   useEffect(() => {
-    if (currentLevel === null || gameStatus !== 'playing') return;
+    if (currentLevel === null || gameStatus !== "playing") return;
 
     const levelConfig = LEVELS[currentLevel - 1];
 
@@ -317,26 +432,32 @@ function App() {
 
       // 2. Обновление врагов
       const currentEnemies = useGameStore.getState().enemies;
-      const processedEnemies = processEnemies(currentEnemies, DEFAULT_PATH, adjustedDeltaTime);
+      const processedEnemies = processEnemies(
+        currentEnemies,
+        DEFAULT_PATH,
+        adjustedDeltaTime
+      );
 
       // 2.5. Удаление врагов после завершения анимации смерти
       const enemy3DManager = getEnemy3DManager();
-      const enemiesAfterDeath = processedEnemies.activeEnemies.filter(enemy => {
-        if (enemy.isDying && enemy.deathStartTime) {
-          // Проверяем вручную, завершена ли анимация
-          const currentTime = Date.now() / 1000;
-          const totalDuration = 3; // 2 секунды переворот + 1 секунда затухание
-          const elapsed = currentTime - enemy.deathStartTime;
-          
-          if (elapsed >= totalDuration) {
-            // Удаляем модель врага из 3D менеджера
-            enemy3DManager.removeEnemy(enemy.id);
-            return false; // Удаляем врага из списка
+      const enemiesAfterDeath = processedEnemies.activeEnemies.filter(
+        (enemy) => {
+          if (enemy.isDying && enemy.deathStartTime) {
+            // Проверяем вручную, завершена ли анимация
+            const currentTime = Date.now() / 1000;
+            const totalDuration = 3; // 2 секунды переворот + 1 секунда затухание
+            const elapsed = currentTime - enemy.deathStartTime;
+
+            if (elapsed >= totalDuration) {
+              // Удаляем модель врага из 3D менеджера
+              enemy3DManager.removeEnemy(enemy.id);
+              return false; // Удаляем врага из списка
+            }
           }
+          return true; // Оставляем врага в списке
         }
-        return true; // Оставляем врага в списке
-      });
-      
+      );
+
       // Обновляем список врагов (с учётом удалённых после анимации смерти)
       state.setEnemies(enemiesAfterDeath);
 
@@ -345,7 +466,7 @@ function App() {
         const newLives = currentLives - processedEnemies.lostLives;
         state.setLives(newLives);
         if (newLives <= 0) {
-          state.setGameStatus('lost');
+          state.setGameStatus("lost");
         }
       }
 
@@ -366,7 +487,11 @@ function App() {
       const updatedTowers: Tower[] = [];
 
       for (const tower of currentTowers) {
-        const fireResult = processTowerFire(tower, enemiesAfterDeath, currentGameTime);
+        const fireResult = processTowerFire(
+          tower,
+          enemiesAfterDeath,
+          currentGameTime
+        );
         updatedTowers.push(fireResult.updatedTower);
         if (fireResult.projectile) {
           newProjectiles.push(fireResult.projectile);
@@ -494,11 +619,17 @@ function App() {
 
       // 9. Проверка победы: все волны пройдены и нет врагов
       const currentState = useGameStore.getState();
-      const allWavesCompleted = !waveSpawnRef.current && currentState.currentWave >= levelConfig.waves.length;
+      const allWavesCompleted =
+        !waveSpawnRef.current &&
+        currentState.currentWave >= levelConfig.waves.length;
       const noEnemiesLeft = currentState.enemies.length === 0;
-      
-      if (allWavesCompleted && noEnemiesLeft && currentState.gameStatus === 'playing') {
-        currentState.setGameStatus('won');
+
+      if (
+        allWavesCompleted &&
+        noEnemiesLeft &&
+        currentState.gameStatus === "playing"
+      ) {
+        currentState.setGameStatus("won");
         return;
       }
 
@@ -550,14 +681,14 @@ function App() {
       {DEV_CONFIG.SHOW_DEBUG_INFO && (
         <DebugInfo gameState={gameState} onGameSpeedChange={setGameSpeed} />
       )}
-      
+
       {/* Добавляем отладочный просмотрщик 3D модели */}
       {/* <ModelDebugViewer /> */}
-      
+
       <div className="app-main-content" style={styles.mainContent}>
         <div className="app-game-section" style={styles.gameSection}>
-          <GameCanvas 
-            gameState={gameState} 
+          <GameCanvas
+            gameState={gameState}
             onCanvasClick={handleCanvasClick}
             onTowerClick={handleTowerClick}
             selectedTowerLevel={selectedTowerLevel}
@@ -573,13 +704,13 @@ function App() {
             selectedTowerLevel={selectedTowerLevel}
             onSelectTowerLevel={setSelectedTowerLevel}
             onStartWave={startWave}
-            onPause={() => setGameStatus('paused')}
-            onResume={() => setGameStatus('playing')}
+            onPause={() => setGameStatus("paused")}
+            onResume={() => setGameStatus("playing")}
             canStartWave={canStartWave}
           />
           {selectedTowerId && (
             <TowerInfo
-              tower={towers.find(t => t.id === selectedTowerId)!}
+              tower={towers.find((t) => t.id === selectedTowerId)!}
               money={money}
               onUpgrade={handleTowerUpgrade}
               onSell={handleTowerSell}
@@ -589,9 +720,9 @@ function App() {
         </div>
       </div>
 
-      {(gameStatus === 'won' || gameStatus === 'lost') && (
+      {(gameStatus === "won" || gameStatus === "lost") && (
         <GameOver
-          won={gameStatus === 'won'}
+          won={gameStatus === "won"}
           currentLevel={currentLevel}
           onRestart={() => initializeGame(currentLevel)}
           onMenu={() => setCurrentLevel(null)}
@@ -602,27 +733,27 @@ function App() {
 }
 
 const app: React.CSSProperties = {
-  minHeight: '100vh',
-  backgroundColor: '#1a1a2e',
-  display: 'flex',
-  justifyContent: 'flex-start',
-  alignItems: 'flex-start',
-  padding: '10px',
-  gap: '10px',
+  minHeight: "100vh",
+  backgroundColor: "#1a1a2e",
+  display: "flex",
+  justifyContent: "flex-start",
+  alignItems: "flex-start",
+  padding: "10px",
+  gap: "10px",
 };
 
 const mainContent: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '10px',
+  display: "flex",
+  flexDirection: "column",
+  gap: "10px",
   flex: 1,
 };
 
 const gameSection: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '10px',
-  alignItems: 'flex-start',
+  display: "flex",
+  flexDirection: "column",
+  gap: "10px",
+  alignItems: "flex-start",
 };
 
 const styles = {

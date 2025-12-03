@@ -11,6 +11,7 @@ interface EnemyRenderState {
   deathStartTime: number;
   deathDuration: number;
   fadeOutDuration: number;
+  knockbackOffset?: { x: number; y: number }; // Вектор отлета при смерти
   config: EnemyModelConfig;
 }
 
@@ -31,8 +32,9 @@ class Enemy3DManager {
     this.scene.background = null; // Прозрачный фон
     
     // Камера для вида сверху-сбоку
-    this.camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
-    this.camera.position.set(0, 1.5, 4);
+    // Увеличиваем FOV и отодвигаем камеру, чтобы враги не обрезались при отлете
+    this.camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
+    this.camera.position.set(0, 1.8, 5);
     this.camera.lookAt(0, 0, 0);
     
     console.log('[Enemy3DManager] Camera position:', this.camera.position);
@@ -113,9 +115,14 @@ class Enemy3DManager {
       return null;
     }
 
-    // Если враг уже существует, возвращаем его модель
+    // Если враг уже существует, обновляем его конфиг и возвращаем модель
     if (this.enemies.has(enemyId)) {
-      return this.enemies.get(enemyId)!.model;
+      const enemy = this.enemies.get(enemyId)!;
+      // Обновляем конфиг на актуальный
+      enemy.config = config;
+      enemy.deathDuration = config.animations.death.duration;
+      enemy.fadeOutDuration = config.animations.death.fadeOutDuration;
+      return enemy.model;
     }
 
     // Создаем новую модель для врага
@@ -156,6 +163,17 @@ class Enemy3DManager {
     enemy.isDying = true;
     // Используем переданное время или текущее
     enemy.deathStartTime = deathStartTime ?? (Date.now() / 1000);
+    
+    // Генерируем случайный вектор отлета
+    const knockbackDistance = enemy.config.animations.death.knockbackDistance || 0;
+    if (knockbackDistance > 0) {
+      const angle = Math.random() * Math.PI * 2; // Случайный угол
+      const distance = knockbackDistance * (0.5 + Math.random() * 0.5); // От 50% до 100% расстояния
+      enemy.knockbackOffset = {
+        x: Math.cos(angle) * distance,
+        y: Math.sin(angle) * distance,
+      };
+    }
   }
 
   // Проверяем, завершена ли анимация смерти
@@ -184,7 +202,7 @@ class Enemy3DManager {
   }
 
   // Рендерим модель с заданным поворотом и обновляем анимацию
-  public render(enemyId: string, rotation: number, deltaTime: number): HTMLCanvasElement | null {
+  public render(enemyId: string, rotation: number, deltaTime: number, gameSpeed: number = 1): HTMLCanvasElement | null {
     if (!this.isModelLoaded || !this.baseModel) {
       return null;
     }
@@ -211,9 +229,21 @@ class Enemy3DManager {
       const currentTime = Date.now() / 1000;
       const deathProgress = Math.min((currentTime - deathStartTime) / deathDuration, 1);
       
+      // Применяем отлет (knockback) к внутренней модели
+      // Делим на scale чтобы смещение было в локальных координатах модели
+      if (enemy.knockbackOffset) {
+        spiderModel.position.x = (enemy.knockbackOffset.x / config.scale) * deathProgress;
+        spiderModel.position.z = (enemy.knockbackOffset.y / config.scale) * deathProgress;
+      }
+      
       if (config.animations.death.flipOver) {
         // Переворачивание на спину (паук)
-        spiderModel.rotation.x = deathProgress * Math.PI; // Поворот на 180°
+        // Случайное направление при переворачивании
+        const rotationOffset = config.rotationOffset || 0;
+        const randomRotation = enemy.knockbackOffset ? Math.atan2(enemy.knockbackOffset.y, enemy.knockbackOffset.x) : Math.random() * Math.PI * 2;
+        spiderModel.rotation.y = randomRotation + rotationOffset;
+        // Поворот на 180° вокруг оси X (переворот на спину)
+        spiderModel.rotation.x = deathProgress * Math.PI;
       }
       
       if (config.animations.death.shrink) {
@@ -245,26 +275,28 @@ class Enemy3DManager {
       // Обычная анимация ходьбы
       const walkConfig = config.animations.walk;
       
-      if (walkConfig.enabled) {
-        // Поворот по направлению движения применяем к группе model
-        const rotationOffset = config.rotationOffset || 0;
-        model.rotation.y = -rotation + Math.PI / 2 + rotationOffset;
-        
-        // Процедурная анимация
-        enemy.animationTime += deltaTime * (walkConfig.speed || 1);
-        
-        if (walkConfig.bobAmount) {
-          spiderModel.position.y = Math.sin(enemy.animationTime) * walkConfig.bobAmount;
-        }
-        
-        if (walkConfig.swayAmount) {
-          spiderModel.position.x = Math.sin(enemy.animationTime * 0.5) * walkConfig.swayAmount;
-        }
-        
-        if (walkConfig.tiltAmount) {
-          spiderModel.rotation.z = Math.sin(enemy.animationTime * 0.7) * walkConfig.tiltAmount;
-        }
-      }
+      // Поворот по направлению движения применяем к spiderModel (как в master)
+      const rotationOffset = config.rotationOffset || 0;
+      spiderModel.rotation.y = -rotation + Math.PI / 2 + rotationOffset;
+      
+      // Сбрасываем rotation.x на случай если враг был в состоянии смерти
+      spiderModel.rotation.x = 0;
+      
+      // Процедурная анимация (всегда применяем, как в master)
+      // Умножаем на gameSpeed чтобы анимация коррелировала со скоростью игры
+      enemy.animationTime += deltaTime * (walkConfig.speed || 8) * gameSpeed;
+      
+      // Покачивание вверх-вниз
+      const bobAmount = walkConfig.bobAmount !== undefined ? walkConfig.bobAmount : 0.05;
+      spiderModel.position.y = Math.sin(enemy.animationTime) * bobAmount;
+      
+      // Покачивание из стороны в сторону
+      const swayAmount = walkConfig.swayAmount !== undefined ? walkConfig.swayAmount : 0.12;
+      spiderModel.position.x = Math.sin(enemy.animationTime * 0.5) * swayAmount;
+      
+      // Наклон при движении
+      const tiltAmount = walkConfig.tiltAmount !== undefined ? walkConfig.tiltAmount : 0.15;
+      spiderModel.rotation.z = Math.sin(enemy.animationTime * 0.7) * tiltAmount;
     }
     
     // Обновляем анимацию (если есть)

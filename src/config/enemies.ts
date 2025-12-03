@@ -17,6 +17,7 @@ export interface EnemyAnimation {
     flipOver?: boolean;      // Переворачиваться на спину
     explode?: boolean;       // Взрыв
     shrink?: boolean;        // Уменьшение
+    knockbackDistance?: number; // Расстояние отлета (в пикселях)
   };
 }
 
@@ -53,22 +54,23 @@ const SPAWN_DELAY = {
 // СТАНДАРТНЫЕ КОНФИГУРАЦИИ МОДЕЛЕЙ
 // ============================================
 
-const SPIDER_MODEL: EnemyModelConfig = {
+export const SPIDER_MODEL: EnemyModelConfig = {
   modelType: 'spider',
   scale: 0.02,
   rotationOffset: Math.PI,  // Паук смотрит назад, поворачиваем на 180°
   animations: {
     walk: {
       enabled: true,
-      bobAmount: 0.05,    // Покачивание вверх-вниз
-      swayAmount: 0.02,   // Покачивание в стороны
-      tiltAmount: 0.05,   // Наклон
-      speed: 8,           // Скорость анимации
+       bobAmount: 0.15,    // Покачивание вверх-вниз
+      swayAmount: 0.12,   // Покачивание в стороны
+      tiltAmount: 0.15,   // Наклон
+      speed: 40,         // Скорость анимации
     },
     death: {
       duration: 2.0,      // 2 секунды переворачивания
       fadeOutDuration: 1.0, // 1 секунда растворения
       flipOver: true,     // Переворачивается на спину
+      knockbackDistance: 30, // Отлетает на 30 пикселей
     },
   },
 };
@@ -186,7 +188,8 @@ const LIGHT_TANK: EnemyClass = {
 const FAST_TANK: EnemyClass = {
   id: 'fast_tank',
   name: 'Скоростной танк',
-  type: EnemyType.TANK_SMALL,
+  // TODO temporary
+  type: EnemyType.TANK_LARGE,
   baseHealth: 80,
   baseSpeed: 70,
   baseReward: 3,
@@ -309,7 +312,14 @@ function createEnemy(baseEnemy: EnemyClass, healthMult: number = 1, speedMult: n
     ...baseEnemy,
     baseHealth: Math.round(baseEnemy.baseHealth * healthMult),
     baseSpeed: Math.round(baseEnemy.baseSpeed * speedMult),
-    modelConfig: baseEnemy.modelConfig, // Сохраняем конфигурацию модели
+    // Глубокое копирование конфигурации модели для избежания мутаций
+    modelConfig: {
+      ...baseEnemy.modelConfig,
+      animations: {
+        walk: { ...baseEnemy.modelConfig.animations.walk },
+        death: { ...baseEnemy.modelConfig.animations.death },
+      },
+    },
   };
 }
 

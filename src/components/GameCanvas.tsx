@@ -61,7 +61,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick
     gameState.towers.forEach((tower) => drawTower(ctx, tower));
 
     // Рисуем врагов
-    gameState.enemies.forEach((enemy) => drawEnemy(ctx, enemy, deltaTime, enemy3DManagerRef.current));
+    gameState.enemies.forEach((enemy) => drawEnemy(ctx, enemy, deltaTime, enemy3DManagerRef.current, gameState.gameSpeed));
 
     // Рисуем снаряды
     gameState.projectiles.forEach((projectile) => drawProjectile(ctx, projectile));
@@ -237,7 +237,7 @@ function drawPath(ctx: CanvasRenderingContext2D, path: { x: number; y: number }[
 }
 
 // Рисование врага (3D модель)
-function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, deltaTime: number, enemy3DManager: ReturnType<typeof getEnemy3DManager>) {
+function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, deltaTime: number, enemy3DManager: ReturnType<typeof getEnemy3DManager>, gameSpeed: number) {
   const size = enemy.size;
   const x = enemy.position.x - size / 2;
   const y = enemy.position.y - size / 2;
@@ -253,12 +253,13 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, deltaTime: numbe
     if (enemy.isDying && enemy.deathStartTime) {
       const is3DDying = enemy3DManager.isEnemyDying(enemy.id);
       if (!is3DDying) {
-        enemy3DManager.startDeathAnimation(enemy.id, enemy.deathStartTime);
+        // Передаем направление движения в момент смерти
+        enemy3DManager.startDeathAnimation(enemy.id, enemy.deathStartTime, enemy.rotation);
       }
     }
     
     const rotation = enemy.rotation ?? 0;
-    const modelCanvas = enemy3DManager.render(enemy.id, rotation, deltaTime);
+    const modelCanvas = enemy3DManager.render(enemy.id, rotation, deltaTime, gameSpeed);
     
     if (modelCanvas) {
       // Рисуем 3D модель на игровом canvas

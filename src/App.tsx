@@ -177,7 +177,7 @@ function App() {
           upgradeQueue: 0,
         };
         const tower2: Tower = {
-          id: "dasdasdas2121",
+          id: "dasdasdas2121132",
           position: { x: 631, y: 247 },
           level: 3,
           damage: towerStats.damage,

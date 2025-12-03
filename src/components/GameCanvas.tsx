@@ -473,7 +473,21 @@ function drawTower(ctx: CanvasRenderingContext2D, tower: Tower) {
 
   // Индикатор строительства/улучшения
   if (tower.buildTimeRemaining > 0) {
-    const progress = 1 - (tower.buildTimeRemaining / (DEV_CONFIG.BASE_BUILD_TIME * 1000 * tower.level));
+    // Вычисляем общее время всех обновлений/постройки
+    const singleUpgradeTime = DEV_CONFIG.BASE_UPGRADE_TIME * 1000;
+    let totalTime: number;
+    
+    if (tower.upgradeQueue > 0) {
+      // Для обновлений: общее время = количество обновлений * время одного
+      totalTime = singleUpgradeTime * tower.upgradeQueue;
+    } else {
+      // Для постройки: используем полное время постройки
+      totalTime = DEV_CONFIG.BASE_BUILD_TIME * 1000 * tower.level;
+    }
+    
+    // Прогресс = сколько времени уже прошло от общего
+    const timeElapsed = totalTime - tower.buildTimeRemaining;
+    const progress = timeElapsed / totalTime;
     
     // Полупрозрачный серый оверлей
     ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';

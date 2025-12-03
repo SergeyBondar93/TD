@@ -1,5 +1,6 @@
 import type { Enemy, Tower, Projectile, Position, WaveConfig, LaserBeam, ElectricChain, FireProjectile, FlameStream, IceProjectile, IceStream } from '../types/game';
-import { ENEMY_SIZES, WeaponType as WeaponTypeEnum, EnemyType, TOWER_STATS } from '../types/game';
+import { ENEMY_SIZES, WeaponType as WeaponTypeEnum, EnemyType } from '../types/game';
+import { TOWER_STATS } from '../config/gameData/towers';
 import { GAME_SETTINGS } from '../config/settings';
 
 /**

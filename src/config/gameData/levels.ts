@@ -1,4 +1,4 @@
-import type { LevelConfig, WaveConfig } from '../types/game';
+import type { LevelConfig, WaveConfig } from '../../types/game';
 import { ENEMY_CLASSES_BY_LEVEL, type EnemyClass } from './enemies';
 
 // Функция для создания волны из класса врага

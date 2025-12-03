@@ -1,6 +1,6 @@
 import React from 'react';
 import type { GameState } from '../types/game';
-import { TOWER_STATS } from '../types/game';
+import { TOWER_STATS } from '../config/gameData/towers';
 
 interface DebugInfoProps {
   gameState: GameState | null;

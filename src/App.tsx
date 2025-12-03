@@ -20,8 +20,9 @@ import type {
   IceProjectile,
   IceStream,
 } from "./types/game";
-import { TOWER_STATS, EnemyType, ENEMY_SIZES, WeaponType, createTowerFromStats } from "./types/game";
-import { LEVELS, DEFAULT_PATH } from "./config/levels";
+import { EnemyType, ENEMY_SIZES, WeaponType } from "./types/game";
+import { TOWER_STATS, createTowerFromStats } from "./config/gameData/towers";
+import { LEVELS, DEFAULT_PATH } from "./config/gameData/levels";
 import { DEV_CONFIG } from "./config/dev";
 import { GAME_SETTINGS } from "./config/settings";
 import {

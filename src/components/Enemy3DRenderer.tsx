@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { loadSpiderModel } from '../utils/modelLoader';
 import type { LoadedModel } from '../utils/modelLoader';
-import type { EnemyModelConfig } from '../config/enemies';
+import type { EnemyModelConfig } from '../config/gameData/enemies';
 
 // Состояние врага для рендеринга
 interface EnemyRenderState {

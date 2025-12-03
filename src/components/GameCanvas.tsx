@@ -7,13 +7,13 @@ import {
   GAME_WIDTH,
   GAME_HEIGHT,
   PROJECTILE_SIZE,
-  TOWER_STATS,
   EnemyType,
   WeaponType,
 } from '../types/game';
 import { DEV_CONFIG } from '../config/dev';
 import { canPlaceTower } from '../utils/pureGameLogic';
 import { getEnemy3DManager } from './Enemy3DRenderer';
+import { TOWER_STATS } from '../config/gameData/towers';
 
 interface GameCanvasProps {
   gameState: GameState;

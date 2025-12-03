@@ -1,5 +1,6 @@
 import React from 'react';
-import { TOWER_STATS, WeaponType } from '../types/game';
+import { WeaponType } from '../types/game';
+import { TOWER_STATS } from '../config/gameData/towers';
 
 interface GameUIProps {
   money: number;

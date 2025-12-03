@@ -1,5 +1,5 @@
 import React from 'react';
-import { LEVELS } from '../config/levels';
+import { LEVELS } from '../config/gameData/levels';
 
 interface LevelSelectProps {
   onSelectLevel: (level: number) => void;

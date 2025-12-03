@@ -1,4 +1,4 @@
-import { EnemyType } from '../types/game';
+import { EnemyType } from '../../types/game';
 
 // Типы анимаций врагов
 export interface EnemyAnimation {

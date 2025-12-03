@@ -311,8 +311,8 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, deltaTime: numbe
   ctx.fillStyle = '#333';
   ctx.fillRect(healthBarX, healthBarY, healthBarWidth, healthBarHeight);
 
-  // Текущий HP
-  const healthPercent = enemy.health / enemy.maxHealth;
+  // Текущий HP (ограничиваем от 0 до 1)
+  const healthPercent = Math.max(0, Math.min(1, enemy.health / enemy.maxHealth));
   ctx.fillStyle = healthPercent > 0.5 ? '#0f0' : healthPercent > 0.25 ? '#ff0' : '#f00';
   ctx.fillRect(healthBarX, healthBarY, healthBarWidth * healthPercent, healthBarHeight);
 

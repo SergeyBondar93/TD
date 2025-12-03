@@ -1,5 +1,34 @@
 import { EnemyType } from '../types/game';
 
+// Типы анимаций врагов
+export interface EnemyAnimation {
+  walk: {
+    enabled: boolean;
+    // Параметры процедурной анимации ходьбы
+    bobAmount?: number;      // Амплитуда покачивания вверх-вниз
+    swayAmount?: number;     // Амплитуда покачивания в стороны
+    tiltAmount?: number;     // Угол наклона
+    speed?: number;          // Скорость анимации
+  };
+  death: {
+    duration: number;        // Длительность анимации смерти в секундах
+    fadeOutDuration: number; // Длительность растворения после смерти
+    // Параметры анимации смерти
+    flipOver?: boolean;      // Переворачиваться на спину
+    explode?: boolean;       // Взрыв
+    shrink?: boolean;        // Уменьшение
+  };
+}
+
+// Конфигурация 3D модели врага
+export interface EnemyModelConfig {
+  modelType: 'spider' | 'wolf' | 'cube';  // Тип модели
+  modelPath?: string;                      // Путь к модели (если не стандартная)
+  scale: number;                           // Масштаб модели
+  rotationOffset?: number;                 // Смещение вращения (если модель смотрит не туда)
+  animations: EnemyAnimation;              // Анимации
+}
+
 // Базовый класс врага
 export interface EnemyClass {
   id: string;
@@ -9,6 +38,7 @@ export interface EnemyClass {
   baseSpeed: number;
   baseReward: number;
   spawnDelay: number;
+  modelConfig: EnemyModelConfig;           // Конфигурация 3D модели
 }
 
 // Константы задержки спавна для разных типов врагов
@@ -18,6 +48,67 @@ const SPAWN_DELAY = {
   TANK_MEDIUM: 750,
   TANK_LARGE: 800,
 } as const;
+
+// ============================================
+// СТАНДАРТНЫЕ КОНФИГУРАЦИИ МОДЕЛЕЙ
+// ============================================
+
+const SPIDER_MODEL: EnemyModelConfig = {
+  modelType: 'spider',
+  scale: 0.02,
+  rotationOffset: Math.PI,  // Паук смотрит назад, поворачиваем на 180°
+  animations: {
+    walk: {
+      enabled: true,
+      bobAmount: 0.05,    // Покачивание вверх-вниз
+      swayAmount: 0.02,   // Покачивание в стороны
+      tiltAmount: 0.05,   // Наклон
+      speed: 8,           // Скорость анимации
+    },
+    death: {
+      duration: 2.0,      // 2 секунды переворачивания
+      fadeOutDuration: 1.0, // 1 секунда растворения
+      flipOver: true,     // Переворачивается на спину
+    },
+  },
+};
+
+const WOLF_MODEL: EnemyModelConfig = {
+  modelType: 'wolf',
+  scale: 0.03,
+  rotationOffset: Math.PI / 2,
+  animations: {
+    walk: {
+      enabled: true,
+      bobAmount: 0.03,
+      swayAmount: 0.01,
+      tiltAmount: 0.03,
+      speed: 6,
+    },
+    death: {
+      duration: 1.5,
+      fadeOutDuration: 1.0,
+      shrink: true,       // Уменьшается
+    },
+  },
+};
+
+const CUBE_MODEL: EnemyModelConfig = {
+  modelType: 'cube',
+  scale: 0.5,
+  animations: {
+    walk: {
+      enabled: true,
+      bobAmount: 0.1,
+      speed: 4,
+    },
+    death: {
+      duration: 1.0,
+      fadeOutDuration: 0.5,
+      explode: true,      // Взрывается
+    },
+  },
+};
 
 // ============================================
 // 15 БАЗОВЫХ ТИПОВ ВРАГОВ
@@ -33,6 +124,7 @@ const SCOUT: EnemyClass = {
   baseSpeed: 75,
   baseReward: 1,
   spawnDelay: SPAWN_DELAY.INFANTRY,
+  modelConfig: SPIDER_MODEL,
 };
 
 const SOLDIER: EnemyClass = {
@@ -43,6 +135,7 @@ const SOLDIER: EnemyClass = {
   baseSpeed: 60,
   baseReward: 1,
   spawnDelay: SPAWN_DELAY.INFANTRY,
+  modelConfig: SPIDER_MODEL,
 };
 
 const VETERAN: EnemyClass = {
@@ -53,6 +146,7 @@ const VETERAN: EnemyClass = {
   baseSpeed: 55,
   baseReward: 2,
   spawnDelay: SPAWN_DELAY.INFANTRY,
+  modelConfig: SPIDER_MODEL,
 };
 
 const COMMANDO: EnemyClass = {
@@ -63,6 +157,7 @@ const COMMANDO: EnemyClass = {
   baseSpeed: 85,
   baseReward: 2,
   spawnDelay: SPAWN_DELAY.INFANTRY,
+  modelConfig: SPIDER_MODEL,
 };
 
 const HEAVY_INFANTRY: EnemyClass = {
@@ -73,6 +168,7 @@ const HEAVY_INFANTRY: EnemyClass = {
   baseSpeed: 50,
   baseReward: 2,
   spawnDelay: SPAWN_DELAY.INFANTRY,
+  modelConfig: SPIDER_MODEL,
 };
 
 // --- ЛЕГКИЕ ТАНКИ (3 типа) ---
@@ -84,6 +180,7 @@ const LIGHT_TANK: EnemyClass = {
   baseSpeed: 55,
   baseReward: 3,
   spawnDelay: SPAWN_DELAY.TANK_SMALL,
+  modelConfig: SPIDER_MODEL,
 };
 
 const FAST_TANK: EnemyClass = {
@@ -94,6 +191,7 @@ const FAST_TANK: EnemyClass = {
   baseSpeed: 70,
   baseReward: 3,
   spawnDelay: SPAWN_DELAY.TANK_SMALL,
+  modelConfig: SPIDER_MODEL,
 };
 
 const ARMORED_TRANSPORT: EnemyClass = {
@@ -104,6 +202,7 @@ const ARMORED_TRANSPORT: EnemyClass = {
   baseSpeed: 50,
   baseReward: 4,
   spawnDelay: SPAWN_DELAY.TANK_SMALL,
+  modelConfig: SPIDER_MODEL,
 };
 
 // --- СРЕДНИЕ ТАНКИ (4 типа) ---
@@ -115,6 +214,7 @@ const MEDIUM_TANK: EnemyClass = {
   baseSpeed: 50,
   baseReward: 5,
   spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
+  modelConfig: SPIDER_MODEL,
 };
 
 const BATTLE_TANK: EnemyClass = {
@@ -125,6 +225,7 @@ const BATTLE_TANK: EnemyClass = {
   baseSpeed: 55,
   baseReward: 6,
   spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
+  modelConfig: SPIDER_MODEL,
 };
 
 const ASSAULT_TANK: EnemyClass = {
@@ -135,6 +236,7 @@ const ASSAULT_TANK: EnemyClass = {
   baseSpeed: 60,
   baseReward: 6,
   spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
+  modelConfig: SPIDER_MODEL,
 };
 
 const SIEGE_TANK: EnemyClass = {
@@ -145,6 +247,7 @@ const SIEGE_TANK: EnemyClass = {
   baseSpeed: 45,
   baseReward: 7,
   spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
+  modelConfig: SPIDER_MODEL,
 };
 
 // --- ТЯЖЕЛЫЕ ТАНКИ (3 типа) ---
@@ -156,6 +259,7 @@ const HEAVY_TANK: EnemyClass = {
   baseSpeed: 45,
   baseReward: 8,
   spawnDelay: SPAWN_DELAY.TANK_LARGE,
+  modelConfig: SPIDER_MODEL,
 };
 
 const BEHEMOTH: EnemyClass = {
@@ -166,6 +270,7 @@ const BEHEMOTH: EnemyClass = {
   baseSpeed: 40,
   baseReward: 10,
   spawnDelay: SPAWN_DELAY.TANK_LARGE,
+  modelConfig: SPIDER_MODEL,
 };
 
 const JUGGERNAUT: EnemyClass = {
@@ -176,6 +281,7 @@ const JUGGERNAUT: EnemyClass = {
   baseSpeed: 35,
   baseReward: 12,
   spawnDelay: SPAWN_DELAY.TANK_LARGE,
+  modelConfig: SPIDER_MODEL,
 };
 
 // --- БОСС ---
@@ -187,7 +293,10 @@ const BOSS: EnemyClass = {
   baseSpeed: 30,
   baseReward: 100,
   spawnDelay: 0,
+  modelConfig: { ...SPIDER_MODEL, scale: 0.05 }, // Босс больше
 };
+
+
 
 // ============================================
 // КОНФИГУРАЦИЯ УРОВНЕЙ
@@ -200,6 +309,7 @@ function createEnemy(baseEnemy: EnemyClass, healthMult: number = 1, speedMult: n
     ...baseEnemy,
     baseHealth: Math.round(baseEnemy.baseHealth * healthMult),
     baseSpeed: Math.round(baseEnemy.baseSpeed * speedMult),
+    modelConfig: baseEnemy.modelConfig, // Сохраняем конфигурацию модели
   };
 }
 

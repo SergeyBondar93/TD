@@ -1,5 +1,27 @@
 import type { Enemy, Tower, Projectile, Position, WaveConfig, LaserBeam, ElectricChain, FireProjectile, FlameStream, IceProjectile, IceStream } from '../types/game';
-import { ENEMY_SIZES, WeaponType as WeaponTypeEnum } from '../types/game';
+import { ENEMY_SIZES, WeaponType as WeaponTypeEnum, EnemyType } from '../types/game';
+
+// Импортируем дефолтную модель паука для всех врагов
+const DEFAULT_MODEL_CONFIG = {
+  modelType: 'spider' as const,
+  scale: 0.02,
+  rotationOffset: Math.PI,
+  animations: {
+    walk: {
+      bobAmount: 0.05,
+      swayAmount: 0.02,
+      tiltAmount: 0.05,
+      speed: 8,
+    },
+    death: {
+      duration: 2.0,
+      fadeOutDuration: 1.0,
+      flipOver: true,
+      explode: false,
+      shrink: false,
+    },
+  },
+};
 
 /**
  * Чистая игровая логика - функции без побочных эффектов
@@ -191,11 +213,24 @@ export function processEnemies(
   let earnedMoney = 0;
 
   for (const enemy of enemies) {
-    if (enemy.health <= 0) {
+    // Если враг умер и НЕ начал анимацию смерти - инициализируем её
+    if (enemy.health <= 0 && !enemy.isDying) {
+      activeEnemies.push({
+        ...enemy,
+        isDying: true,
+        deathStartTime: Date.now() / 1000 // в секундах
+      });
       earnedMoney += enemy.reward;
       continue;
     }
 
+    // Если враг в процессе анимации смерти - оставляем его на месте без движения
+    if (enemy.isDying) {
+      activeEnemies.push(enemy); // Враг остаётся на месте
+      continue;
+    }
+
+    // Враг жив - обрабатываем движение
     const updated = updateEnemyPosition(enemy, path, deltaTime);
     if (updated.reachedEnd) {
       lostLives++;
@@ -230,6 +265,11 @@ export function findClosestEnemyInRange(
   let minDistance = Infinity;
 
   for (const enemy of enemies) {
+    // Игнорируем умирающих врагов
+    if (enemy.isDying) {
+      continue;
+    }
+    
     if (isEnemyInRange(tower, enemy)) {
       const dist = distance(tower.position, enemy.position);
       if (dist < minDistance) {
@@ -259,6 +299,9 @@ export function findEnemyChain(
 
     for (const enemy of enemies) {
       if (used.has(enemy.id)) continue;
+      
+      // Игнорируем умирающих врагов
+      if (enemy.isDying) continue;
 
       const dist = distance(lastEnemy.position, enemy.position);
       if (dist <= chainRange && dist < minDist) {
@@ -289,6 +332,9 @@ export function findEnemiesInCone(
   const coneAngleRad = (coneAngle * Math.PI) / 180;
 
   return enemies.filter(enemy => {
+    // Игнорируем умирающих врагов
+    if (enemy.isDying) return false;
+    
     const dist = distance(towerPosition, enemy.position);
     if (dist > range) return false;
 
@@ -987,6 +1033,7 @@ export function processWaveSpawn(
       size: enemySize,
       pathOffset: pathOffset,
       turnPoints: [],
+      modelConfig: DEFAULT_MODEL_CONFIG, // Используем дефолтную модель паука
     };
 
     const updatedSpawnState: WaveSpawnState = {

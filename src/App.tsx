@@ -5,8 +5,7 @@ import { LevelSelect } from './components/LevelSelect';
 import { GameOver } from './components/GameOver';
 import { DebugInfo } from './components/DebugInfo';
 import { TowerInfo } from './components/TowerInfo';
-import { ModelDebugViewer } from './components/ModelDebugViewer';
-import { ModelPositionController } from './components/Enemy3DRenderer';
+import { getEnemy3DManager } from './components/Enemy3DRenderer';
 import { useGameStore } from './stores/gameStore';
 import { useUIStore } from './stores/uiStore';
 import type { GameState, Enemy, Tower, Projectile, LaserBeam, ElectricChain, FireProjectile, FlameStream, IceProjectile, IceStream } from './types/game';
@@ -272,11 +271,11 @@ function App() {
   }, [selectedTowerId, towers, money, setTowers, setMoney, setSelectedTowerId]);
 
   // Автоматическая инициализация первого уровня в дев режиме
-  useEffect(() => {
-    if (DEV_CONFIG.AUTO_START_LEVEL && currentLevel !== null && !isInitialized) {
-      initializeGame(DEV_CONFIG.AUTO_START_LEVEL);
-    }
-  }, [currentLevel, isInitialized, initializeGame]);
+  // useEffect(() => {
+  //   if (DEV_CONFIG.AUTO_START_LEVEL && currentLevel !== null && !isInitialized) {
+  //     initializeGame(DEV_CONFIG.AUTO_START_LEVEL);
+  //   }
+  // }, [currentLevel, isInitialized, initializeGame]);
 
   // Основной игровой цикл
   useEffect(() => {
@@ -319,7 +318,27 @@ function App() {
       // 2. Обновление врагов
       const currentEnemies = useGameStore.getState().enemies;
       const processedEnemies = processEnemies(currentEnemies, DEFAULT_PATH, adjustedDeltaTime);
-      state.setEnemies(processedEnemies.activeEnemies);
+
+      // 2.5. Удаление врагов после завершения анимации смерти
+      const enemy3DManager = getEnemy3DManager();
+      const enemiesAfterDeath = processedEnemies.activeEnemies.filter(enemy => {
+        if (enemy.isDying && enemy.deathStartTime) {
+          // Проверяем вручную, завершена ли анимация
+          const currentTime = Date.now() / 1000;
+          const totalDuration = 3; // 2 секунды переворот + 1 секунда затухание
+          const elapsed = currentTime - enemy.deathStartTime;
+          
+          if (elapsed >= totalDuration) {
+            // Удаляем модель врага из 3D менеджера
+            enemy3DManager.removeEnemy(enemy.id);
+            return false; // Удаляем врага из списка
+          }
+        }
+        return true; // Оставляем врага в списке
+      });
+      
+      // Обновляем список врагов (с учётом удалённых после анимации смерти)
+      state.setEnemies(enemiesAfterDeath);
 
       if (processedEnemies.lostLives > 0) {
         const currentLives = useGameStore.getState().lives;
@@ -347,7 +366,7 @@ function App() {
       const updatedTowers: Tower[] = [];
 
       for (const tower of currentTowers) {
-        const fireResult = processTowerFire(tower, processedEnemies.activeEnemies, currentGameTime);
+        const fireResult = processTowerFire(tower, enemiesAfterDeath, currentGameTime);
         updatedTowers.push(fireResult.updatedTower);
         if (fireResult.projectile) {
           newProjectiles.push(fireResult.projectile);
@@ -398,7 +417,7 @@ function App() {
       const currentProjectiles = useGameStore.getState().projectiles;
       const processedProjectiles = processProjectiles(
         currentProjectiles,
-        processedEnemies.activeEnemies,
+        enemiesAfterDeath,
         adjustedDeltaTime
       );
 
@@ -409,7 +428,7 @@ function App() {
       const currentLaserBeams = useGameStore.getState().laserBeams;
       const processedLasers = processLaserBeams(
         currentLaserBeams,
-        useGameStore.getState().enemies,
+        processedProjectiles.updatedEnemies,
         currentGameTime
       );
 
@@ -420,7 +439,7 @@ function App() {
       const currentElectricChains = useGameStore.getState().electricChains;
       const processedElectric = processElectricChains(
         currentElectricChains,
-        useGameStore.getState().enemies,
+        processedLasers.updatedEnemies,
         currentGameTime
       );
 
@@ -431,7 +450,7 @@ function App() {
       const currentFireProjectiles = useGameStore.getState().fireProjectiles;
       const processedFire = processFireProjectiles(
         currentFireProjectiles,
-        useGameStore.getState().enemies,
+        processedElectric.updatedEnemies,
         adjustedDeltaTime
       );
 
@@ -442,7 +461,7 @@ function App() {
       const currentFlameStreams = useGameStore.getState().flameStreams;
       const processedFlames = processFlameStreams(
         currentFlameStreams,
-        useGameStore.getState().enemies,
+        processedFire.updatedEnemies,
         adjustedDeltaTime,
         currentGameTime
       );
@@ -454,7 +473,7 @@ function App() {
       const currentIceProjectiles = useGameStore.getState().iceProjectiles;
       const processedIce = processIceProjectiles(
         currentIceProjectiles,
-        useGameStore.getState().enemies,
+        processedFlames.updatedEnemies,
         adjustedDeltaTime
       );
 
@@ -465,7 +484,7 @@ function App() {
       const currentIceStreams = useGameStore.getState().iceStreams;
       const processedIceStreams = processIceStreams(
         currentIceStreams,
-        useGameStore.getState().enemies,
+        processedIce.updatedEnemies,
         adjustedDeltaTime,
         currentGameTime
       );
@@ -534,9 +553,6 @@ function App() {
       
       {/* Добавляем отладочный просмотрщик 3D модели */}
       {/* <ModelDebugViewer /> */}
-      
-      {/* Контроллер позиции модели */}
-      {DEV_CONFIG.SHOW_DEBUG_INFO && <ModelPositionController />}
       
       <div className="app-main-content" style={styles.mainContent}>
         <div className="app-game-section" style={styles.gameSection}>

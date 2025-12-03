@@ -26,6 +26,8 @@ export const ENEMY_SIZES: Record<EnemyType, number> = {
   [EnemyType.TANK_LARGE]: 60,
 };
 
+import type { EnemyModelConfig } from '../config/enemies';
+
 export interface Position {
   x: number;
   y: number;
@@ -46,6 +48,9 @@ export interface Enemy {
   turnPoints?: Position[]; // Точки где был совершен поворот (для отладки)
   slowEffect?: number; // Замедление от ледяного оружия (0-1, где 0.2 = 20% замедление)
   rotation?: number; // Угол направления движения в радианах
+  isDying?: boolean; // Враг начал анимацию смерти
+  deathStartTime?: number; // Время начала анимации смерти
+  modelConfig?: EnemyModelConfig; // Конфигурация 3D модели
 }
 
 export interface Tower {

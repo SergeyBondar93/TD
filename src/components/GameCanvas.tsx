@@ -236,16 +236,27 @@ function drawPath(ctx: CanvasRenderingContext2D, path: { x: number; y: number }[
   });
 }
 
-// Рисование врага (3D модель волка)
+// Рисование врага (3D модель)
 function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, deltaTime: number, enemy3DManager: ReturnType<typeof getEnemy3DManager>) {
   const size = enemy.size;
   const x = enemy.position.x - size / 2;
   const y = enemy.position.y - size / 2;
 
-  // Рендерим 3D модель волка
+  // Рендерим 3D модель
   const isLoaded = enemy3DManager.isLoaded();
   
-  if (isLoaded) {
+  if (isLoaded && enemy.modelConfig) {
+    // Создаём или получаем модель для этого врага
+    enemy3DManager.getOrCreateEnemy(enemy.id, enemy.modelConfig);
+    
+    // Если ЭТОТ конкретный враг начал умирать - запускаем анимацию смерти
+    if (enemy.isDying && enemy.deathStartTime) {
+      const is3DDying = enemy3DManager.isEnemyDying(enemy.id);
+      if (!is3DDying) {
+        enemy3DManager.startDeathAnimation(enemy.id, enemy.deathStartTime);
+      }
+    }
+    
     const rotation = enemy.rotation ?? 0;
     const modelCanvas = enemy3DManager.render(enemy.id, rotation, deltaTime);
     
@@ -285,7 +296,11 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, deltaTime: numbe
     ctx.fillText(enemy.level.toString(), enemy.position.x, enemy.position.y);
   }
 
-  // HP полоска над врагом
+  // HP полоска над врагом (не показываем для умирающих)
+  if (enemy.isDying) {
+    return; // Не рисуем HP бар для умирающих врагов
+  }
+  
   const healthBarWidth = size;
   const healthBarHeight = 4;
   const healthBarX = x;

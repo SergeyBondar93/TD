@@ -33,7 +33,7 @@ export const DEV_CONFIG = {
   SHOW_ENEMY_LEVEL: false,
 
   // Время строительства башни в секундах (базовое для уровня 1)
-  BASE_BUILD_TIME: 2,
+  BASE_BUILD_TIME: 0.01,
   
   // Время улучшения башни в секундах (базовое)
   BASE_UPGRADE_TIME: 1.5,

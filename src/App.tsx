@@ -20,7 +20,7 @@ import type {
   IceProjectile,
   IceStream,
 } from "./types/game";
-import { TOWER_STATS, EnemyType, ENEMY_SIZES, WeaponType } from "./types/game";
+import { TOWER_STATS, EnemyType, ENEMY_SIZES, WeaponType, createTowerFromStats } from "./types/game";
 import { LEVELS, DEFAULT_PATH } from "./config/levels";
 import { DEV_CONFIG } from "./config/dev";
 import {
@@ -150,56 +150,18 @@ function App() {
 
       // Автоматически размещаем башни если включен флаг
       if (DEV_CONFIG.AUTO_PLACE_TOWERS) {
-        const selectedTowerLevel = 3;
-        const towerStats = TOWER_STATS[selectedTowerLevel];
-        const tower1: Tower = {
+        const tower1 = createTowerFromStats({
           id: "dasdasdas2121",
           position: { x: 275, y: 250 },
-          level: 3,
-          damage: towerStats.damage,
-          range: towerStats.range,
-          fireRate: towerStats.fireRate,
-          lastFireTime: 0,
-          cost: towerStats.cost,
-          size: towerStats.size,
-          weaponType: towerStats.weaponType,
-          chainCount: towerStats.chainCount,
-          areaRadius: (towerStats as any).areaRadius,
-          slowEffect: (towerStats as any).slowEffect,
-          slowDuration: (towerStats as any).slowDuration,
-          rotation: 0,
-          targetRotation: 0,
+          towerLevel: 3,
           upgradeLevel: 0,
-          baseDamage: towerStats.damage,
-          baseRange: towerStats.range,
-          baseFireRate: towerStats.fireRate,
-          buildTimeRemaining: 0,
-          upgradeQueue: 0,
-        };
-        const tower2: Tower = {
+        });
+        const tower2 = createTowerFromStats({
           id: "dasdasdas2121132",
           position: { x: 631, y: 247 },
-          level: 3,
-          damage: towerStats.damage,
-          range: towerStats.range,
-          fireRate: towerStats.fireRate,
-          lastFireTime: 0,
-          cost: towerStats.cost,
-          size: towerStats.size,
-          weaponType: towerStats.weaponType,
-          chainCount: towerStats.chainCount,
-          areaRadius: (towerStats as any).areaRadius,
-          slowEffect: (towerStats as any).slowEffect,
-          slowDuration: (towerStats as any).slowDuration,
-          rotation: 0,
-          targetRotation: 0,
-          upgradeLevel: 0,
-          baseDamage: towerStats.damage,
-          baseRange: towerStats.range,
-          baseFireRate: towerStats.fireRate,
-          buildTimeRemaining: 0,
-          upgradeQueue: 0,
-        };
+          towerLevel: 3,
+          upgradeLevel: 5,
+        });
         setTowers([tower1, tower2]);
       }
 
@@ -250,7 +212,7 @@ function App() {
     (x: number, y: number) => {
       if (!selectedTowerLevel) return;
 
-      const towerStats = TOWER_STATS[selectedTowerLevel];
+      const towerStats = TOWER_STATS[selectedTowerLevel][0];
 
       if (money < towerStats.cost) return;
 
@@ -258,34 +220,15 @@ function App() {
       if (!canPlaceTower(position, towers, DEFAULT_PATH)) return;
 
       const newTowerId = `tower-${Date.now()}`;
-      const buildTime = DEV_CONFIG.BASE_BUILD_TIME * 1000 * selectedTowerLevel; // Время строительства зависит от уровня башни
-      const newTower: Tower = {
+      const newTower = createTowerFromStats({
         id: newTowerId,
         position,
-        level: selectedTowerLevel,
-        damage: towerStats.damage,
-        range: towerStats.range,
-        fireRate: towerStats.fireRate,
-        lastFireTime: 0,
-        cost: towerStats.cost,
-        size: towerStats.size,
-        weaponType: towerStats.weaponType,
-        chainCount: towerStats.chainCount,
-        areaRadius: (towerStats as any).areaRadius,
-        slowEffect: (towerStats as any).slowEffect,
-        slowDuration: (towerStats as any).slowDuration,
-        rotation: 0,
-        targetRotation: 0,
+        towerLevel: selectedTowerLevel,
         upgradeLevel: 0,
-        baseDamage: towerStats.damage,
-        baseRange: towerStats.range,
-        baseFireRate: towerStats.fireRate,
-        buildTimeRemaining: buildTime,
-        upgradeQueue: 0,
-      };
+      });
 
       addTower(newTower);
-      setMoney(money - towerStats.cost);
+      setMoney(money - newTower.cost);
       setSelectedTowerLevel(null);
       setSelectedTowerId(newTowerId); // Устанавливаем фокус на новую башню
     },
@@ -309,12 +252,6 @@ function App() {
     [setSelectedTowerId, setSelectedTowerLevel]
   );
 
-  // Константы для расчета апгрейдов
-  const UPGRADE_COST_MULTIPLIER = 2.5;
-  const UPGRADE_DAMAGE_MULTIPLIER = 1.8;
-  const UPGRADE_RANGE_MULTIPLIER = 1.15;
-  const UPGRADE_FIRE_RATE_MULTIPLIER = 1.2;
-
   // Апгрейд башни
   const handleTowerUpgrade = useCallback(() => {
     if (!selectedTowerId) return;
@@ -322,19 +259,12 @@ function App() {
     const tower = towers.find((t) => t.id === selectedTowerId);
     if (!tower || tower.upgradeLevel + tower.upgradeQueue >= 5) return;
 
-    const upgradeCost = Math.round(
-      tower.cost *
-        Math.pow(
-          UPGRADE_COST_MULTIPLIER,
-          tower.upgradeLevel + tower.upgradeQueue + 1
-        )
-    );
-    if (money < upgradeCost) return;
+    const nextUpgradeLevel = tower.upgradeLevel + tower.upgradeQueue + 1;
+    const nextUpgradeStats = TOWER_STATS[tower.level][nextUpgradeLevel];
+    if (!nextUpgradeStats?.upgradeCost) return;
+    if (money < nextUpgradeStats.upgradeCost) return;
 
-    const upgradeTime =
-      DEV_CONFIG.BASE_UPGRADE_TIME *
-      1000 *
-      (tower.upgradeLevel + tower.upgradeQueue + 1);
+    const upgradeTime = nextUpgradeStats.buildTime; // Берём время улучшения из конфига
 
     const updatedTowers = towers.map((t) => {
       if (t.id === selectedTowerId) {
@@ -348,7 +278,7 @@ function App() {
     });
 
     setTowers(updatedTowers);
-    setMoney(money - upgradeCost);
+    setMoney(money - nextUpgradeStats.upgradeCost);
   }, [selectedTowerId, towers, money, setTowers, setMoney]);
 
   // Продажа башни
@@ -361,18 +291,19 @@ function App() {
     // Рассчитываем стоимость завершенных улучшений
     const completedUpgrades = Array.from(
       { length: tower.upgradeLevel },
-      (_, i) =>
-        Math.round(tower.cost * Math.pow(UPGRADE_COST_MULTIPLIER, i + 1))
+      (_, i) => {
+        const stats = TOWER_STATS[tower.level][i + 1];
+        return stats?.upgradeCost ?? 0;
+      }
     ).reduce((sum, cost) => sum + cost, 0);
 
     // Рассчитываем стоимость улучшений в очереди
     const queuedUpgrades = Array.from(
       { length: tower.upgradeQueue || 0 },
-      (_, i) =>
-        Math.round(
-          tower.cost *
-            Math.pow(UPGRADE_COST_MULTIPLIER, tower.upgradeLevel + i + 1)
-        )
+      (_, i) => {
+        const stats = TOWER_STATS[tower.level][tower.upgradeLevel + i + 1];
+        return stats?.upgradeCost ?? 0;
+      }
     ).reduce((sum, cost) => sum + cost, 0);
 
     // Общая инвестиция = базовая стоимость + завершенные + в очереди
@@ -529,12 +460,7 @@ function App() {
       const rotatedTowers = updateTowerRotations(
         useGameStore.getState().towers,
         adjustedDeltaTime,
-        5, // rotation speed
-        {
-          damageMultiplier: UPGRADE_DAMAGE_MULTIPLIER,
-          rangeMultiplier: UPGRADE_RANGE_MULTIPLIER,
-          fireRateMultiplier: UPGRADE_FIRE_RATE_MULTIPLIER,
-        }
+        5 // rotation speed
       );
       state.setTowers(rotatedTowers);
 
@@ -554,7 +480,8 @@ function App() {
       const processedLasers = processLaserBeams(
         currentLaserBeams,
         processedProjectiles.updatedEnemies,
-        currentGameTime
+        currentGameTime,
+        adjustedDeltaTime // Передаём deltaTime для учёта скорости игры
       );
 
       state.setLaserBeams(processedLasers.activeLaserBeams);

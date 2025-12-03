@@ -33,11 +33,17 @@ export const DEV_CONFIG = {
   SHOW_ENEMY_LEVEL: false,
 
   // Время строительства башни в секундах (базовое для уровня 1)
-  BASE_BUILD_TIME: 0.000001,
+  BASE_BUILD_TIME: .2,
   
   // Время улучшения башни в секундах (базовое)
   BASE_UPGRADE_TIME: 1.5,
   
   // Автоматически создавать базовые башни при старте уровня
   AUTO_PLACE_TOWERS: true,
+
+  // Множители для апгрейдов башен
+  UPGRADE_COST_MULTIPLIER: 2.5,
+  UPGRADE_DAMAGE_MULTIPLIER: 1.8,
+  UPGRADE_RANGE_MULTIPLIER: 1.15,
+  UPGRADE_FIRE_RATE_MULTIPLIER: 1.2,
 };

@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Tower } from '../types/game';
-import { WeaponType } from '../types/game';
+import { WeaponType, TOWER_STATS } from '../types/game';
+import { DEV_CONFIG } from '../config/dev';
 
 interface TowerInfoProps {
   tower: Tower | null;
@@ -10,11 +11,6 @@ interface TowerInfoProps {
   onClose: () => void;
 }
 
-// Константы для расчета апгрейдов
-const UPGRADE_COST_MULTIPLIER = 2.5;
-const UPGRADE_DAMAGE_MULTIPLIER = 1.8;
-const UPGRADE_RANGE_MULTIPLIER = 1.15;
-const UPGRADE_FIRE_RATE_MULTIPLIER = 1.2;
 const MAX_UPGRADES = 5;
 
 export const TowerInfo: React.FC<TowerInfoProps> = ({ tower, money, onUpgrade, onSell, onClose }) => {
@@ -22,18 +18,21 @@ export const TowerInfo: React.FC<TowerInfoProps> = ({ tower, money, onUpgrade, o
 
   const totalUpgradeLevel = tower.upgradeLevel + tower.upgradeQueue;
   const canUpgrade = totalUpgradeLevel < MAX_UPGRADES;
-  const upgradeCost = canUpgrade ? Math.round(tower.cost * Math.pow(UPGRADE_COST_MULTIPLIER, totalUpgradeLevel + 1)) : 0;
+  const nextUpgradeStats = TOWER_STATS[tower.level][totalUpgradeLevel + 1];
+  const upgradeCost = canUpgrade && nextUpgradeStats ? nextUpgradeStats.upgradeCost ?? 0 : 0;
   const canAffordUpgrade = money >= upgradeCost;
   const isBuilding = tower.buildTimeRemaining > 0;
   
   // Расчет стоимости продажи (70% от базовой стоимости + все улучшения + улучшения в очереди)
-  const completedUpgrades = Array.from({ length: tower.upgradeLevel }, (_, i) => 
-    Math.round(tower.cost * Math.pow(UPGRADE_COST_MULTIPLIER, i + 1))
-  ).reduce((sum, cost) => sum + cost, 0);
+  const completedUpgrades = Array.from({ length: tower.upgradeLevel }, (_, i) => {
+    const stats = TOWER_STATS[tower.level][i + 1];
+    return stats?.upgradeCost ?? 0;
+  }).reduce((sum, cost) => sum + cost, 0);
   
-  const queuedUpgrades = Array.from({ length: tower.upgradeQueue }, (_, i) => 
-    Math.round(tower.cost * Math.pow(UPGRADE_COST_MULTIPLIER, tower.upgradeLevel + i + 1))
-  ).reduce((sum, cost) => sum + cost, 0);
+  const queuedUpgrades = Array.from({ length: tower.upgradeQueue }, (_, i) => {
+    const stats = TOWER_STATS[tower.level][tower.upgradeLevel + i + 1];
+    return stats?.upgradeCost ?? 0;
+  }).reduce((sum, cost) => sum + cost, 0);
   
   const totalInvested = tower.cost + completedUpgrades + queuedUpgrades;
   const sellValue = Math.round(totalInvested * 0.7);
@@ -226,9 +225,13 @@ export const TowerInfo: React.FC<TowerInfoProps> = ({ tower, money, onUpgrade, o
               Улучшить за ${upgradeCost}
             </button>
             <div style={styles.upgradeInfo}>
-              Урон: {tower.damage.toFixed(1)} → {(tower.damage * UPGRADE_DAMAGE_MULTIPLIER).toFixed(1)}<br />
-              Дальность: {tower.range.toFixed(0)} → {(tower.range * UPGRADE_RANGE_MULTIPLIER).toFixed(0)}<br />
-              Скорость: {tower.fireRate.toFixed(1)} → {(tower.fireRate * UPGRADE_FIRE_RATE_MULTIPLIER).toFixed(1)}
+              {nextUpgradeStats ? (
+                <>
+                  Урон: {tower.damage.toFixed(1)} → {nextUpgradeStats.damage.toFixed(1)}<br />
+                  Дальность: {tower.range.toFixed(0)} → {nextUpgradeStats.range.toFixed(0)}<br />
+                  Скорость: {tower.fireRate.toFixed(1)} → {nextUpgradeStats.fireRate.toFixed(1)}
+                </>
+              ) : null}
             </div>
           </>
         ) : (

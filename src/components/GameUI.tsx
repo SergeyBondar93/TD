@@ -61,7 +61,7 @@ export const GameUI: React.FC<GameUIProps> = ({
       <div className="game-ui-tower-section" style={styles.towerSection}>
         <div className="game-ui-tower-buttons" style={styles.towerButtons}>
           {([1, 2, 3, 4, 5] as const).map((level) => {
-            const stats = TOWER_STATS[level];
+            const stats = TOWER_STATS[level][0]; // Base level stats (upgrade level 0)
             const isSelected = selectedTowerLevel === level;
             const canAfford = money >= stats.cost;
 

@@ -1,5 +1,5 @@
 import type { Enemy, Tower, Projectile, Position, WaveConfig, LaserBeam, ElectricChain, FireProjectile, FlameStream, IceProjectile, IceStream } from '../types/game';
-import { ENEMY_SIZES, WeaponType as WeaponTypeEnum, EnemyType } from '../types/game';
+import { ENEMY_SIZES, WeaponType as WeaponTypeEnum, EnemyType, TOWER_STATS } from '../types/game';
 
 /**
  * Чистая игровая логика - функции без побочных эффектов
@@ -875,6 +875,7 @@ export function processLaserBeams(
   laserBeams: LaserBeam[],
   enemies: Enemy[],
   currentTime: number,
+  deltaTime: number, // Для учёта скорости игры
   beamDuration: number = 100 // Длительность лазерного луча в мс
 ): ProcessedLaserBeams {
   const activeLaserBeams: LaserBeam[] = [];
@@ -891,9 +892,10 @@ export function processLaserBeams(
 
     const target = enemiesMap.get(beam.targetEnemyId);
 
-    // Применяем урон только один раз за луч
+    // Применяем урон с учётом времени (непрерывный урон)
     if (target && !damagedEnemies.has(target.id)) {
-      target.health -= beam.damage;
+      // Урон в секунду * (deltaTime / 1000) = урон за этот кадр
+      target.health -= beam.damage * (deltaTime / 1000);
       damagedEnemies.add(target.id);
     }
 
@@ -916,12 +918,7 @@ export function processLaserBeams(
 export function updateTowerRotations(
   towers: Tower[],
   deltaTime: number,
-  rotationSpeed: number = 5, // радиан в секунду
-  upgradeMultipliers?: {
-    damageMultiplier: number;
-    rangeMultiplier: number;
-    fireRateMultiplier: number;
-  }
+  rotationSpeed: number = 5 // радиан в секунду
 ): Tower[] {
   return towers.map(tower => {
     const currentRotation = tower.rotation ?? 0;
@@ -938,15 +935,20 @@ export function updateTowerRotations(
     };
 
     // Если завершилось улучшение, применяем его
-    if (tower.buildTimeRemaining > 0 && updatedTower.buildTimeRemaining === 0 && tower.upgradeQueue > 0 && upgradeMultipliers) {
-      updatedTower = {
-        ...updatedTower,
-        upgradeLevel: tower.upgradeLevel + tower.upgradeQueue,
-        damage: tower.damage * Math.pow(upgradeMultipliers.damageMultiplier, tower.upgradeQueue),
-        range: tower.range * Math.pow(upgradeMultipliers.rangeMultiplier, tower.upgradeQueue),
-        fireRate: tower.fireRate * Math.pow(upgradeMultipliers.fireRateMultiplier, tower.upgradeQueue),
-        upgradeQueue: 0,
-      };
+    if (tower.buildTimeRemaining > 0 && updatedTower.buildTimeRemaining === 0 && tower.upgradeQueue > 0) {
+      const newUpgradeLevel = tower.upgradeLevel + tower.upgradeQueue;
+      const towerStats = TOWER_STATS[tower.level][newUpgradeLevel];
+      
+      if (towerStats) {
+        updatedTower = {
+          ...updatedTower,
+          upgradeLevel: newUpgradeLevel,
+          damage: towerStats.damage,
+          range: towerStats.range,
+          fireRate: towerStats.fireRate,
+          upgradeQueue: 0,
+        };
+      }
     }
 
     return updatedTower;

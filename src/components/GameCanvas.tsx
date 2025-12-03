@@ -966,7 +966,7 @@ function drawTowerPreview(
   existingTowers: Tower[],
   path: { x: number; y: number }[]
 ) {
-  const towerStats = TOWER_STATS[towerLevel];
+  const towerStats = TOWER_STATS[towerLevel][0]; // Base level stats (upgrade level 0)
   const canPlace = canPlaceTower(position, existingTowers, path);
   
   const size = towerStats.size;

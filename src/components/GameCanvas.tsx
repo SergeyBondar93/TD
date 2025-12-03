@@ -12,7 +12,7 @@ import {
 } from '../types/game';
 import { DEV_CONFIG } from '../config/dev';
 import { GAME_SETTINGS } from '../config/settings';
-import { canPlaceTower } from '../utils/pureGameLogic';
+import { canPlaceTower } from '../core/logic/towers';
 import { getEnemy3DManager } from './Enemy3DRenderer';
 import { TOWER_STATS } from '../config/gameData/towers';
 

@@ -26,9 +26,6 @@ import { LEVELS, DEFAULT_PATH } from "./config/gameData/levels";
 import { DEV_CONFIG } from "./config/dev";
 import { GAME_SETTINGS } from "./config/settings";
 import {
-  canPlaceTower,
-  processEnemies,
-  processTowerFire,
   processProjectiles,
   processLaserBeams,
   processElectricChains,
@@ -36,10 +33,10 @@ import {
   processFlameStreams,
   processIceProjectiles,
   processIceStreams,
-  processWaveSpawn,
-  updateTowerRotations,
-  type WaveSpawnState,
-} from "./utils/pureGameLogic";
+} from "./core/logic/projectiles";
+import { processWaveSpawn, updateTowerRotations, type WaveSpawnState } from "./core/logic/waves";
+import { canPlaceTower, processTowerFire } from "./core/logic/towers";
+import { processEnemies } from "./core/logic/enemies";
 import "./App.css";
 
 function App() {

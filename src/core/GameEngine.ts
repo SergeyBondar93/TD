@@ -151,13 +151,34 @@ export class GameEngine {
     }
 
     // Вычисляем deltaTime в миллисекундах
-    const deltaTime = currentTime - this.lastUpdateTime;
+    let deltaTime = currentTime - this.lastUpdateTime;
     this.lastUpdateTime = currentTime;
 
     // Применяем скорость игры
-    const adjustedDeltaTime = deltaTime * this.gameSpeed;
-    this.gameTime += adjustedDeltaTime;
+    let adjustedDeltaTime = deltaTime * this.gameSpeed;
+    
+    // КРИТИЧНО: Ограничиваем максимальный шаг симуляции
+    // На высоких скоростях разбиваем большие шаги на несколько маленьких
+    // Это предотвращает "телепортацию" объектов
+    const MAX_STEP = 33.33; // ~30 FPS worth of time (в миллисекундах)
+    
+    while (adjustedDeltaTime > MAX_STEP) {
+      this.gameTime += MAX_STEP;
+      this.performUpdateStep(MAX_STEP);
+      adjustedDeltaTime -= MAX_STEP;
+    }
+    
+    // Обрабатываем остаток
+    if (adjustedDeltaTime > 0) {
+      this.gameTime += adjustedDeltaTime;
+      this.performUpdateStep(adjustedDeltaTime);
+    }
+  }
 
+  /**
+   * Выполнить один шаг обновления игры
+   */
+  private performUpdateStep(adjustedDeltaTime: number): void {
     // 1. Спавн врагов
     this.updateWaveSpawn();
 

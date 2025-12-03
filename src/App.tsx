@@ -37,7 +37,6 @@ function App() {
   // Инициализация игры с выбранным уровнем
   const initializeGame = useCallback(
     (levelNumber: number) => {
-      console.log('[App] Initializing game level:', levelNumber);
       const levelConfig = LEVELS[levelNumber - 1];
       if (!levelConfig) return;
 
@@ -50,8 +49,6 @@ function App() {
         levelConfig.startingMoney,
         levelConfig.startingLives
       );
-
-      console.log('[App] Game initialized. State:', engine.getState());
 
       setSelectedTowerLevel(null);
 
@@ -255,6 +252,7 @@ function App() {
       const currentTime = performance.now();
       
       // Обновляем игровую логику
+      // GameEngine сам разбивает большие шаги на маленькие для точности
       engine.update(currentTime);
 
       // Продолжаем симуляцию

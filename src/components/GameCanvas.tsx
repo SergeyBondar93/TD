@@ -13,6 +13,7 @@ import {
 } from '../types/game';
 import { DEV_CONFIG } from '../config/dev';
 import { canPlaceTower } from '../utils/pureGameLogic';
+import { getEnemy3DManager } from './Enemy3DRenderer';
 
 interface GameCanvasProps {
   gameState: GameState;
@@ -25,6 +26,8 @@ interface GameCanvasProps {
 export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick, onTowerClick, selectedTowerLevel, path }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
+  const enemy3DManagerRef = useRef(getEnemy3DManager());
+  const lastFrameTimeRef = useRef(Date.now());
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -32,6 +35,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // Вычисляем deltaTime для анимации
+    const now = Date.now();
+    const deltaTime = (now - lastFrameTimeRef.current) / 1000; // в секундах
+    lastFrameTimeRef.current = now;
 
     // Очистка canvas
     ctx.fillStyle = '#1a1a2e';
@@ -53,7 +61,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onCanvasClick
     gameState.towers.forEach((tower) => drawTower(ctx, tower));
 
     // Рисуем врагов
-    gameState.enemies.forEach((enemy) => drawEnemy(ctx, enemy));
+    gameState.enemies.forEach((enemy) => drawEnemy(ctx, enemy, deltaTime, enemy3DManagerRef.current));
 
     // Рисуем снаряды
     gameState.projectiles.forEach((projectile) => drawProjectile(ctx, projectile));
@@ -228,24 +236,48 @@ function drawPath(ctx: CanvasRenderingContext2D, path: { x: number; y: number }[
   });
 }
 
-// Рисование врага (квадратик с уровнем и HP)
-function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy) {
+// Рисование врага (3D модель волка)
+function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, deltaTime: number, enemy3DManager: ReturnType<typeof getEnemy3DManager>) {
   const size = enemy.size;
   const x = enemy.position.x - size / 2;
   const y = enemy.position.y - size / 2;
 
-  // Определяем цвет в зависимости от типа врага
-  const color = enemy.type === EnemyType.INFANTRY ? '#ff6b6b' : '#4a90e2';
-  ctx.fillStyle = color;
-  ctx.fillRect(x, y, size, size);
-
-  // Обводка
-  ctx.strokeStyle = '#000';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(x, y, size, size);
+  // Рендерим 3D модель волка
+  const isLoaded = enemy3DManager.isLoaded();
+  
+  if (isLoaded) {
+    const rotation = enemy.rotation ?? 0;
+    const modelCanvas = enemy3DManager.render(enemy.id, rotation, deltaTime);
+    
+    if (modelCanvas) {
+      // Рисуем 3D модель на игровом canvas
+      ctx.save();
+      ctx.drawImage(modelCanvas, x, y, size, size);
+      ctx.restore();
+    } else {
+      console.log('[drawEnemy] Model loaded but render returned null for enemy:', enemy.id);
+      // Fallback - рисуем квадратик
+      const color = enemy.type === EnemyType.INFANTRY ? '#ff6b6b' : '#4a90e2';
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, size, size);
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, size, size);
+    }
+  } else {
+    // Запасной вариант: рисуем квадратик пока модель не загрузилась
+    const color = enemy.type === EnemyType.INFANTRY ? '#ff6b6b' : '#4a90e2';
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, size, size);
+    
+    // Обводка
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, size, size);
+  }
 
   // Уровень врага в центре квадрата (не показываем для уровней до 10)
-  if (enemy.level >= 10) {
+  if (DEV_CONFIG.SHOW_ENEMY_LEVEL && enemy.level >= 10) {
     ctx.fillStyle = '#fff';
     ctx.font = 'bold 14px Arial';
     ctx.textAlign = 'center';
@@ -292,33 +324,6 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy) {
       y + size + 12
     );
   }
-
-  // Рисуем стрелку направления движения
-  const rotation = enemy.rotation ?? 0;
-  const arrowLength = size * 0.5;
-  const arrowWidth = size * 0.2;
-  
-  ctx.save();
-  ctx.translate(enemy.position.x, enemy.position.y);
-  ctx.rotate(rotation);
-  
-  // Стрелка
-  ctx.fillStyle = '#ffff00';
-  ctx.globalAlpha = 0.9;
-  ctx.beginPath();
-  ctx.moveTo(arrowLength, 0); // Кончик стрелки
-  ctx.lineTo(0, -arrowWidth);
-  ctx.lineTo(0, arrowWidth);
-  ctx.closePath();
-  ctx.fill();
-  
-  // Обводка стрелки
-  ctx.strokeStyle = '#000000';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-  
-  ctx.globalAlpha = 1;
-  ctx.restore();
 }
 
 // Рисование башни (квадратик с уровнем)

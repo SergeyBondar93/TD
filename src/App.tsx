@@ -5,6 +5,8 @@ import { LevelSelect } from './components/LevelSelect';
 import { GameOver } from './components/GameOver';
 import { DebugInfo } from './components/DebugInfo';
 import { TowerInfo } from './components/TowerInfo';
+import { ModelDebugViewer } from './components/ModelDebugViewer';
+import { ModelPositionController } from './components/Enemy3DRenderer';
 import { useGameStore } from './stores/gameStore';
 import { useUIStore } from './stores/uiStore';
 import type { GameState, Enemy, Tower, Projectile, LaserBeam, ElectricChain, FireProjectile, FlameStream, IceProjectile, IceStream } from './types/game';
@@ -272,7 +274,7 @@ function App() {
   // Автоматическая инициализация первого уровня в дев режиме
   useEffect(() => {
     if (DEV_CONFIG.AUTO_START_LEVEL && currentLevel !== null && !isInitialized) {
-      initializeGame(currentLevel);
+      initializeGame(DEV_CONFIG.AUTO_START_LEVEL);
     }
   }, [currentLevel, isInitialized, initializeGame]);
 
@@ -529,6 +531,12 @@ function App() {
       {DEV_CONFIG.SHOW_DEBUG_INFO && (
         <DebugInfo gameState={gameState} onGameSpeedChange={setGameSpeed} />
       )}
+      
+      {/* Добавляем отладочный просмотрщик 3D модели */}
+      {/* <ModelDebugViewer /> */}
+      
+      {/* Контроллер позиции модели */}
+      {DEV_CONFIG.SHOW_DEBUG_INFO && <ModelPositionController />}
       
       <div className="app-main-content" style={styles.mainContent}>
         <div className="app-game-section" style={styles.gameSection}>

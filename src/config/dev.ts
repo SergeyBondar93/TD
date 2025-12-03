@@ -21,12 +21,16 @@ export const DEV_CONFIG = {
   SHOW_PATH_COORDINATES: true,
   
   // Автоматически запускать первый уровень при загрузке (для разработки)
-  // AUTO_START_LEVEL: true,
+  // AUTO_START_LEVEL: 10,
 
-  GAME_SPEED: 1.05,
+  GAME_SPEED: 0.05,
+  // GAME_SPEED: 1.05,
   
   // Скрывать цифры HP у пехоты
   HIDE_INFANTRY_HP: true,
+
+  // Скрывать уровень врагов на карте
+  SHOW_ENEMY_LEVEL: false,
 
   // Время строительства башни в секундах (базовое для уровня 1)
   BASE_BUILD_TIME: 2,

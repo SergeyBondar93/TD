@@ -20,10 +20,10 @@ export const EnemyType = {
 export type EnemyType = typeof EnemyType[keyof typeof EnemyType];
 
 export const ENEMY_SIZES: Record<EnemyType, number> = {
-  [EnemyType.INFANTRY]: 5,
-  [EnemyType.TANK_SMALL]: 30,
-  [EnemyType.TANK_MEDIUM]: 40,
-  [EnemyType.TANK_LARGE]: 50,
+  [EnemyType.INFANTRY]: 20,
+  [EnemyType.TANK_SMALL]: 40,
+  [EnemyType.TANK_MEDIUM]: 50,
+  [EnemyType.TANK_LARGE]: 60,
 };
 
 export interface Position {

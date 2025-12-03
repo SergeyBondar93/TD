@@ -45,7 +45,7 @@ export const DebugInfo: React.FC<DebugInfoProps> = ({ gameState, onGameSpeedChan
               type="range"
               className="debug-info-slider"
               min="0"
-              max="3.0"
+              max="16.0"
               step="0.05"
               value={gameState.gameSpeed}
               onChange={(e) => onGameSpeedChange(parseFloat(e.target.value))}

@@ -23,6 +23,7 @@ import type {
 import { TOWER_STATS, EnemyType, ENEMY_SIZES, WeaponType, createTowerFromStats } from "./types/game";
 import { LEVELS, DEFAULT_PATH } from "./config/levels";
 import { DEV_CONFIG } from "./config/dev";
+import { GAME_SETTINGS } from "./config/settings";
 import {
   canPlaceTower,
   processEnemies,
@@ -376,10 +377,9 @@ function App() {
           if (enemy.isDying && enemy.deathStartTime) {
             // Проверяем вручную, завершена ли анимация
             const currentTime = Date.now() / 1000;
-            const totalDuration = 3; // 2 секунды переворот + 1 секунда затухание
             const elapsed = currentTime - enemy.deathStartTime;
 
-            if (elapsed >= totalDuration) {
+            if (elapsed >= GAME_SETTINGS.ENEMY_DEATH_ANIMATION_DURATION) {
               // Удаляем модель врага из 3D менеджера
               enemy3DManager.removeEnemy(enemy.id);
               return false; // Удаляем врага из списка
@@ -405,9 +405,16 @@ function App() {
         state.setMoney((prev) => prev + processedEnemies.earnedMoney);
       }
 
-      // 3. Башни стреляют
-      const currentGameTime = gameTimeRef.current;
+      // 3. Обновление вращения башен (плавная интерполяция) и времени строительства/улучшения
       const currentTowers = useGameStore.getState().towers;
+      const rotatedTowers = updateTowerRotations(
+        currentTowers,
+        adjustedDeltaTime,
+        5 // rotation speed
+      );
+
+      // 3.5. Башни стреляют (после обновления поворота!)
+      const currentGameTime = gameTimeRef.current;
       const newProjectiles: Projectile[] = [];
       const newLaserBeams: LaserBeam[] = [];
       const newElectricChains: ElectricChain[] = [];
@@ -416,38 +423,29 @@ function App() {
       const newIceProjectiles: IceProjectile[] = [];
       const newIceStreams: IceStream[] = [];
       const updatedTowers: Tower[] = [];
+      
+      // Обрабатываем каждую башню и накапливаем урон по врагам
+      let enemiesAfterTowerFire = enemiesAfterDeath;
 
-      for (const tower of currentTowers) {
+      for (const tower of rotatedTowers) {
         const fireResult = processTowerFire(
           tower,
-          enemiesAfterDeath,
+          enemiesAfterTowerFire,
           currentGameTime
         );
         updatedTowers.push(fireResult.updatedTower);
-        if (fireResult.projectile) {
-          newProjectiles.push(fireResult.projectile);
-        }
-        if (fireResult.laserBeam) {
-          newLaserBeams.push(fireResult.laserBeam);
-        }
-        if (fireResult.electricChain) {
-          newElectricChains.push(fireResult.electricChain);
-        }
-        if (fireResult.fireProjectile) {
-          newFireProjectiles.push(fireResult.fireProjectile);
-        }
-        if (fireResult.flameStream) {
-          newFlameStreams.push(fireResult.flameStream);
-        }
-        if (fireResult.iceProjectile) {
-          newIceProjectiles.push(fireResult.iceProjectile);
-        }
-        if (fireResult.iceStream) {
-          newIceStreams.push(fireResult.iceStream);
-        }
+        enemiesAfterTowerFire = fireResult.updatedEnemies; // Обновляем врагов с нанесенным уроном
+        newProjectiles.push(...fireResult.projectiles);
+        newLaserBeams.push(...fireResult.laserBeams);
+        newElectricChains.push(...fireResult.electricChains);
+        newFireProjectiles.push(...fireResult.fireProjectiles);
+        newFlameStreams.push(...fireResult.flameStreams);
+        newIceProjectiles.push(...fireResult.iceProjectiles);
+        newIceStreams.push(...fireResult.iceStreams);
       }
 
       state.setTowers(updatedTowers);
+      state.setEnemies(enemiesAfterTowerFire); // Сохраняем врагов с нанесенным уроном
       newProjectiles.forEach((p) => state.addProjectile(p));
       newLaserBeams.forEach((l) => state.addLaserBeam(l));
       newElectricChains.forEach((e) => state.addElectricChain(e));
@@ -456,19 +454,11 @@ function App() {
       newIceProjectiles.forEach((i) => state.addIceProjectile(i));
       newIceStreams.forEach((i) => state.addIceStream(i));
 
-      // 3.5. Обновление вращения башен (плавная интерполяция) и времени строительства/улучшения
-      const rotatedTowers = updateTowerRotations(
-        useGameStore.getState().towers,
-        adjustedDeltaTime,
-        5 // rotation speed
-      );
-      state.setTowers(rotatedTowers);
-
       // 4. Обновление снарядов
       const currentProjectiles = useGameStore.getState().projectiles;
       const processedProjectiles = processProjectiles(
         currentProjectiles,
-        enemiesAfterDeath,
+        enemiesAfterTowerFire, // Используем врагов после урона от башен
         adjustedDeltaTime
       );
 
@@ -480,8 +470,7 @@ function App() {
       const processedLasers = processLaserBeams(
         currentLaserBeams,
         processedProjectiles.updatedEnemies,
-        currentGameTime,
-        adjustedDeltaTime // Передаём deltaTime для учёта скорости игры
+        currentGameTime
       );
 
       state.setLaserBeams(processedLasers.activeLaserBeams);

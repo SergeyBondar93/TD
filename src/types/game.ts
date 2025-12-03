@@ -28,6 +28,7 @@ export const ENEMY_SIZES: Record<EnemyType, number> = {
 
 import type { EnemyModelConfig } from '../config/enemies';
 import { DEV_CONFIG } from '../config/dev';
+import { GAME_SETTINGS } from '../config/settings';
 
 export interface Position {
   x: number;
@@ -202,7 +203,7 @@ export interface TowerStats {
 // Функция для генерации всех уровней улучшений башни
 function generateTowerUpgrades(baseTower: TowerStats, maxUpgrades: number = 5): TowerStats[] {
   const upgrades: TowerStats[] = [];
-  const { UPGRADE_DAMAGE_MULTIPLIER, UPGRADE_RANGE_MULTIPLIER, UPGRADE_FIRE_RATE_MULTIPLIER, UPGRADE_COST_MULTIPLIER, BASE_UPGRADE_TIME } = DEV_CONFIG;
+  const { UPGRADE_DAMAGE_MULTIPLIER, UPGRADE_RANGE_MULTIPLIER, UPGRADE_FIRE_RATE_MULTIPLIER, UPGRADE_COST_MULTIPLIER, BASE_UPGRADE_TIME } = GAME_SETTINGS;
   
   for (let i = 0; i <= maxUpgrades; i++) {
     upgrades.push({
@@ -231,52 +232,52 @@ const BASE_TOWER_STATS: Record<1 | 2 | 3 | 4 | 5, TowerStats> = {
     size: 30,
     weaponType: WeaponType.PROJECTILE,
     upgradeCost: 10,
-    buildTime: DEV_CONFIG.BASE_BUILD_TIME * 1000 * 1, // Время строительства уровня 1
+    buildTime: (DEV_CONFIG.DEV_BUILD_TIME || GAME_SETTINGS.BASE_BUILD_TIME) * 1000 * 1, // Время строительства уровня 1
   },
   2: {
     level: 2,
     upgradeLevel: 0,
-    damage: 25,
+    damage: 1, // Урон за один выстрел
     range: 120,
-    fireRate: 1.5,
+    fireRate: 20, // 20 выстрелов в секунду = 20 урона/сек
     cost: 15,
     size: 35,
     weaponType: WeaponType.ELECTRIC,
     chainCount: 3, // Бьет по 3 врагам
     upgradeCost: 20,
-    buildTime: DEV_CONFIG.BASE_BUILD_TIME * 1000 * 2, // Время строительства уровня 2
+    buildTime: (DEV_CONFIG.DEV_BUILD_TIME || GAME_SETTINGS.BASE_BUILD_TIME) * 1000 * 2, // Время строительства уровня 2
   },
   3: {
     level: 3,
     upgradeLevel: 0,
-    damage: 50,
+    damage: 1, // Урон за один выстрел
     range: 150,
-    fireRate: 2,
+    fireRate: 100, // 100 выстрелов в секунду = 100 урона/сек
     cost: 35,
     size: 40,
     weaponType: WeaponType.LASER,
     upgradeCost: 30,
-    buildTime: DEV_CONFIG.BASE_BUILD_TIME * 1000 * 3, // Время строительства уровня 3
+    buildTime: (DEV_CONFIG.DEV_BUILD_TIME || GAME_SETTINGS.BASE_BUILD_TIME) * 1000 * 3, // Время строительства уровня 3
   },
   4: {
     level: 4,
     upgradeLevel: 0,
-    damage: 8, // Маленький урон в секунду, но постоянный
+    damage: 2, // Урон за один выстрел
     range: 120,
-    fireRate: 10, // 10 тиков в секунду для плавного урона
+    fireRate: 20, // 20 выстрелов в секунду = 40 урона/сек
     cost: 20,
     size: 35,
     weaponType: WeaponType.FIRE,
     areaRadius: 42, // Угол конуса огня (уменьшен на 30%)
     upgradeCost: 25,
-    buildTime: DEV_CONFIG.BASE_BUILD_TIME * 1000 * 4, // Время строительства уровня 4
+    buildTime: (DEV_CONFIG.DEV_BUILD_TIME || GAME_SETTINGS.BASE_BUILD_TIME) * 1000 * 4, // Время строительства уровня 4
   },
   5: {
     level: 5,
     upgradeLevel: 0,
-    damage: 3, // Очень низкий урон - основная цель замедлять
+    damage: 1, // Урон за один выстрел
     range: 130,
-    fireRate: 8, // Высокая скорострельность для постоянного замедления
+    fireRate: 10, // 10 выстрелов в секунду = 10 урона/сек
     cost: 40,
     size: 40,
     weaponType: WeaponType.ICE,
@@ -284,7 +285,7 @@ const BASE_TOWER_STATS: Record<1 | 2 | 3 | 4 | 5, TowerStats> = {
     slowDuration: 3000, // 3 секунды
     areaRadius: 50, // Угол конуса льда
     upgradeCost: 40,
-    buildTime: DEV_CONFIG.BASE_BUILD_TIME * 1000 * 5, // Время строительства уровня 5
+    buildTime: (DEV_CONFIG.DEV_BUILD_TIME || GAME_SETTINGS.BASE_BUILD_TIME) * 1000 * 5, // Время строительства уровня 5
   },
 };
 

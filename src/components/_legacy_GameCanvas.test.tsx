@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { GameCanvas } from "./GameCanvas";
+import { GameCanvas } from "./_legacy_GameCanvas";
 import type { GameState } from "../types/game";
 
 describe("GameCanvas", () => {

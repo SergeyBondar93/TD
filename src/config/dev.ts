@@ -41,7 +41,4 @@ export const DEV_CONFIG = {
 
   // Показывать отладочные боксы у 3D моделей врагов
   // SHOW_ENEMY_3D_BOXES: true,
-
-  // Использовать 3D canvas (Three.js) вместо 2D
-  USE_3D_CANVAS: true,
 };

@@ -481,11 +481,27 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
             if (enemy.isDying && enemy.deathStartTime) {
               const is3DDying = enemy3DManager.isEnemyDying(enemy.id);
               if (!is3DDying) {
+                // Сохраняем начальную позицию при начале анимации смерти
                 enemy3DManager.startDeathAnimation(enemy.id, enemy.deathStartTime);
               }
               
-              // Обновляем анимацию смерти
+              // Обновляем анимацию смерти (переворачивание)
               enemy3DManager.updateDeathAnimation(enemy.id, deltaTime, gameState.gameSpeed);
+              
+              // Применяем отскок к позиции mesh в сцене
+              const currentTime = Date.now() / 1000;
+              const elapsed = currentTime - enemy.deathStartTime!;
+              const deathDuration = enemy.modelConfig?.animations.death.duration || 2.0;
+              
+              if (elapsed < deathDuration) {
+                const knockbackOffset = enemy3DManager.getKnockbackOffset(enemy.id, elapsed, deathDuration);
+                if (knockbackOffset) {
+                  // Применяем отскок к позиции mesh относительно начальной позиции врага
+                  mesh.position.x = enemy.position.x + knockbackOffset.x;
+                  mesh.position.z = enemy.position.y + knockbackOffset.z; // y в игровых координатах = z в 3D
+                  mesh.position.y = 0; // Остаемся на земле
+                }
+              }
             }
             
             // Обновляем анимацию модели

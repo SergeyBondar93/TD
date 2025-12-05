@@ -2,17 +2,19 @@ import * as THREE from "three";
 import { loadSpiderModel } from "../utils/modelLoader";
 import type { LoadedModel } from "../utils/modelLoader";
 import type { EnemyModelConfig } from "../config/gameData/enemies";
-import { DEV_CONFIG } from "../config/dev";
 
 // Состояние врага для рендеринга
 interface EnemyRenderState {
   model: THREE.Group;
+  modelClone: THREE.Group; // Внутренняя модель (для анимации)
+  modelHeight: number; // Высота модели (для компенсации при переворачивании)
   animationTime: number;
   isDying: boolean;
   deathStartTime: number;
   deathDuration: number;
   fadeOutDuration: number;
   knockbackOffset?: { x: number; y: number; z: number }; // Вектор отлета при смерти
+  initialDeathPosition?: { x: number; y: number; z: number }; // Начальная позиция при смерти
   config: EnemyModelConfig;
   boxHelper?: THREE.BoxHelper; // Отладочный бокс
 }
@@ -70,7 +72,7 @@ class Enemy3DManager {
   }
 
   // Создаем новую модель для врага
-  private createEnemyModel(config: EnemyModelConfig): THREE.Group {
+  private createEnemyModel(config: EnemyModelConfig): { group: THREE.Group; modelClone: THREE.Group; height: number } {
     if (!this.baseModel) {
       throw new Error("Base model not loaded");
     }
@@ -81,11 +83,13 @@ class Enemy3DManager {
     // Вычисляем bounding box для центрирования
     const box = new THREE.Box3().setFromObject(modelClone);
     const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const height = size.y; // Сохраняем высоту модели
 
     // Создаем группу-контейнер для врага
     const enemyGroup = new THREE.Group();
 
-    // Центрируем модель
+    // Центрируем модель так, чтобы нижняя часть была на y=0
     modelClone.position.set(-center.x, -box.min.y, -center.z);
 
     // Применяем масштаб из конфигурации (преобразуем проценты в десятичные)
@@ -95,7 +99,7 @@ class Enemy3DManager {
     // Добавляем модель в группу
     enemyGroup.add(modelClone);
 
-    return enemyGroup;
+    return { group: enemyGroup, modelClone, height: height * scaleFactor };
   }
 
   // Получаем или создаем модель для врага
@@ -117,32 +121,31 @@ class Enemy3DManager {
       return enemy.model;
     }
 
-    // Создаем новую модель для врага
-    try {
-      const enemyModel = this.createEnemyModel(config);
-      // НЕ добавляем в свою сцену, модель будет добавлена в основную сцену Game3DCanvas
-      // this.scene.add(enemyModel);
+      // Создаем новую модель для врага
+      try {
+        const { group: enemyModel, modelClone, height } = this.createEnemyModel(config);
+        // НЕ добавляем в свою сцену, модель будет добавлена в основную сцену Game3DCanvas
+        // this.scene.add(enemyModel);
 
-      // Создаём зелёный отладочный бокс (только если включен флаг)
-      let boxHelper: THREE.BoxHelper | undefined;
-      if (DEV_CONFIG.SHOW_ENEMY_3D_BOXES) {
-        boxHelper = new THREE.BoxHelper(enemyModel, 0x00ff00);
-        // this.scene.add(boxHelper); // Тоже не добавляем в свою сцену
-      }
+        // Создаём зелёный отладочный бокс (если нужно для отладки)
+        let boxHelper: THREE.BoxHelper | undefined;
+        // boxHelper = new THREE.BoxHelper(enemyModel, 0x00ff00); // Раскомментируйте для отладки
 
-      // Сохраняем состояние врага
-      this.enemies.set(enemyId, {
-        model: enemyModel,
-        animationTime: 0,
-        isDying: false,
-        deathStartTime: 0,
-        deathDuration: config.animations.death.duration,
-        fadeOutDuration: config.animations.death.fadeOutDuration,
-        config,
-        boxHelper,
-      });
+        // Сохраняем состояние врага
+        this.enemies.set(enemyId, {
+          model: enemyModel,
+          modelClone: modelClone,
+          modelHeight: height,
+          animationTime: 0,
+          isDying: false,
+          deathStartTime: 0,
+          deathDuration: config.animations.death.duration,
+          fadeOutDuration: config.animations.death.fadeOutDuration,
+          config,
+          boxHelper,
+        });
 
-      return enemyModel;
+        return enemyModel;
     } catch (error) {
       console.error("[Enemy3DManager] Failed to create enemy model:", error);
       return null;
@@ -165,18 +168,18 @@ class Enemy3DManager {
     // Используем переданное время или текущее
     enemy.deathStartTime = deathStartTime ?? Date.now() / 1000;
 
-    // Генерируем случайный вектор отлета
+    // Генерируем случайный вектор отлета в горизонтальной плоскости
     const knockbackDistance =
       enemy.config.animations.death.knockbackDistance || 0;
     if (knockbackDistance > 0) {
-      const angle = Math.random() * Math.PI * 2; // Случайный угол
+      const angle = Math.random() * Math.PI * 2; // Случайный угол в горизонтальной плоскости
       const distance = knockbackDistance * (0.5 + Math.random() * 0.5); // От 50% до 100% расстояния
-      const flipOver = enemy.config.animations.death.flipOver;
-      const zOffset = flipOver && typeof flipOver === 'object' ? flipOver.z : 5;
+      // Генерируем отскок только в горизонтальной плоскости (x и z)
+      // y не используется, так как паук должен оставаться на земле
       enemy.knockbackOffset = {
         x: Math.cos(angle) * distance,
-        y: Math.sin(angle) * distance,
-        z: zOffset,
+        y: Math.sin(angle) * distance, // Это будет использовано как z-координата
+        z: 0, // Не поднимаем паука вверх
       };
     }
   }
@@ -231,10 +234,9 @@ class Enemy3DManager {
       return;
     }
 
-    const { model, config, isDying } = enemy;
-    const spiderModel = model.children[0];
+    const { modelClone, config, isDying } = enemy;
 
-    if (!spiderModel || isDying) {
+    if (!modelClone || isDying) {
       return;
     }
 
@@ -244,20 +246,21 @@ class Enemy3DManager {
       // Умножаем на gameSpeed чтобы анимация коррелировала со скоростью игры
       enemy.animationTime += deltaTime * (walkConfig.speed || 8) * gameSpeed;
 
-      // Покачивание вверх-вниз
+      // Покачивание вверх-вниз (относительно начальной позиции)
       const bobAmount =
         walkConfig.bobAmount !== undefined ? walkConfig.bobAmount : 0.05;
-      spiderModel.position.y = Math.sin(enemy.animationTime) * bobAmount;
+      const baseY = -enemy.modelHeight / 2; // Базовая позиция Y (нижняя часть на y=0)
+      modelClone.position.y = baseY + Math.sin(enemy.animationTime) * bobAmount;
 
       // Покачивание из стороны в сторону
       const swayAmount =
         walkConfig.swayAmount !== undefined ? walkConfig.swayAmount : 0.12;
-      spiderModel.position.x = Math.sin(enemy.animationTime * 0.5) * swayAmount;
+      modelClone.position.x = Math.sin(enemy.animationTime * 0.5) * swayAmount;
 
       // Наклон при движении
       const tiltAmount =
         walkConfig.tiltAmount !== undefined ? walkConfig.tiltAmount : 0.15;
-      spiderModel.rotation.z = Math.sin(enemy.animationTime * 0.7) * tiltAmount;
+      modelClone.rotation.z = Math.sin(enemy.animationTime * 0.7) * tiltAmount;
     }
 
     // Обновляем миксер анимаций (если есть)
@@ -269,8 +272,8 @@ class Enemy3DManager {
   // Обновляем анимацию смерти
   public updateDeathAnimation(
     enemyId: string,
-    deltaTime: number,
-    gameSpeed: number = 1
+    _deltaTime: number,
+    _gameSpeed: number = 1
   ) {
     const enemy = this.enemies.get(enemyId);
     if (!enemy || !enemy.isDying) {
@@ -279,6 +282,8 @@ class Enemy3DManager {
 
     const {
       model,
+      modelClone,
+      modelHeight,
       config,
       deathStartTime,
       deathDuration,
@@ -293,24 +298,84 @@ class Enemy3DManager {
     // Анимация смерти
     if (elapsed < deathDuration) {
       const deathProgress = elapsed / deathDuration;
+      const deathConfig = config.animations.death;
+      const flipOver = deathConfig.flipOver;
 
-      // Падение и вращение
-      const spiderModel = model.children[0];
-      if (spiderModel) {
-        const deathConfig = config.animations.death;
-        const fallSpeed = deathConfig.fallSpeed || 1;
-        const spinSpeed = deathConfig.spinSpeed || 2;
+      console.log('[Enemy3DRenderer] updateDeathAnimation:', {
+        enemyId,
+        deathProgress: deathProgress.toFixed(3),
+        elapsed: elapsed.toFixed(3),
+        deathDuration,
+        flipOver,
+        modelHeight,
+        knockbackOffset,
+      });
 
-        spiderModel.position.y = -deathProgress * fallSpeed;
-        spiderModel.rotation.x = deathProgress * Math.PI * spinSpeed;
+      // Определяем функцию плавности из конфигурации
+      let easeOut: number;
+      if (flipOver?.easeFunction === 'easeOut') {
+        easeOut = 1 - Math.pow(1 - deathProgress, 3);
+      } else {
+        // По умолчанию easeOut
+        easeOut = 1 - Math.pow(1 - deathProgress, 3);
+      }
 
-        // Применяем отлет при смерти к внутренней модели
-        if (knockbackOffset) {
-          const knockbackProgress = Math.min(1, deathProgress * 2);
-          const easeOut = 1 - Math.pow(1 - knockbackProgress, 3);
-          spiderModel.position.x = knockbackOffset.x * easeOut;
-          spiderModel.position.z = knockbackOffset.y * easeOut + knockbackOffset.z * easeOut;
+      console.log('[Enemy3DRenderer] easeOut:', easeOut.toFixed(3));
+
+      // Применяем переворачивание согласно конфигурации flipOver
+      if (flipOver) {
+        // Вращаем по осям согласно конфигурации (x, y, z - это углы в радианах)
+        const flipX = flipOver.x ? easeOut * flipOver.x * Math.PI : 0;
+        const flipY = flipOver.y ? easeOut * flipOver.y * Math.PI : 0;
+        const flipZ = flipOver.z ? easeOut * flipOver.z * Math.PI : 0;
+        
+        console.log('[Enemy3DRenderer] Applying flipOver:', {
+          flipX: flipX.toFixed(3),
+          flipY: flipY.toFixed(3),
+          flipZ: flipZ.toFixed(3),
+          flipX_degrees: (flipX * 180 / Math.PI).toFixed(1),
+          flipY_degrees: (flipY * 180 / Math.PI).toFixed(1),
+          flipZ_degrees: (flipZ * 180 / Math.PI).toFixed(1),
+        });
+        
+        modelClone.rotation.x = flipX;
+        modelClone.rotation.y = flipY;
+        modelClone.rotation.z = flipZ;
+        
+        // Компенсируем смещение по Y при переворачивании
+        // Когда модель переворачивается на 180°, её центр смещается вниз на половину высоты
+        // Поднимаем модель вверх, чтобы она оставалась на земле
+        if (flipX !== 0) {
+          const yOffset = (modelHeight / 2) * (1 - Math.cos(flipX));
+          const newY = -modelHeight / 2 + yOffset;
+          console.log('[Enemy3DRenderer] Y compensation:', {
+            modelHeight,
+            yOffset: yOffset.toFixed(3),
+            newY: newY.toFixed(3),
+            oldY: modelClone.position.y.toFixed(3),
+          });
+          modelClone.position.y = newY;
         }
+      } else {
+        console.log('[Enemy3DRenderer] No flipOver config, using default rotation');
+        // Если flipOver не задан, используем стандартное переворачивание по оси X
+        modelClone.rotation.x = easeOut * Math.PI;
+        const yOffset = (modelHeight / 2) * (1 - Math.cos(easeOut * Math.PI));
+        modelClone.position.y = -modelHeight / 2 + yOffset;
+      }
+      
+      // Добавляем дополнительное вращение по оси Z для более естественного вида при отскоке
+      if (knockbackOffset && flipOver) {
+        const rollDirection = knockbackOffset.x > 0 ? 1 : -1;
+        const rollAmount = rollDirection * 0.3; // Небольшой наклон в сторону отскока
+        const additionalZ = easeOut * rollAmount;
+        console.log('[Enemy3DRenderer] Additional Z rotation from knockback:', {
+          rollDirection,
+          rollAmount: rollAmount.toFixed(3),
+          additionalZ: additionalZ.toFixed(3),
+          finalZ: modelClone.rotation.z.toFixed(3),
+        });
+        modelClone.rotation.z += additionalZ;
       }
     }
     // Фаза исчезновения
@@ -326,6 +391,23 @@ class Enemy3DManager {
         }
       });
     }
+  }
+
+  // Получаем текущий offset отскока для врага (для применения к позиции в сцене)
+  public getKnockbackOffset(enemyId: string, elapsed: number, deathDuration: number): { x: number; z: number } | null {
+    const enemy = this.enemies.get(enemyId);
+    if (!enemy || !enemy.isDying || !enemy.knockbackOffset) {
+      return null;
+    }
+
+    const deathProgress = elapsed / deathDuration;
+    const knockbackProgress = Math.min(1, deathProgress * 1.5);
+    const knockbackEase = 1 - Math.pow(1 - knockbackProgress, 2);
+
+    return {
+      x: enemy.knockbackOffset.x * knockbackEase,
+      z: enemy.knockbackOffset.y * knockbackEase, // y в knockbackOffset используется как z
+    };
   }
 
   public isLoaded(): boolean {

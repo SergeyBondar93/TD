@@ -37,6 +37,18 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   );
   const enemy3DManagerRef = useRef(getEnemy3DManager());
   const lastFrameTimeRef = useRef(Date.now());
+  
+  // Состояние камеры для 3D вида (как в Warcraft 3)
+  const [cameraZoom, setCameraZoom] = useState(1); // Масштаб камеры
+  const [cameraAngle, setCameraAngle] = useState(0); // Угол наклона камеры (0 = сверху, 1 = под углом)
+  const cameraZoomRef = useRef(1);
+  const cameraAngleRef = useRef(0);
+  
+  // Плавная интерполяция для камеры
+  useEffect(() => {
+    cameraZoomRef.current = cameraZoom;
+    cameraAngleRef.current = cameraAngle;
+  }, [cameraZoom, cameraAngle]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -53,6 +65,40 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     // Очистка canvas
     ctx.fillStyle = "#1a1a2e";
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    // Применяем трансформацию камеры
+    ctx.save();
+    
+    // Центр canvas для трансформаций
+    const centerX = CANVAS_WIDTH / 2;
+    const centerY = CANVAS_HEIGHT / 2;
+    
+    // Переходим в центр
+    ctx.translate(centerX, centerY);
+    
+    // Применяем зум
+    const zoom = cameraZoomRef.current;
+    ctx.scale(zoom, zoom);
+    
+    // Применяем изометрическую трансформацию для 3D эффекта
+    const angle = cameraAngleRef.current;
+    
+    // Матрица трансформации для изометрии
+    // [scaleX, skewY, skewX, scaleY, translateX, translateY]
+    const skewAmount = angle * 0.5; // Наклон по X
+    const verticalScale = 1 - angle * 0.2; // Сжатие по Y
+    
+    ctx.transform(
+      1,              // scaleX
+      -skewAmount,    // skewY - наклон вниз
+      0,              // skewX
+      verticalScale,  // scaleY - сжатие
+      0,              // translateX
+      angle * 100     // translateY - смещение вверх
+    );
+    
+    // Возвращаемся к началу координат
+    ctx.translate(-centerX, -centerY);
 
     // Заливка игрового поля
     ctx.fillStyle = "#16213e";
@@ -189,6 +235,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         path
       );
     }
+    
+    // Восстанавливаем контекст после трансформаций камеры
+    ctx.restore();
   }, [gameState, selectedTowerLevel, mousePos, path]);
 
   const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -234,6 +283,35 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     setMousePos(null);
   };
 
+  const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    
+    const delta = e.deltaY;
+    const zoomSpeed = 0.001;
+    const angleSpeed = 0.0008;
+    
+    // Обновляем зум (1.0 = нормальный, 1.5 = приближен)
+    setCameraZoom((prev) => {
+      const newZoom = Math.max(1.0, Math.min(1.5, prev + delta * zoomSpeed));
+      return newZoom;
+    });
+    
+    // Обновляем угол камеры (0 = сверху, 1 = под углом)
+    setCameraAngle((prev) => {
+      const newAngle = Math.max(0, Math.min(1, prev + delta * angleSpeed));
+      return newAngle;
+    });
+  };
+
+  // Стили для canvas (убираем CSS трансформации, используем только Canvas API)
+  const canvasStyle = React.useMemo(() => {
+    return {
+      border: "2px solid #0f3460",
+      cursor: selectedTowerLevel ? "crosshair" : "default",
+      display: "block",
+    };
+  }, [selectedTowerLevel]);
+
   return (
     <canvas
       ref={canvasRef}
@@ -243,11 +321,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       onClick={handleClick}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      style={{
-        border: "2px solid #0f3460",
-        cursor: selectedTowerLevel ? "crosshair" : "default",
-        display: "block",
-      }}
+      onWheel={handleWheel}
+      style={canvasStyle}
     />
   );
 };

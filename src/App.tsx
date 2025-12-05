@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useRef, useState } from "react";
 import { GameCanvas } from "./components/GameCanvas";
+import { Game3DCanvas } from "./components/Game3DCanvas";
 import { GameUI } from "./components/GameUI";
 import { LevelSelect } from "./components/LevelSelect";
 import { GameOver } from "./components/GameOver";
@@ -327,13 +328,23 @@ function App() {
 
       <div className="app-main-content" style={styles.mainContent}>
         <div className="app-game-section" style={styles.gameSection}>
-          <GameCanvas
-            gameState={gameStateWithUI}
-            onCanvasClick={handleCanvasClick}
-            onTowerClick={handleTowerClick}
-            selectedTowerLevel={selectedTowerLevel}
-            path={gameState.path}
-          />
+          {DEV_CONFIG.USE_3D_CANVAS ? (
+            <Game3DCanvas
+              gameState={gameStateWithUI}
+              onCanvasClick={handleCanvasClick}
+              onTowerClick={handleTowerClick}
+              selectedTowerLevel={selectedTowerLevel}
+              path={gameState.path}
+            />
+          ) : (
+            <GameCanvas
+              gameState={gameStateWithUI}
+              onCanvasClick={handleCanvasClick}
+              onTowerClick={handleTowerClick}
+              selectedTowerLevel={selectedTowerLevel}
+              path={gameState.path}
+            />
+          )}
           <GameUI
             money={gameState.money}
             lives={gameState.lives}

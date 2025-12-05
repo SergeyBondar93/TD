@@ -552,6 +552,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
               side: THREE.DoubleSide,
             });
             const arrowMesh = new THREE.Mesh(arrowGeometry, arrowMaterial);
+
             arrowMesh.rotation.x = -Math.PI / 2; // Лежит горизонтально
             scene.add(arrowMesh);
             towerArrowsRef.current.set(tower.id, arrowMesh);

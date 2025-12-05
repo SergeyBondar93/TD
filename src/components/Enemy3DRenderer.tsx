@@ -12,7 +12,7 @@ interface EnemyRenderState {
   deathStartTime: number;
   deathDuration: number;
   fadeOutDuration: number;
-  knockbackOffset?: { x: number; y: number }; // Вектор отлета при смерти
+  knockbackOffset?: { x: number; y: number; z: number }; // Вектор отлета при смерти
   config: EnemyModelConfig;
   boxHelper?: THREE.BoxHelper; // Отладочный бокс
 }
@@ -107,8 +107,9 @@ class Enemy3DManager {
     // Центрируем модель
     modelClone.position.set(-center.x, -box.min.y, -center.z);
 
-    // Применяем масштаб из конфигурации
-    enemyGroup.scale.set(config.scale, config.scale, config.scale);
+    // Применяем масштаб из конфигурации (преобразуем проценты в десятичные)
+    const scaleFactor = config.scale / 100;
+    enemyGroup.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
     // Добавляем модель в группу
     enemyGroup.add(modelClone);
@@ -189,9 +190,12 @@ class Enemy3DManager {
     if (knockbackDistance > 0) {
       const angle = Math.random() * Math.PI * 2; // Случайный угол
       const distance = knockbackDistance * (0.5 + Math.random() * 0.5); // От 50% до 100% расстояния
+      const flipOver = enemy.config.animations.death.flipOver;
+      const zOffset = flipOver && typeof flipOver === 'object' ? flipOver.z : 5;
       enemy.knockbackOffset = {
         x: Math.cos(angle) * distance,
         y: Math.sin(angle) * distance,
+        z: zOffset,
       };
     }
   }
@@ -228,6 +232,7 @@ class Enemy3DManager {
     deltaTime: number,
     gameSpeed: number = 1
   ): HTMLCanvasElement | null {
+           console.log('!!FLIP')
     if (!this.isModelLoaded || !this.baseModel) {
       return null;
     }
@@ -277,11 +282,13 @@ class Enemy3DManager {
       if (enemy.knockbackOffset) {
         // Камера смещается в ПРОТИВОПОЛОЖНУЮ сторону, создавая эффект что модель отлетает
         this.camera.position.x = -enemy.knockbackOffset.x * deathProgress * 0.15;
+        this.camera.position.z = 8 - enemy.knockbackOffset.z * deathProgress * 0.15;
       } else {
         this.camera.position.x = 0;
+        this.camera.position.z = 8;
       }
 
-      if (config.animations.death.flipOver) {
+      if (config.animations.death.flipOver && typeof config.animations.death.flipOver === 'object') {
         // Переворачивание на спину (паук)
         // Применяем ротацию к ГРУППЕ, а не к внутренней модели
         const rotationOffset = config.rotationOffset || 0;
@@ -289,10 +296,11 @@ class Enemy3DManager {
           ? Math.atan2(enemy.knockbackOffset.y, enemy.knockbackOffset.x)
           : Math.random() * Math.PI * 2;
         
+        const flipConfig = config.animations.death.flipOver;
         // Поворот группы по Y (направление)
         model.rotation.y = randomRotation + rotationOffset;
         // Поворот на 180° вокруг оси X (переворот на спину)
-        model.rotation.x = deathProgress * Math.PI;
+        model.rotation.x = deathProgress * Math.PI * flipConfig.x;
         
         // Сбрасываем ротацию внутренней модели
         spiderModel.rotation.x = 0;
@@ -302,10 +310,11 @@ class Enemy3DManager {
       if (config.animations.death.shrink) {
         // Уменьшение
         const shrinkScale = 1 - deathProgress * 0.5;
+        const scaleFactor = config.scale / 100;
         model.scale.set(
-          config.scale * shrinkScale,
-          config.scale * shrinkScale,
-          config.scale * shrinkScale
+          scaleFactor * shrinkScale,
+          scaleFactor * shrinkScale,
+          scaleFactor * shrinkScale
         );
       }
 
@@ -337,12 +346,14 @@ class Enemy3DManager {
 
       // Сбрасываем позицию камеры и ротацию группы
       this.camera.position.x = 0;
+      this.camera.position.z = 8;
       model.position.set(0, 0, 0);
       model.rotation.set(0, 0, 0);
 
       // Поворот по направлению движения применяем к spiderModel (как в master)
       const rotationOffset = config.rotationOffset || 0;
-      spiderModel.rotation.y = -rotation + Math.PI / 2 + rotationOffset;
+      const walkRotationOffset = config.animations.walk.rotationOffset || 0;
+      spiderModel.rotation.y = -rotation + walkRotationOffset + rotationOffset;
 
       // Сбрасываем rotation.x на случай если враг был в состоянии смерти
       spiderModel.rotation.x = 0;
@@ -481,7 +492,7 @@ class Enemy3DManager {
           const knockbackProgress = Math.min(1, deathProgress * 2);
           const easeOut = 1 - Math.pow(1 - knockbackProgress, 3);
           spiderModel.position.x = knockbackOffset.x * easeOut;
-          spiderModel.position.z = knockbackOffset.y * easeOut;
+          spiderModel.position.z = knockbackOffset.y * easeOut + knockbackOffset.z * easeOut;
         }
       }
     }

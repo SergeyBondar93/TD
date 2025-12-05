@@ -9,12 +9,13 @@ export interface EnemyAnimation {
     swayAmount?: number; // Амплитуда покачивания в стороны
     tiltAmount?: number; // Угол наклона
     speed?: number; // Скорость анимации
+    rotationOffset?: number; // Поправка на вращение модели при ходьбе (в радианах)
   };
   death: {
     duration: number; // Длительность анимации смерти в секундах
     fadeOutDuration: number; // Длительность растворения после смерти
     // Параметры анимации смерти
-    flipOver?: boolean; // Переворачиваться на спину
+    flipOver?: { x: number; y: number; z: number; easeFunction?: string }; // Переворачивание с координатами отлета
     explode?: boolean; // Взрыв
     shrink?: boolean; // Уменьшение
     knockbackDistance?: number; // Расстояние отлета (в пикселях)
@@ -25,7 +26,7 @@ export interface EnemyAnimation {
 export interface EnemyModelConfig {
   modelType: "spider" | "wolf" | "cube"; // Тип модели
   modelPath?: string; // Путь к модели (если не стандартная)
-  scale: number; // Масштаб модели
+  scale: number; // Масштаб модели (в процентах от базового размера, например 20 = 20%)
   rotationOffset?: number; // Смещение вращения (если модель смотрит не туда)
   animations: EnemyAnimation; // Анимации
 }
@@ -56,7 +57,7 @@ const SPAWN_DELAY = {
 
 export const SPIDER_MODEL: EnemyModelConfig = {
   modelType: "spider",
-  scale: 0.02,
+  scale: 20, // 20% от базового размера
   rotationOffset: Math.PI, // Паук смотрит назад, поворачиваем на 180°
   animations: {
     walk: {
@@ -65,11 +66,12 @@ export const SPIDER_MODEL: EnemyModelConfig = {
       swayAmount: 0.12, // Покачивание в стороны
       tiltAmount: 0.15, // Наклон
       speed: 40, // Скорость анимации
+      rotationOffset: Math.PI / 2, // Поправка на -90 градусов для правильного направления
     },
     death: {
       duration: 2.0, // 2 секунды переворачивания
       fadeOutDuration: 1.0, // 1 секунда растворения
-      flipOver: true, // Переворачивается на спину
+      flipOver: { x: 1, y: 1, z: 5, easeFunction: 'easeOut' }, // Переворачивается на спину с координатами отлета
       knockbackDistance: 15, // Отлетает на 8 единиц (уменьшено чтобы не обрезался)
     },
   },
@@ -77,7 +79,7 @@ export const SPIDER_MODEL: EnemyModelConfig = {
 
 const WOLF_MODEL: EnemyModelConfig = {
   modelType: "wolf",
-  scale: 0.03,
+  scale: 30, // 30% от базового размера
   rotationOffset: Math.PI / 2,
   animations: {
     walk: {
@@ -97,7 +99,7 @@ const WOLF_MODEL: EnemyModelConfig = {
 
 const CUBE_MODEL: EnemyModelConfig = {
   modelType: "cube",
-  scale: 0.5,
+  scale: 50, // 50% от базового размера
   animations: {
     walk: {
       enabled: true,
@@ -296,7 +298,7 @@ const BOSS: EnemyClass = {
   baseSpeed: 30,
   baseReward: 100,
   spawnDelay: 0,
-  modelConfig: { ...SPIDER_MODEL, scale: 0.05 }, // Босс больше
+  modelConfig: { ...SPIDER_MODEL, scale: 50 }, // Босс больше (50% вместо 20%)
 };
 
 // ============================================

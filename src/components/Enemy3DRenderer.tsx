@@ -351,7 +351,3 @@ export function getEnemy3DManager(): Enemy3DManager {
   return enemy3DManager;
 }
 
-// Основной компонент для отображения всех врагов
-export function Enemy3DRenderer() {
-  return null; // Рендеринг происходит через GameCanvas
-}

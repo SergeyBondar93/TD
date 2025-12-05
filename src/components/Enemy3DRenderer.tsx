@@ -138,13 +138,14 @@ class Enemy3DManager {
     // Создаем новую модель для врага
     try {
       const enemyModel = this.createEnemyModel(config);
-      this.scene.add(enemyModel);
+      // НЕ добавляем в свою сцену, модель будет добавлена в основную сцену Game3DCanvas
+      // this.scene.add(enemyModel);
 
       // Создаём зелёный отладочный бокс (только если включен флаг)
       let boxHelper: THREE.BoxHelper | undefined;
       if (DEV_CONFIG.SHOW_ENEMY_3D_BOXES) {
         boxHelper = new THREE.BoxHelper(enemyModel, 0x00ff00);
-        this.scene.add(boxHelper);
+        // this.scene.add(boxHelper); // Тоже не добавляем в свою сцену
       }
 
       // Сохраняем состояние врага
@@ -382,11 +383,120 @@ class Enemy3DManager {
   public removeEnemy(enemyId: string) {
     const enemy = this.enemies.get(enemyId);
     if (enemy) {
-      this.scene.remove(enemy.model);
+      // НЕ удаляем из сцены, так как модель в основной сцене Game3DCanvas
+      // this.scene.remove(enemy.model);
       if (enemy.boxHelper) {
-        this.scene.remove(enemy.boxHelper);
+        // this.scene.remove(enemy.boxHelper);
       }
       this.enemies.delete(enemyId);
+    }
+  }
+
+  // Обновляем анимацию без рендеринга
+  public updateAnimation(
+    enemyId: string,
+    deltaTime: number,
+    gameSpeed: number = 1
+  ) {
+    const enemy = this.enemies.get(enemyId);
+    if (!enemy || !this.baseModel) {
+      return;
+    }
+
+    const { model, config, isDying } = enemy;
+    const spiderModel = model.children[0];
+
+    if (!spiderModel || isDying) {
+      return;
+    }
+
+    // Анимация ходьбы
+    const walkConfig = config.animations.walk;
+    if (walkConfig && !isDying) {
+      // Умножаем на gameSpeed чтобы анимация коррелировала со скоростью игры
+      enemy.animationTime += deltaTime * (walkConfig.speed || 8) * gameSpeed;
+
+      // Покачивание вверх-вниз
+      const bobAmount =
+        walkConfig.bobAmount !== undefined ? walkConfig.bobAmount : 0.05;
+      spiderModel.position.y = Math.sin(enemy.animationTime) * bobAmount;
+
+      // Покачивание из стороны в сторону
+      const swayAmount =
+        walkConfig.swayAmount !== undefined ? walkConfig.swayAmount : 0.12;
+      spiderModel.position.x = Math.sin(enemy.animationTime * 0.5) * swayAmount;
+
+      // Наклон при движении
+      const tiltAmount =
+        walkConfig.tiltAmount !== undefined ? walkConfig.tiltAmount : 0.15;
+      spiderModel.rotation.z = Math.sin(enemy.animationTime * 0.7) * tiltAmount;
+    }
+
+    // Обновляем миксер анимаций (если есть)
+    if (this.baseModel.mixer) {
+      this.baseModel.mixer.update(deltaTime);
+    }
+  }
+
+  // Обновляем анимацию смерти
+  public updateDeathAnimation(
+    enemyId: string,
+    deltaTime: number,
+    gameSpeed: number = 1
+  ) {
+    const enemy = this.enemies.get(enemyId);
+    if (!enemy || !enemy.isDying) {
+      return;
+    }
+
+    const {
+      model,
+      config,
+      deathStartTime,
+      deathDuration,
+      fadeOutDuration,
+      knockbackOffset,
+    } = enemy;
+
+    const currentTime = Date.now() / 1000;
+    const elapsed = currentTime - deathStartTime;
+    const totalDuration = deathDuration + fadeOutDuration;
+
+    // Анимация смерти
+    if (elapsed < deathDuration) {
+      const deathProgress = elapsed / deathDuration;
+
+      // Падение и вращение
+      const spiderModel = model.children[0];
+      if (spiderModel) {
+        const deathConfig = config.animations.death;
+        const fallSpeed = deathConfig.fallSpeed || 1;
+        const spinSpeed = deathConfig.spinSpeed || 2;
+
+        spiderModel.position.y = -deathProgress * fallSpeed;
+        spiderModel.rotation.x = deathProgress * Math.PI * spinSpeed;
+
+        // Применяем отлет при смерти к внутренней модели
+        if (knockbackOffset) {
+          const knockbackProgress = Math.min(1, deathProgress * 2);
+          const easeOut = 1 - Math.pow(1 - knockbackProgress, 3);
+          spiderModel.position.x = knockbackOffset.x * easeOut;
+          spiderModel.position.z = knockbackOffset.y * easeOut;
+        }
+      }
+    }
+    // Фаза исчезновения
+    else if (elapsed < totalDuration) {
+      const fadeProgress = (elapsed - deathDuration) / fadeOutDuration;
+      
+      // Уменьшаем прозрачность
+      model.traverse((child) => {
+        if (child instanceof THREE.Mesh && child.material) {
+          const material = child.material as THREE.MeshStandardMaterial;
+          material.transparent = true;
+          material.opacity = 1 - fadeProgress;
+        }
+      });
     }
   }
 

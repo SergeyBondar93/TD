@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { GameState, Enemy, Tower, Projectile } from "../types/game";
 import {
   CANVAS_WIDTH,
@@ -13,6 +12,15 @@ import {
 import { getEnemy3DManager } from "./Enemy3DRenderer";
 import { canPlaceTower } from "../core/logic/towers";
 import { TOWER_STATS } from "../config/gameData/towers";
+
+// Константы для управления камерой
+const CAMERA_DISTANCE_MIN = 300; // Минимальная дистанция (приближение)
+const CAMERA_DISTANCE_MAX = 1000; // Максимальная дистанция (отдаление)
+const CAMERA_DISTANCE_DEFAULT = 1000; // Дистанция по умолчанию (отдалена)
+const CAMERA_ANGLE_FAR = 85; // Угол камеры при отдалении
+const CAMERA_ANGLE_NEAR = 10; // Угол камеры при приближении
+const CAMERA_ANGLE_DEFAULT = 85; // Угол камеры по умолчанию
+const CAMERA_TRANSITION_SPEED = 0.15; // Скорость плавного перехода камеры (0-1)
 
 interface Game3DCanvasProps {
   gameState: GameState;
@@ -33,8 +41,22 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const controlsRef = useRef<OrbitControls | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  
+  // Camera control state (Warcraft 3 style)
+  const cameraStateRef = useRef({
+    distance: CAMERA_DISTANCE_DEFAULT, // Текущая дистанция от цели
+    targetDistance: CAMERA_DISTANCE_DEFAULT, // Целевая дистанция (для плавного перехода)
+    angle: CAMERA_ANGLE_DEFAULT, // Текущий угол в градусах
+    targetAngle: CAMERA_ANGLE_DEFAULT, // Целевой угол (для плавного перехода)
+    targetX: 0,
+    targetZ: 0,
+    dragStartX: 0,
+    dragStartY: 0,
+    dragStartTargetX: 0,
+    dragStartTargetZ: 0,
+  });
   
   // Храним 3D объекты врагов
   const enemyMeshesRef = useRef<Map<string, THREE.Mesh>>(new Map());
@@ -74,11 +96,29 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
       0.1,
       2000
     );
-    // Позиция камеры - смотрим на центр игрового поля (с учётом PADDING)
+    
+    // Инициализируем начальную позицию камеры
     const centerX = CANVAS_PADDING + GAME_WIDTH / 2;
     const centerZ = CANVAS_PADDING + GAME_HEIGHT / 2;
-    camera.position.set(centerX, 400, centerZ + 400);
-    camera.lookAt(centerX, 0, centerZ);
+    cameraStateRef.current.targetX = centerX;
+    cameraStateRef.current.targetZ = centerZ;
+    
+    // Устанавливаем камеру с углом 20 градусов (по умолчанию)
+    const updateCameraPosition = () => {
+      const state = cameraStateRef.current;
+      const angleRad = (state.angle * Math.PI) / 180;
+      const height = state.distance * Math.sin(angleRad);
+      const horizontalDist = state.distance * Math.cos(angleRad);
+      
+      camera.position.set(
+        state.targetX,
+        height,
+        state.targetZ + horizontalDist
+      );
+      camera.lookAt(state.targetX, 0, state.targetZ);
+    };
+    
+    updateCameraPosition();
     cameraRef.current = camera;
 
     // Создаём рендерер
@@ -90,15 +130,28 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Добавляем OrbitControls для управления камерой (скролл для зума)
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.minDistance = 300;
-    controls.maxDistance = 1000;
-    controls.maxPolarAngle = Math.PI / 2.5; // Ограничиваем угол
-    controls.target.set(centerX, 0, centerZ);
-    controlsRef.current = controls;
+    // Обработчик колесика мыши для зума (как в Warcraft 3)
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const state = cameraStateRef.current;
+      
+      // Изменяем целевую дистанцию в зависимости от направления скролла
+      const zoomDelta = e.deltaY * 0.5;
+      state.targetDistance = Math.max(CAMERA_DISTANCE_MIN, Math.min(CAMERA_DISTANCE_MAX, state.targetDistance + zoomDelta));
+      
+      // Вычисляем целевой угол в зависимости от дистанции
+      // distance MIN (близко) -> angle NEAR (30 градусов)
+      // distance MAX (далеко) -> angle FAR (85 градусов)
+      const t = (state.targetDistance - CAMERA_DISTANCE_MIN) / (CAMERA_DISTANCE_MAX - CAMERA_DISTANCE_MIN); // 0 to 1
+      state.targetAngle = CAMERA_ANGLE_NEAR + t * (CAMERA_ANGLE_FAR - CAMERA_ANGLE_NEAR); // от 30 до 85 градусов
+    };
+    
+    renderer.domElement.addEventListener('wheel', handleWheel, { passive: false });
+    
+    // Cleanup для wheel listener
+    const cleanupWheel = () => {
+      renderer.domElement.removeEventListener('wheel', handleWheel);
+    };
 
     // Освещение
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -141,12 +194,12 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
     // Cleanup
     return () => {
       console.log('!!CLEAN START')
+      cleanupWheel();
       if (container && renderer.domElement && container.contains(renderer.domElement)) {
         console.log('!!CLEAN END')
         container.removeChild(renderer.domElement);
       }
       renderer.dispose();
-      controls.dispose();
     };
   }, []);
 
@@ -274,14 +327,34 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
     const animate = () => {
       animationId = requestAnimationFrame(animate);
 
-      if (controlsRef.current) {
-        controlsRef.current.update();
-      }
-
       // Вычисляем deltaTime для анимации
       const now = Date.now();
       const deltaTime = (now - lastFrameTimeRef.current) / 1000;
       lastFrameTimeRef.current = now;
+
+      // Плавное изменение позиции камеры
+      const state = cameraStateRef.current;
+      const camera = cameraRef.current;
+      
+      if (camera) {
+        // Плавная интерполяция дистанции
+        state.distance += (state.targetDistance - state.distance) * CAMERA_TRANSITION_SPEED;
+        
+        // Плавная интерполяция угла
+        state.angle += (state.targetAngle - state.angle) * CAMERA_TRANSITION_SPEED;
+        
+        // Обновляем позицию камеры
+        const angleRad = (state.angle * Math.PI) / 180;
+        const height = state.distance * Math.sin(angleRad);
+        const horizontalDist = state.distance * Math.cos(angleRad);
+        
+        camera.position.set(
+          state.targetX,
+          height,
+          state.targetZ + horizontalDist
+        );
+        camera.lookAt(state.targetX, 0, state.targetZ);
+      }
 
       // Обновляем позиции врагов
       if (sceneRef.current) {
@@ -310,23 +383,23 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
           let mesh = enemyMeshesRef.current.get(enemy.id);
 
           if (!mesh) {
-            // Создаём плоскость для отображения 3D модели паука
-            const planeGeometry = new THREE.PlaneGeometry(enemy.size, enemy.size);
-            const canvas = document.createElement('canvas');
-            canvas.width = 128;
-            canvas.height = 128;
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.minFilter = THREE.LinearFilter;
-            const material = new THREE.MeshBasicMaterial({
-              map: texture,
-              transparent: true,
-              side: THREE.DoubleSide,
-            });
-            mesh = new THREE.Mesh(planeGeometry, material);
-            mesh.rotation.x = -Math.PI / 2; // Поворачиваем чтобы лежала горизонтально
-            mesh.position.y = 1; // Немного приподнимаем над землёй
-            scene.add(mesh);
-            enemyMeshesRef.current.set(enemy.id, mesh);
+            // Используем 3D модель напрямую вместо плоскости (не клонируем!)
+            const enemy3DModel = enemy3DManager.getOrCreateEnemy(enemy.id, enemy.modelConfig);
+            
+            if (enemy3DModel) {
+              // Используем модель напрямую, а не клонируем
+              mesh = enemy3DModel;
+              mesh.position.y = 0; // На уровне земли
+              mesh.castShadow = true;
+              mesh.receiveShadow = true;
+              
+              // Масштабируем модель в зависимости от размера врага
+              const scale = enemy.size / 100; // Уменьшенный коэффициент масштабирования
+              mesh.scale.set(scale, scale, scale);
+              
+              scene.add(mesh);
+              enemyMeshesRef.current.set(enemy.id, mesh);
+            }
             
             // Создаем HP sprite
             const hpCanvas = document.createElement('canvas');
@@ -340,12 +413,18 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
             enemyHPSpritesRef.current.set(enemy.id, hpSprite);
           }
 
-          // Обновляем позицию
-          mesh.position.set(
-            enemy.position.x,
-            1,
-            enemy.position.y
-          );
+          // Обновляем позицию только для живых врагов
+          if (mesh && !enemy.isDying) {
+            mesh.position.set(
+              enemy.position.x,
+              0,
+              enemy.position.y
+            );
+            
+            // Обновляем поворот модели (с поправкой на -90 градусов)
+            const rotation = enemy.rotation ?? 0;
+            mesh.rotation.y = -rotation - Math.PI / 2; // Поправка на -90 градусов
+          }
           
           // Обновляем HP sprite
           const hpSprite = enemyHPSpritesRef.current.get(enemy.id);
@@ -397,34 +476,20 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
             hpSprite.visible = false;
           }
 
-          // Рендерим 3D модель паука и обновляем текстуру
-          if (isLoaded && enemy.modelConfig) {
-            enemy3DManager.getOrCreateEnemy(enemy.id, enemy.modelConfig);
-
+          // Обрабатываем анимацию смерти
+          if (isLoaded && enemy.modelConfig && mesh) {
             if (enemy.isDying && enemy.deathStartTime) {
               const is3DDying = enemy3DManager.isEnemyDying(enemy.id);
               if (!is3DDying) {
                 enemy3DManager.startDeathAnimation(enemy.id, enemy.deathStartTime);
               }
+              
+              // Обновляем анимацию смерти
+              enemy3DManager.updateDeathAnimation(enemy.id, deltaTime, gameState.gameSpeed);
             }
-
-            const rotation = enemy.rotation ?? 0;
-            const modelCanvas = enemy3DManager.render(
-              enemy.id,
-              rotation,
-              deltaTime,
-              gameState.gameSpeed
-            );
-
-            if (modelCanvas && mesh.material instanceof THREE.MeshBasicMaterial) {
-              const texture = mesh.material.map as THREE.CanvasTexture;
-              const ctx = texture.image.getContext('2d');
-              if (ctx) {
-                ctx.clearRect(0, 0, 128, 128);
-                ctx.drawImage(modelCanvas, 0, 0, 128, 128);
-                texture.needsUpdate = true;
-              }
-            }
+            
+            // Обновляем анимацию модели
+            enemy3DManager.updateAnimation(enemy.id, deltaTime, gameState.gameSpeed);
           }
         });
 
@@ -719,6 +784,29 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
     };
   }, [isInitialized, gameState, selectedTowerLevel, mousePos]);
 
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Начинаем перетаскивание для панорамирования камеры
+    if (e.button === 0) { // Left mouse button
+      const state = cameraStateRef.current;
+      setIsDragging(true);
+      state.dragStartX = e.clientX;
+      state.dragStartY = e.clientY;
+      state.dragStartTargetX = state.targetX;
+      state.dragStartTargetZ = state.targetZ;
+    }
+  };
+
+  const handleMouseUp = (e: React.MouseEvent<HTMLDivElement>) => {
+    const wasDragging = isDragging;
+    setIsDragging(false);
+    
+    // Если мы не перетаскивали (или перетащили совсем чуть-чуть), обрабатываем как клик
+    const state = cameraStateRef.current;
+    if (!wasDragging || (Math.abs(e.clientX - state.dragStartX) < 5 && Math.abs(e.clientY - state.dragStartY) < 5)) {
+      handleClick(e);
+    }
+  };
+
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current || !cameraRef.current || !groundRef.current) return;
 
@@ -755,6 +843,36 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const state = cameraStateRef.current;
+    
+    // Обрабатываем перетаскивание камеры
+    if (isDragging && cameraRef.current) {
+      const deltaX = e.clientX - state.dragStartX;
+      const deltaY = e.clientY - state.dragStartY;
+      
+      // Конвертируем движение мыши в движение камеры
+      // Учитываем угол камеры для правильного направления панорамирования
+      const panSpeed = 1.0;
+      const angleRad = (state.angle * Math.PI) / 180;
+      
+      state.targetX = state.dragStartTargetX - deltaX * panSpeed;
+      state.targetZ = state.dragStartTargetZ - deltaY * panSpeed * Math.cos(angleRad);
+      
+      // Обновляем позицию камеры
+      const height = state.distance * Math.sin(angleRad);
+      const horizontalDist = state.distance * Math.cos(angleRad);
+      
+      cameraRef.current.position.set(
+        state.targetX,
+        height,
+        state.targetZ + horizontalDist
+      );
+      cameraRef.current.lookAt(state.targetX, 0, state.targetZ);
+      
+      return; // Не обрабатываем preview башни во время перетаскивания
+    }
+    
+    // Обрабатываем preview башни
     if (!selectedTowerLevel || !containerRef.current || !cameraRef.current || !groundRef.current) {
       setMousePos(null);
       return;
@@ -785,14 +903,15 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
   return (
     <div
       ref={containerRef}
-      onClick={handleClick}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       style={{
         width: CANVAS_WIDTH,
         height: CANVAS_HEIGHT,
         border: "2px solid #0f3460",
-        cursor: selectedTowerLevel ? "crosshair" : "default",
+        cursor: isDragging ? "grabbing" : selectedTowerLevel ? "crosshair" : "grab",
       }}
     />
   );

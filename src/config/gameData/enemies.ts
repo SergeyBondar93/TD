@@ -70,7 +70,7 @@ export const SPIDER_MODEL: EnemyModelConfig = {
       duration: 2.0, // 2 секунды переворачивания
       fadeOutDuration: 1.0, // 1 секунда растворения
       flipOver: true, // Переворачивается на спину
-      knockbackDistance: 30, // Отлетает на 30 пикселей
+      knockbackDistance: 15, // Отлетает на 8 единиц (уменьшено чтобы не обрезался)
     },
   },
 };

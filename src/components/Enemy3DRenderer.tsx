@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { loadSpiderModel } from "../utils/modelLoader";
 import type { LoadedModel } from "../utils/modelLoader";
 import type { EnemyModelConfig } from "../config/gameData/enemies";
+import { DEV_CONFIG } from "../config/dev";
 
 // Состояние врага для рендеринга
 interface EnemyRenderState {
@@ -13,6 +14,7 @@ interface EnemyRenderState {
   fadeOutDuration: number;
   knockbackOffset?: { x: number; y: number }; // Вектор отлета при смерти
   config: EnemyModelConfig;
+  boxHelper?: THREE.BoxHelper; // Отладочный бокс
 }
 
 // Класс для управления 3D рендерингом врагов
@@ -20,7 +22,7 @@ class Enemy3DManager {
   private baseModel: LoadedModel | null = null;
   private isModelLoaded = false;
   private scene: THREE.Scene;
-  private camera: THREE.PerspectiveCamera;
+  private camera: THREE.OrthographicCamera;
   private renderer: THREE.WebGLRenderer;
   private enemies: Map<string, EnemyRenderState> = new Map(); // Хранилище врагов по ID
 
@@ -31,10 +33,15 @@ class Enemy3DManager {
     this.scene = new THREE.Scene();
     this.scene.background = null; // Прозрачный фон
 
-    // Камера для вида сверху-сбоку
-    // Увеличиваем FOV и отодвигаем камеру, чтобы враги не обрезались при отлете
-    this.camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
-    this.camera.position.set(0, 1.8, 5);
+    // Ортографическая камера с большой областью видимости
+    // Это позволит видеть врагов когда они отлетают за пределы
+    const viewSize = 3; // Размер области видимости
+    this.camera = new THREE.OrthographicCamera(
+      -viewSize, viewSize,  // left, right
+      viewSize, -viewSize,  // top, bottom
+      0.1, 100              // near, far
+    );
+    this.camera.position.set(0, 3, 8);
     this.camera.lookAt(0, 0, 0);
 
     console.log("[Enemy3DManager] Camera position:", this.camera.position);
@@ -46,7 +53,7 @@ class Enemy3DManager {
       antialias: true,
       preserveDrawingBuffer: true,
     });
-    this.renderer.setSize(128, 128);
+    this.renderer.setSize(512, 512);
     this.renderer.setClearColor(0x000000, 0); // Прозрачный фон
 
     // Освещение
@@ -133,6 +140,13 @@ class Enemy3DManager {
       const enemyModel = this.createEnemyModel(config);
       this.scene.add(enemyModel);
 
+      // Создаём зелёный отладочный бокс (только если включен флаг)
+      let boxHelper: THREE.BoxHelper | undefined;
+      if (DEV_CONFIG.SHOW_ENEMY_3D_BOXES) {
+        boxHelper = new THREE.BoxHelper(enemyModel, 0x00ff00);
+        this.scene.add(boxHelper);
+      }
+
       // Сохраняем состояние врага
       this.enemies.set(enemyId, {
         model: enemyModel,
@@ -142,6 +156,7 @@ class Enemy3DManager {
         deathDuration: config.animations.death.duration,
         fadeOutDuration: config.animations.death.fadeOutDuration,
         config,
+        boxHelper,
       });
 
       return enemyModel;
@@ -238,7 +253,15 @@ class Enemy3DManager {
     // СКРЫВАЕМ ВСЕ модели кроме текущей
     this.enemies.forEach((e, id) => {
       e.model.visible = id === enemyId;
+      if (e.boxHelper) {
+        e.boxHelper.visible = id === enemyId;
+      }
     });
+
+    // Обновляем отладочный бокс
+    if (enemy.boxHelper) {
+      enemy.boxHelper.update();
+    }
 
     if (isDying) {
       // Анимация смерти
@@ -248,25 +271,31 @@ class Enemy3DManager {
         1
       );
 
-      // Применяем отлет (knockback) к внутренней модели
-      // Делим на scale чтобы смещение было в локальных координатах модели
+      // Вместо движения модели - двигаем КАМЕРУ в противоположную сторону
+      // Это создаст визуальный эффект отлета врага в canvas
       if (enemy.knockbackOffset) {
-        spiderModel.position.x =
-          (enemy.knockbackOffset.x / config.scale) * deathProgress;
-        spiderModel.position.z =
-          (enemy.knockbackOffset.y / config.scale) * deathProgress;
+        // Камера смещается в ПРОТИВОПОЛОЖНУЮ сторону, создавая эффект что модель отлетает
+        this.camera.position.x = -enemy.knockbackOffset.x * deathProgress * 0.15;
+      } else {
+        this.camera.position.x = 0;
       }
 
       if (config.animations.death.flipOver) {
         // Переворачивание на спину (паук)
-        // Случайное направление при переворачивании
+        // Применяем ротацию к ГРУППЕ, а не к внутренней модели
         const rotationOffset = config.rotationOffset || 0;
         const randomRotation = enemy.knockbackOffset
           ? Math.atan2(enemy.knockbackOffset.y, enemy.knockbackOffset.x)
           : Math.random() * Math.PI * 2;
-        spiderModel.rotation.y = randomRotation + rotationOffset;
+        
+        // Поворот группы по Y (направление)
+        model.rotation.y = randomRotation + rotationOffset;
         // Поворот на 180° вокруг оси X (переворот на спину)
-        spiderModel.rotation.x = deathProgress * Math.PI;
+        model.rotation.x = deathProgress * Math.PI;
+        
+        // Сбрасываем ротацию внутренней модели
+        spiderModel.rotation.x = 0;
+        spiderModel.rotation.y = 0;
       }
 
       if (config.animations.death.shrink) {
@@ -304,6 +333,11 @@ class Enemy3DManager {
     } else {
       // Обычная анимация ходьбы
       const walkConfig = config.animations.walk;
+
+      // Сбрасываем позицию камеры и ротацию группы
+      this.camera.position.x = 0;
+      model.position.set(0, 0, 0);
+      model.rotation.set(0, 0, 0);
 
       // Поворот по направлению движения применяем к spiderModel (как в master)
       const rotationOffset = config.rotationOffset || 0;
@@ -349,6 +383,9 @@ class Enemy3DManager {
     const enemy = this.enemies.get(enemyId);
     if (enemy) {
       this.scene.remove(enemy.model);
+      if (enemy.boxHelper) {
+        this.scene.remove(enemy.boxHelper);
+      }
       this.enemies.delete(enemyId);
     }
   }

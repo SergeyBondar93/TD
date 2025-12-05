@@ -38,4 +38,7 @@ export const DEV_CONFIG = {
 
   // Автоматически создавать базовые башни при старте уровня
   AUTO_PLACE_TOWERS: true,
+
+  // Показывать отладочные боксы у 3D моделей врагов
+  // SHOW_ENEMY_3D_BOXES: true,
 };

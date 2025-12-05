@@ -27,50 +27,31 @@ class Enemy3DManager {
   private enemies: Map<string, EnemyRenderState> = new Map(); // Хранилище врагов по ID
 
   constructor() {
-    console.log("[Enemy3DManager] Constructor called");
-
-    // Создаём Three.js сцену
     this.scene = new THREE.Scene();
-    this.scene.background = null; // Прозрачный фон
-
-    // Ортографическая камера с большой областью видимости
-    // Это позволит видеть врагов когда они отлетают за пределы
-    const viewSize = 3; // Размер области видимости
+    this.scene.background = null;
+    const viewSize = 3;
     this.camera = new THREE.OrthographicCamera(
-      -viewSize, viewSize,  // left, right
-      viewSize, -viewSize,  // top, bottom
-      0.1, 100              // near, far
+      -viewSize, viewSize,
+      viewSize, -viewSize,
+      0.1, 100
     );
     this.camera.position.set(0, 3, 8);
     this.camera.lookAt(0, 0, 0);
-
-    console.log("[Enemy3DManager] Camera position:", this.camera.position);
-    console.log("[Enemy3DManager] Camera looking at: 0,0,0");
-
-    // WebGL рендерер
     this.renderer = new THREE.WebGLRenderer({
       alpha: true,
       antialias: true,
       preserveDrawingBuffer: true,
     });
     this.renderer.setSize(512, 512);
-    this.renderer.setClearColor(0x000000, 0); // Прозрачный фон
-
-    // Освещение
+    this.renderer.setClearColor(0x000000, 0);
     const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
     this.scene.add(ambientLight);
-
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
     directionalLight.position.set(5, 10, 5);
     this.scene.add(directionalLight);
-
     const backLight = new THREE.DirectionalLight(0xffffff, 0.4);
     backLight.position.set(-5, 5, -5);
     this.scene.add(backLight);
-
-    console.log("[Enemy3DManager] Lights added:", this.scene.children.length);
-
-    // Загружаем базовую модель
     this.loadModel();
   }
 
@@ -225,170 +206,6 @@ class Enemy3DManager {
     return enemy?.isDying ?? false;
   }
 
-  // Рендерим модель с заданным поворотом и обновляем анимацию
-  public render(
-    enemyId: string,
-    rotation: number,
-    deltaTime: number,
-    gameSpeed: number = 1
-  ): HTMLCanvasElement | null {
-           console.log('!!FLIP')
-    if (!this.isModelLoaded || !this.baseModel) {
-      return null;
-    }
-
-    const enemy = this.enemies.get(enemyId);
-    if (!enemy) {
-      return null;
-    }
-
-    const {
-      model,
-      config,
-      isDying,
-      deathStartTime,
-      deathDuration,
-      fadeOutDuration,
-    } = enemy;
-    const spiderModel = model.children[0];
-
-    if (!spiderModel) {
-      return null;
-    }
-
-    // СКРЫВАЕМ ВСЕ модели кроме текущей
-    this.enemies.forEach((e, id) => {
-      e.model.visible = id === enemyId;
-      if (e.boxHelper) {
-        e.boxHelper.visible = id === enemyId;
-      }
-    });
-
-    // Обновляем отладочный бокс
-    if (enemy.boxHelper) {
-      enemy.boxHelper.update();
-    }
-
-    if (isDying) {
-      // Анимация смерти
-      const currentTime = Date.now() / 1000;
-      const deathProgress = Math.min(
-        (currentTime - deathStartTime) / deathDuration,
-        1
-      );
-
-      // Вместо движения модели - двигаем КАМЕРУ в противоположную сторону
-      // Это создаст визуальный эффект отлета врага в canvas
-      if (enemy.knockbackOffset) {
-        // Камера смещается в ПРОТИВОПОЛОЖНУЮ сторону, создавая эффект что модель отлетает
-        this.camera.position.x = -enemy.knockbackOffset.x * deathProgress * 0.15;
-        this.camera.position.z = 8 - enemy.knockbackOffset.z * deathProgress * 0.15;
-      } else {
-        this.camera.position.x = 0;
-        this.camera.position.z = 8;
-      }
-
-      if (config.animations.death.flipOver && typeof config.animations.death.flipOver === 'object') {
-        // Переворачивание на спину (паук)
-        // Применяем ротацию к ГРУППЕ, а не к внутренней модели
-        const rotationOffset = config.rotationOffset || 0;
-        const randomRotation = enemy.knockbackOffset
-          ? Math.atan2(enemy.knockbackOffset.y, enemy.knockbackOffset.x)
-          : Math.random() * Math.PI * 2;
-        
-        const flipConfig = config.animations.death.flipOver;
-        // Поворот группы по Y (направление)
-        model.rotation.y = randomRotation + rotationOffset;
-        // Поворот на 180° вокруг оси X (переворот на спину)
-        model.rotation.x = deathProgress * Math.PI * flipConfig.x;
-        
-        // Сбрасываем ротацию внутренней модели
-        spiderModel.rotation.x = 0;
-        spiderModel.rotation.y = 0;
-      }
-
-      if (config.animations.death.shrink) {
-        // Уменьшение
-        const shrinkScale = 1 - deathProgress * 0.5;
-        const scaleFactor = config.scale / 100;
-        model.scale.set(
-          scaleFactor * shrinkScale,
-          scaleFactor * shrinkScale,
-          scaleFactor * shrinkScale
-        );
-      }
-
-      // Фаза растворения после смерти
-      if (deathProgress >= 1) {
-        const fadeProgress = Math.min(
-          (currentTime - deathStartTime - deathDuration) / fadeOutDuration,
-          1
-        );
-
-        // Уменьшаем прозрачность
-        model.traverse((child) => {
-          if (child instanceof THREE.Mesh) {
-            if (Array.isArray(child.material)) {
-              child.material.forEach((mat) => {
-                mat.transparent = true;
-                mat.opacity = 1 - fadeProgress;
-              });
-            } else {
-              child.material.transparent = true;
-              child.material.opacity = 1 - fadeProgress;
-            }
-          }
-        });
-      }
-    } else {
-      // Обычная анимация ходьбы
-      const walkConfig = config.animations.walk;
-
-      // Сбрасываем позицию камеры и ротацию группы
-      this.camera.position.x = 0;
-      this.camera.position.z = 8;
-      model.position.set(0, 0, 0);
-      model.rotation.set(0, 0, 0);
-
-      // Поворот по направлению движения применяем к spiderModel (как в master)
-      const rotationOffset = config.rotationOffset || 0;
-      const walkRotationOffset = config.animations.walk.rotationOffset || 0;
-      spiderModel.rotation.y = -rotation + walkRotationOffset + rotationOffset;
-
-      // Сбрасываем rotation.x на случай если враг был в состоянии смерти
-      spiderModel.rotation.x = 0;
-
-      // Процедурная анимация (всегда применяем, как в master)
-      // Умножаем на gameSpeed чтобы анимация коррелировала со скоростью игры
-      enemy.animationTime += deltaTime * (walkConfig.speed || 8) * gameSpeed;
-
-      // Покачивание вверх-вниз
-      const bobAmount =
-        walkConfig.bobAmount !== undefined ? walkConfig.bobAmount : 0.05;
-      spiderModel.position.y = Math.sin(enemy.animationTime) * bobAmount;
-
-      // Покачивание из стороны в сторону
-      const swayAmount =
-        walkConfig.swayAmount !== undefined ? walkConfig.swayAmount : 0.12;
-      spiderModel.position.x = Math.sin(enemy.animationTime * 0.5) * swayAmount;
-
-      // Наклон при движении
-      const tiltAmount =
-        walkConfig.tiltAmount !== undefined ? walkConfig.tiltAmount : 0.15;
-      spiderModel.rotation.z = Math.sin(enemy.animationTime * 0.7) * tiltAmount;
-    }
-
-    // Обновляем анимацию (если есть)
-    if (this.baseModel.mixer) {
-      this.baseModel.mixer.update(deltaTime);
-    }
-
-    // Рендерим сцену
-    this.renderer.render(this.scene, this.camera);
-
-    // Возвращаем canvas элемент
-    return this.renderer.domElement;
-  }
 
   // Удаляем врага полностью
   public removeEnemy(enemyId: string) {

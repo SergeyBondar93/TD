@@ -332,6 +332,7 @@ function App() {
             onCanvasClick={handleCanvasClick}
             onTowerClick={handleTowerClick}
             selectedTowerLevel={selectedTowerLevel}
+            selectedTowerId={selectedTowerId}
             path={gameState.path}
           />
           <GameUI

@@ -14,6 +14,7 @@ interface EnemyRenderState {
   deathDuration: number;
   fadeOutDuration: number;
   knockbackOffset?: { x: number; y: number; z: number }; // Вектор отлета при смерти
+  randomFlipRotation?: { x: number; y: number; z: number }; // Случайные углы вращения при смерти
   initialDeathPosition?: { x: number; y: number; z: number }; // Начальная позиция при смерти
   config: EnemyModelConfig;
   boxHelper?: THREE.BoxHelper; // Отладочный бокс
@@ -72,7 +73,7 @@ class Enemy3DManager {
   }
 
   // Создаем новую модель для врага
-  private createEnemyModel(config: EnemyModelConfig): { group: THREE.Group; modelClone: THREE.Group; height: number } {
+  private createEnemyModel(config: EnemyModelConfig): { group: THREE.Group; modelClone: THREE.Group; height: number; configScale: number } {
     if (!this.baseModel) {
       throw new Error("Base model not loaded");
     }
@@ -84,7 +85,7 @@ class Enemy3DManager {
     const box = new THREE.Box3().setFromObject(modelClone);
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
-    const height = size.y; // Сохраняем высоту модели
+    const height = size.y; // Сохраняем высоту модели БЕЗ scale
 
     // Создаем группу-контейнер для врага
     const enemyGroup = new THREE.Group();
@@ -92,14 +93,14 @@ class Enemy3DManager {
     // Центрируем модель так, чтобы нижняя часть была на y=0
     modelClone.position.set(-center.x, -box.min.y, -center.z);
 
-    // Применяем масштаб из конфигурации (преобразуем проценты в десятичные)
-    const scaleFactor = config.scale / 100;
-    enemyGroup.scale.set(scaleFactor, scaleFactor, scaleFactor);
+    // НЕ применяем scale здесь - он будет применен в Game3DCanvas вместе с sizeScale
+    // Просто сохраняем значение scale из конфигурации
+    const configScale = config.scale / 100;
 
     // Добавляем модель в группу
     enemyGroup.add(modelClone);
 
-    return { group: enemyGroup, modelClone, height: height * scaleFactor };
+    return { group: enemyGroup, modelClone, height, configScale };
   }
 
   // Получаем или создаем модель для врага
@@ -123,7 +124,7 @@ class Enemy3DManager {
 
       // Создаем новую модель для врага
       try {
-        const { group: enemyModel, modelClone, height } = this.createEnemyModel(config);
+        const { group: enemyModel, modelClone, height, configScale } = this.createEnemyModel(config);
         // НЕ добавляем в свою сцену, модель будет добавлена в основную сцену Game3DCanvas
         // this.scene.add(enemyModel);
 
@@ -135,7 +136,7 @@ class Enemy3DManager {
         this.enemies.set(enemyId, {
           model: enemyModel,
           modelClone: modelClone,
-          modelHeight: height,
+          modelHeight: height * configScale, // Высота с учетом scale из конфигурации
           animationTime: 0,
           isDying: false,
           deathStartTime: 0,
@@ -171,16 +172,62 @@ class Enemy3DManager {
     // Генерируем случайный вектор отлета в горизонтальной плоскости
     const knockbackDistance =
       enemy.config.animations.death.knockbackDistance || 0;
-    if (knockbackDistance > 0) {
-      const angle = Math.random() * Math.PI * 2; // Случайный угол в горизонтальной плоскости
-      const distance = knockbackDistance * (0.5 + Math.random() * 0.5); // От 50% до 100% расстояния
-      // Генерируем отскок только в горизонтальной плоскости (x и z)
-      // y не используется, так как паук должен оставаться на земле
-      enemy.knockbackOffset = {
-        x: Math.cos(angle) * distance,
-        y: Math.sin(angle) * distance, // Это будет использовано как z-координата
-        z: 0, // Не поднимаем паука вверх
+    
+    // Всегда генерируем отскок, даже если knockbackDistance не задан
+    let baseDistance = knockbackDistance;
+    if (baseDistance <= 0) {
+      // Если не задан, используем минимальный отскок
+      baseDistance = 10;
+    }
+    
+    // Генерируем случайный угол и расстояние
+    const angle = Math.random() * Math.PI * 2; // Случайный угол в горизонтальной плоскости
+    // Расстояние от 60% до 120% базового значения для более заметного эффекта
+    const distance = baseDistance * (0.6 + Math.random() * 0.6);
+    
+    // Генерируем отскок только в горизонтальной плоскости (x и z)
+    // y не используется, так как паук должен оставаться на земле
+    enemy.knockbackOffset = {
+      x: Math.cos(angle) * distance,
+      y: Math.sin(angle) * distance, // Это будет использовано как z-координата
+      z: 0, // Не поднимаем паука вверх
+    };
+    
+    console.log('[Enemy3DRenderer] Generated knockback offset:', {
+      enemyId,
+      baseDistance,
+      angle: (angle * 180 / Math.PI).toFixed(1),
+      distance: distance.toFixed(3),
+      knockbackOffset: {
+        x: enemy.knockbackOffset.x.toFixed(2),
+        y: enemy.knockbackOffset.y.toFixed(2),
+      },
+    });
+
+    // Генерируем случайные углы вращения при смерти
+    const flipOver = enemy.config.animations.death.flipOver;
+    if (flipOver) {
+      // Используем значения из конфигурации как множители для случайного вращения
+      // Генерируем случайные углы от 0 до значения из конфигурации * Math.PI
+      const randomX = (Math.random() - 0.5) * 2 * (flipOver.x || 0) * Math.PI; // От -x*PI до +x*PI
+      const randomY = (Math.random() - 0.5) * 2 * (flipOver.y || 0) * Math.PI; // От -y*PI до +y*PI
+      const randomZ = (Math.random() - 0.5) * 2 * (flipOver.z || 0) * Math.PI; // От -z*PI до +z*PI
+      
+      enemy.randomFlipRotation = {
+        x: randomX,
+        y: randomY,
+        z: randomZ,
       };
+      
+      console.log('[Enemy3DRenderer] Generated random flip rotation:', {
+        enemyId,
+        randomX: randomX.toFixed(3),
+        randomY: randomY.toFixed(3),
+        randomZ: randomZ.toFixed(3),
+        randomX_degrees: (randomX * 180 / Math.PI).toFixed(1),
+        randomY_degrees: (randomY * 180 / Math.PI).toFixed(1),
+        randomZ_degrees: (randomZ * 180 / Math.PI).toFixed(1),
+      });
     }
   }
 
@@ -289,6 +336,7 @@ class Enemy3DManager {
       deathDuration,
       fadeOutDuration,
       knockbackOffset,
+      randomFlipRotation,
     } = enemy;
 
     const currentTime = Date.now() / 1000;
@@ -323,13 +371,13 @@ class Enemy3DManager {
       console.log('[Enemy3DRenderer] easeOut:', easeOut.toFixed(3));
 
       // Применяем переворачивание согласно конфигурации flipOver
-      if (flipOver) {
-        // Вращаем по осям согласно конфигурации (x, y, z - это углы в радианах)
-        const flipX = flipOver.x ? easeOut * flipOver.x * Math.PI : 0;
-        const flipY = flipOver.y ? easeOut * flipOver.y * Math.PI : 0;
-        const flipZ = flipOver.z ? easeOut * flipOver.z * Math.PI : 0;
+      if (flipOver && randomFlipRotation) {
+        // Используем заранее сгенерированные случайные углы вращения
+        const flipX = easeOut * randomFlipRotation.x;
+        const flipY = easeOut * randomFlipRotation.y;
+        const flipZ = easeOut * randomFlipRotation.z;
         
-        console.log('[Enemy3DRenderer] Applying flipOver:', {
+        console.log('[Enemy3DRenderer] Applying random flip rotation:', {
           flipX: flipX.toFixed(3),
           flipY: flipY.toFixed(3),
           flipZ: flipZ.toFixed(3),
@@ -343,9 +391,9 @@ class Enemy3DManager {
         modelClone.rotation.z = flipZ;
         
         // Компенсируем смещение по Y при переворачивании
-        // Когда модель переворачивается на 180°, её центр смещается вниз на половину высоты
+        // Когда модель переворачивается, её центр может смещаться
         // Поднимаем модель вверх, чтобы она оставалась на земле
-        if (flipX !== 0) {
+        if (Math.abs(flipX) > 0.1) {
           const yOffset = (modelHeight / 2) * (1 - Math.cos(flipX));
           const newY = -modelHeight / 2 + yOffset;
           console.log('[Enemy3DRenderer] Y compensation:', {
@@ -356,26 +404,26 @@ class Enemy3DManager {
           });
           modelClone.position.y = newY;
         }
+      } else if (flipOver) {
+        // Fallback: если случайные углы не были сгенерированы, используем конфигурацию
+        const flipX = flipOver.x ? easeOut * flipOver.x * Math.PI : 0;
+        const flipY = flipOver.y ? easeOut * flipOver.y * Math.PI : 0;
+        const flipZ = flipOver.z ? easeOut * flipOver.z * Math.PI : 0;
+        
+        modelClone.rotation.x = flipX;
+        modelClone.rotation.y = flipY;
+        modelClone.rotation.z = flipZ;
+        
+        if (Math.abs(flipX) > 0.1) {
+          const yOffset = (modelHeight / 2) * (1 - Math.cos(flipX));
+          modelClone.position.y = -modelHeight / 2 + yOffset;
+        }
       } else {
         console.log('[Enemy3DRenderer] No flipOver config, using default rotation');
         // Если flipOver не задан, используем стандартное переворачивание по оси X
         modelClone.rotation.x = easeOut * Math.PI;
         const yOffset = (modelHeight / 2) * (1 - Math.cos(easeOut * Math.PI));
         modelClone.position.y = -modelHeight / 2 + yOffset;
-      }
-      
-      // Добавляем дополнительное вращение по оси Z для более естественного вида при отскоке
-      if (knockbackOffset && flipOver) {
-        const rollDirection = knockbackOffset.x > 0 ? 1 : -1;
-        const rollAmount = rollDirection * 0.3; // Небольшой наклон в сторону отскока
-        const additionalZ = easeOut * rollAmount;
-        console.log('[Enemy3DRenderer] Additional Z rotation from knockback:', {
-          rollDirection,
-          rollAmount: rollAmount.toFixed(3),
-          additionalZ: additionalZ.toFixed(3),
-          finalZ: modelClone.rotation.z.toFixed(3),
-        });
-        modelClone.rotation.z += additionalZ;
       }
     }
     // Фаза исчезновения

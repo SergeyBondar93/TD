@@ -27,6 +27,7 @@ interface Game3DCanvasProps {
   onCanvasClick: (x: number, y: number) => void;
   onTowerClick: (towerId: string) => void;
   selectedTowerLevel: 1 | 2 | 3 | 4 | 5 | null;
+  selectedTowerId: string | null;
   path: { x: number; y: number }[];
 }
 
@@ -35,6 +36,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
   onCanvasClick,
   onTowerClick,
   selectedTowerLevel,
+  selectedTowerId,
   path,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -393,9 +395,15 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
               mesh.castShadow = true;
               mesh.receiveShadow = true;
               
-              // Масштабируем модель в зависимости от размера врага
-              const scale = enemy.size / 100; // Уменьшенный коэффициент масштабирования
-              mesh.scale.set(scale, scale, scale);
+              // Применяем масштаб ОДИН РАЗ при создании модели
+              // Объединяем scale из конфигурации модели и scale от размера врага
+              const configScale = enemy.modelConfig?.scale || 100;
+              const configScaleFactor = configScale / 100; // Например, 20% = 0.2
+              const sizeScale = enemy.size / 100; // Например, 20 = 0.2
+              const totalScale = configScaleFactor * sizeScale; // Итоговый scale
+              
+              // Применяем scale один раз
+              mesh.scale.set(totalScale, totalScale, totalScale);
               
               scene.add(mesh);
               enemyMeshesRef.current.set(enemy.id, mesh);
@@ -497,9 +505,28 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
                 const knockbackOffset = enemy3DManager.getKnockbackOffset(enemy.id, elapsed, deathDuration);
                 if (knockbackOffset) {
                   // Применяем отскок к позиции mesh относительно начальной позиции врага
+                  // Отскок происходит быстро в начале, затем замедляется
                   mesh.position.x = enemy.position.x + knockbackOffset.x;
                   mesh.position.z = enemy.position.y + knockbackOffset.z; // y в игровых координатах = z в 3D
                   mesh.position.y = 0; // Остаемся на земле
+                  
+                  // Логируем для отладки (можно убрать позже)
+                  if (Math.random() < 0.01) { // Логируем только 1% кадров чтобы не засорять консоль
+                    console.log('[Game3DCanvas] Applying knockback:', {
+                      enemyId: enemy.id,
+                      baseX: enemy.position.x.toFixed(2),
+                      baseZ: enemy.position.y.toFixed(2),
+                      offsetX: knockbackOffset.x.toFixed(2),
+                      offsetZ: knockbackOffset.z.toFixed(2),
+                      finalX: mesh.position.x.toFixed(2),
+                      finalZ: mesh.position.z.toFixed(2),
+                    });
+                  }
+                } else {
+                  // Если нет knockbackOffset, все равно применяем базовую позицию
+                  mesh.position.x = enemy.position.x;
+                  mesh.position.z = enemy.position.y;
+                  mesh.position.y = 0;
                 }
               }
             }
@@ -600,6 +627,17 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
             tower.position.y
           );
           
+          // Подсвечиваем выбранную башню зеленым
+          const isSelected = selectedTowerId === tower.id;
+          const material = mesh.material as THREE.MeshStandardMaterial;
+          if (isSelected) {
+            material.color.setHex(0x00ff00); // Зеленый цвет
+            material.emissive.setHex(0x004400); // Зеленое свечение
+          } else {
+            material.color.setHex(0x888888); // Обычный серый цвет
+            material.emissive.setHex(0x000000); // Без свечения
+          }
+          
           // Обновляем стрелку направления
           const arrowMesh = towerArrowsRef.current.get(tower.id);
           if (arrowMesh) {
@@ -611,9 +649,20 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
             arrowMesh.rotation.z = -(tower.rotation ?? 0);
           }
           
-          // Обновляем позицию круга радиуса если башня двигалась или радиус изменился
+          // Обновляем круг радиуса - подсвечиваем зеленым если башня выбрана
           const rangeCircle = towerRangeCirclesRef.current.get(tower.id);
           if (rangeCircle) {
+            // Обновляем цвет и прозрачность
+            const circleMaterial = rangeCircle.material as THREE.LineBasicMaterial;
+            if (isSelected) {
+              circleMaterial.color.setHex(0x00ff00); // Зеленый цвет
+              circleMaterial.opacity = 0.6; // Более яркая прозрачность
+            } else {
+              circleMaterial.color.setHex(0x888888); // Обычный серый цвет
+              circleMaterial.opacity = 0.3; // Обычная прозрачность
+            }
+            
+            // Обновляем позицию круга радиуса если башня двигалась или радиус изменился
             const segments = 64;
             const circlePoints: THREE.Vector3[] = [];
             for (let i = 0; i <= segments; i++) {
@@ -690,22 +739,30 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
         // Рисуем огненные потоки
         gameState.flameStreams?.forEach((stream) => {
           const tower = gameState.towers.find((t) => t.id === stream.towerId);
-          const enemy = gameState.enemies.find((e) => e.id === stream.targetEnemyId);
-          if (tower && enemy) {
-            const points = [
-              new THREE.Vector3(tower.position.x, tower.size / 2, tower.position.y),
-              new THREE.Vector3(enemy.position.x, 5, enemy.position.y)
-            ];
-            const geometry = new THREE.BufferGeometry().setFromPoints(points);
-            const material = new THREE.LineBasicMaterial({
-              color: 0xff6600,
-              linewidth: 4,
-              transparent: true,
-              opacity: 0.7
+          if (tower) {
+            // Для огненного оружия может быть несколько целей (конус)
+            const targetEnemyIds = 'targetEnemyIds' in stream ? stream.targetEnemyIds : 
+                                   'targetEnemyId' in stream ? [stream.targetEnemyId] : [];
+            
+            targetEnemyIds.forEach((enemyId) => {
+              const enemy = gameState.enemies.find((e) => e.id === enemyId);
+              if (enemy) {
+                const points = [
+                  new THREE.Vector3(tower.position.x, tower.size / 2, tower.position.y),
+                  new THREE.Vector3(enemy.position.x, 5, enemy.position.y)
+                ];
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const material = new THREE.LineBasicMaterial({
+                  color: 0xff6600,
+                  linewidth: 4,
+                  transparent: true,
+                  opacity: 0.7
+                });
+                const line = new THREE.Line(geometry, material);
+                scene.add(line);
+                flameLinesRef.current.push(line);
+              }
             });
-            const line = new THREE.Line(geometry, material);
-            scene.add(line);
-            flameLinesRef.current.push(line);
           }
         });
 
@@ -716,22 +773,30 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
         // Рисуем ледяные потоки
         gameState.iceStreams?.forEach((stream) => {
           const tower = gameState.towers.find((t) => t.id === stream.towerId);
-          const enemy = gameState.enemies.find((e) => e.id === stream.targetEnemyId);
-          if (tower && enemy) {
-            const points = [
-              new THREE.Vector3(tower.position.x, tower.size / 2, tower.position.y),
-              new THREE.Vector3(enemy.position.x, 5, enemy.position.y)
-            ];
-            const geometry = new THREE.BufferGeometry().setFromPoints(points);
-            const material = new THREE.LineBasicMaterial({
-              color: 0x00ffff,
-              linewidth: 3,
-              transparent: true,
-              opacity: 0.8
+          if (tower) {
+            // Для ледяного оружия может быть несколько целей (конус)
+            const targetEnemyIds = 'targetEnemyIds' in stream ? stream.targetEnemyIds : 
+                                   'targetEnemyId' in stream ? [stream.targetEnemyId] : [];
+            
+            targetEnemyIds.forEach((enemyId) => {
+              const enemy = gameState.enemies.find((e) => e.id === enemyId);
+              if (enemy) {
+                const points = [
+                  new THREE.Vector3(tower.position.x, tower.size / 2, tower.position.y),
+                  new THREE.Vector3(enemy.position.x, 5, enemy.position.y)
+                ];
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const material = new THREE.LineBasicMaterial({
+                  color: 0x00ffff,
+                  linewidth: 3,
+                  transparent: true,
+                  opacity: 0.8
+                });
+                const line = new THREE.Line(geometry, material);
+                scene.add(line);
+                iceLinesRef.current.push(line);
+              }
             });
-            const line = new THREE.Line(geometry, material);
-            scene.add(line);
-            iceLinesRef.current.push(line);
           }
         });
 

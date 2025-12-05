@@ -57,7 +57,7 @@ const SPAWN_DELAY = {
 
 export const SPIDER_MODEL: EnemyModelConfig = {
   modelType: "spider",
-  scale: 20, // 20% от базового размера
+  scale: 40, // 20% от базового размера
   rotationOffset: Math.PI, // Паук смотрит назад, поворачиваем на 180°
   animations: {
     walk: {
@@ -71,7 +71,7 @@ export const SPIDER_MODEL: EnemyModelConfig = {
     death: {
       duration: 2.0, // 2 секунды переворачивания
       fadeOutDuration: 1.0, // 1 секунда растворения
-      flipOver: { x: 1, y: 1, z: 5, easeFunction: 'easeOut' }, // Переворачивается на спину с координатами отлета
+      flipOver: { x: 0.2, y: 0.2 , z: 0.2, easeFunction: 'easeOut' }, // Переворачивается на спину с координатами отлета
       knockbackDistance: 15, // Отлетает на 8 единиц (уменьшено чтобы не обрезался)
     },
   },

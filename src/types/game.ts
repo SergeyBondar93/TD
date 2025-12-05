@@ -1,23 +1,23 @@
 // Базовые типы для игры Tower Defense
 
 export const WeaponType = {
-  PROJECTILE: 'projectile',
-  LASER: 'laser',
-  ELECTRIC: 'electric',
-  FIRE: 'fire',
-  ICE: 'ice',
+  PROJECTILE: "projectile",
+  LASER: "laser",
+  ELECTRIC: "electric",
+  FIRE: "fire",
+  ICE: "ice",
 } as const;
 
-export type WeaponType = typeof WeaponType[keyof typeof WeaponType];
+export type WeaponType = (typeof WeaponType)[keyof typeof WeaponType];
 
 export const EnemyType = {
-  INFANTRY: 'infantry',
-  TANK_SMALL: 'tank_small',
-  TANK_MEDIUM: 'tank_medium',
-  TANK_LARGE: 'tank_large',
+  INFANTRY: "infantry",
+  TANK_SMALL: "tank_small",
+  TANK_MEDIUM: "tank_medium",
+  TANK_LARGE: "tank_large",
 } as const;
 
-export type EnemyType = typeof EnemyType[keyof typeof EnemyType];
+export type EnemyType = (typeof EnemyType)[keyof typeof EnemyType];
 
 export const ENEMY_SIZES: Record<EnemyType, number> = {
   [EnemyType.INFANTRY]: 20,
@@ -26,7 +26,7 @@ export const ENEMY_SIZES: Record<EnemyType, number> = {
   [EnemyType.TANK_LARGE]: 60,
 };
 
-import type { EnemyModelConfig } from '../config/gameData/enemies';
+import type { EnemyModelConfig } from "../config/gameData/enemies";
 
 export interface Position {
   x: number;
@@ -157,7 +157,7 @@ export interface GameState {
   iceProjectiles: IceProjectile[];
   iceStreams: IceStream[];
   path: Position[];
-  gameStatus: 'menu' | 'playing' | 'paused' | 'won' | 'lost';
+  gameStatus: "menu" | "playing" | "paused" | "won" | "lost";
   selectedTowerLevel: 1 | 2 | 3 | 4 | 5 | null;
   currentLevel: number | null; // 1-10 уровней сложности или null если не начата
   gameSpeed: number; // Скорость игры от 0.05 до 3.0

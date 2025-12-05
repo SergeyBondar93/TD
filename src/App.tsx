@@ -18,9 +18,11 @@ import "./App.css";
 function App() {
   // GameEngine instance
   const gameEngineRef = useRef<GameEngine>(new GameEngine());
-  
+
   // Состояние для рендеринга (обновляется на каждый кадр)
-  const [gameState, setGameState] = useState<GameState>(gameEngineRef.current.getState());
+  const [gameState, setGameState] = useState<GameState>(
+    gameEngineRef.current.getState()
+  );
 
   // UI store для управления интерфейсом
   const {
@@ -79,7 +81,7 @@ function App() {
           testEnemies.push(enemy);
         }
         // Добавляем тестовых врагов напрямую в движок
-        testEnemies.forEach(e => {
+        testEnemies.forEach((e) => {
           const enemies = engine.getEnemies();
           enemies.push(e);
         });
@@ -136,7 +138,14 @@ function App() {
 
       const position = { x, y };
       const currentPath = engine.getPath();
-      if (!canPlaceTower(position, engine.getTowers(), currentPath.length > 0 ? currentPath : DEFAULT_PATH)) return;
+      if (
+        !canPlaceTower(
+          position,
+          engine.getTowers(),
+          currentPath.length > 0 ? currentPath : DEFAULT_PATH
+        )
+      )
+        return;
 
       const newTowerId = `tower-${Date.now()}`;
       const newTower = createTowerFromStats({
@@ -233,7 +242,10 @@ function App() {
 
   // Автоматический запуск уровня при монтировании (если включен DEV_CONFIG.AUTO_START_LEVEL)
   useEffect(() => {
-    if (DEV_CONFIG.AUTO_START_LEVEL && typeof DEV_CONFIG.AUTO_START_LEVEL === 'number') {
+    if (
+      DEV_CONFIG.AUTO_START_LEVEL &&
+      typeof DEV_CONFIG.AUTO_START_LEVEL === "number"
+    ) {
       initializeGame(DEV_CONFIG.AUTO_START_LEVEL);
     }
   }, [initializeGame]);
@@ -243,14 +255,14 @@ function App() {
     const engine = gameEngineRef.current;
     const currentLevel = engine.getCurrentLevel();
     const gameStatus = engine.getGameStatus();
-    
+
     if (currentLevel === null || gameStatus !== "playing") {
       return;
     }
 
     const simulationLoop = () => {
       const currentTime = performance.now();
-      
+
       // Обновляем игровую логику
       // GameEngine сам разбивает большие шаги на маленькие для точности
       engine.update(currentTime);
@@ -271,11 +283,11 @@ function App() {
   // Цикл рендеринга - всегда работает на 60 FPS
   useEffect(() => {
     const engine = gameEngineRef.current;
-    
+
     const renderLoop = () => {
       // Получаем актуальное состояние из движка для рендеринга
       setGameState(engine.getState());
-      
+
       // Продолжаем рендеринг на 60 FPS
       renderFrameRef.current = requestAnimationFrame(renderLoop);
     };
@@ -307,7 +319,10 @@ function App() {
   return (
     <div className="app-container" style={styles.app}>
       {DEV_CONFIG.SHOW_DEBUG_INFO && (
-        <DebugInfo gameState={gameStateWithUI} onGameSpeedChange={handleGameSpeedChange} />
+        <DebugInfo
+          gameState={gameStateWithUI}
+          onGameSpeedChange={handleGameSpeedChange}
+        />
       )}
 
       <div className="app-main-content" style={styles.mainContent}>
@@ -339,15 +354,16 @@ function App() {
             }}
             canStartWave={canStartWave}
           />
-          {selectedTowerId && gameState.towers.find((t) => t.id === selectedTowerId) && (
-            <TowerInfo
-              tower={gameState.towers.find((t) => t.id === selectedTowerId)!}
-              money={gameState.money}
-              onUpgrade={handleTowerUpgrade}
-              onSell={handleTowerSell}
-              onClose={() => setSelectedTowerId(null)}
-            />
-          )}
+          {selectedTowerId &&
+            gameState.towers.find((t) => t.id === selectedTowerId) && (
+              <TowerInfo
+                tower={gameState.towers.find((t) => t.id === selectedTowerId)!}
+                money={gameState.money}
+                onUpgrade={handleTowerUpgrade}
+                onSell={handleTowerSell}
+                onClose={() => setSelectedTowerId(null)}
+              />
+            )}
         </div>
       </div>
 

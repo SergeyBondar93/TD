@@ -1,8 +1,8 @@
-import type { Tower, WaveConfig, Enemy, Position } from '../../types/game';
-import { ENEMY_SIZES } from '../../types/game';
-import { TOWER_STATS } from '../../config/gameData/towers';
-import { GAME_SETTINGS } from '../../config/settings';
-import { lerpAngle, generateId } from './math';
+import type { Tower, WaveConfig, Enemy, Position } from "../../types/game";
+import { ENEMY_SIZES } from "../../types/game";
+import { TOWER_STATS } from "../../config/gameData/towers";
+import { GAME_SETTINGS } from "../../config/settings";
+import { lerpAngle, generateId } from "./math";
 
 /**
  * Логика башен - обновление поворотов и улучшений
@@ -13,12 +13,17 @@ export function updateTowerRotations(
   deltaTime: number,
   rotationSpeed: number = GAME_SETTINGS.TOWER_ROTATION_SPEED
 ): Tower[] {
-  return towers.map(tower => {
+  return towers.map((tower) => {
     const currentRotation = tower.rotation ?? 0;
     const targetRotation = tower.targetRotation ?? currentRotation;
 
     // Плавно поворачиваем к целевому углу
-    const newRotation = lerpAngle(currentRotation, targetRotation, rotationSpeed, deltaTime);
+    const newRotation = lerpAngle(
+      currentRotation,
+      targetRotation,
+      rotationSpeed,
+      deltaTime
+    );
 
     // Обновляем время строительства/улучшения
     let updatedTower = {
@@ -28,10 +33,14 @@ export function updateTowerRotations(
     };
 
     // Если завершилось улучшение, применяем его
-    if (tower.buildTimeRemaining > 0 && updatedTower.buildTimeRemaining === 0 && tower.upgradeQueue > 0) {
+    if (
+      tower.buildTimeRemaining > 0 &&
+      updatedTower.buildTimeRemaining === 0 &&
+      tower.upgradeQueue > 0
+    ) {
       const newUpgradeLevel = tower.upgradeLevel + tower.upgradeQueue;
       const towerStats = TOWER_STATS[tower.level][newUpgradeLevel];
-      
+
       if (towerStats) {
         updatedTower = {
           ...updatedTower,
@@ -81,14 +90,15 @@ export function processWaveSpawn(
   ) {
     // Определяем размер врага в зависимости от типа
     const enemySize = ENEMY_SIZES[waveConfig.enemyType];
-    
+
     // Для пехоты добавляем случайное смещение (перпендикулярно и вдоль пути)
     let spawnPosition = { ...startPosition };
     let pathOffset = 0;
-    
-    if (waveConfig.enemyType === 'infantry') {
+
+    if (waveConfig.enemyType === "infantry") {
       // Смещение для создания эффекта толпы
-      pathOffset =  (Math.random() - 0.5) * GAME_SETTINGS.INFANTRY_PATH_OFFSET_RANGE;
+      pathOffset =
+        (Math.random() - 0.5) * GAME_SETTINGS.INFANTRY_PATH_OFFSET_RANGE;
       // Смещение применяется как перпендикулярно, так и вдоль направления движения
       spawnPosition.x += pathOffset;
       spawnPosition.y += pathOffset;
@@ -116,9 +126,9 @@ export function processWaveSpawn(
     };
 
     // Если все враги заспавнились, возвращаем null
-    const finalSpawnState = 
-      updatedSpawnState.enemiesSpawned >= waveConfig.enemyCount 
-        ? null 
+    const finalSpawnState =
+      updatedSpawnState.enemiesSpawned >= waveConfig.enemyCount
+        ? null
         : updatedSpawnState;
 
     return { newEnemy, updatedSpawnState: finalSpawnState };

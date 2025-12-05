@@ -1,6 +1,16 @@
-import type { Enemy, Position, Projectile, FireProjectile, IceProjectile, LaserBeam, ElectricChain, FlameStream, IceStream } from '../../types/game';
-import { GAME_SETTINGS } from '../../config/settings';
-import { distance } from './math';
+import type {
+  Enemy,
+  Position,
+  Projectile,
+  FireProjectile,
+  IceProjectile,
+  LaserBeam,
+  ElectricChain,
+  FlameStream,
+  IceStream,
+} from "../../types/game";
+import { GAME_SETTINGS } from "../../config/settings";
+import { distance } from "./math";
 
 /**
  * Логика снарядов и эффектов
@@ -18,7 +28,7 @@ export function updateProjectilePosition(
   if (dist === 0) return projectile.position;
 
   const moveDistance = (projectile.speed * deltaTime) / 1000;
-  
+
   if (dist <= moveDistance) {
     return targetPosition;
   }
@@ -57,7 +67,11 @@ export function processProjectiles(
 
     if (!target) continue;
 
-    const newPosition = updateProjectilePosition(projectile, target.position, deltaTime);
+    const newPosition = updateProjectilePosition(
+      projectile,
+      target.position,
+      deltaTime
+    );
 
     if (checkProjectileHit({ ...projectile, position: newPosition }, target)) {
       target.health -= projectile.damage;
@@ -258,7 +272,9 @@ export function processElectricChains(
       continue;
     }
 
-    const allTargetsExist = chain.targetEnemyIds.every(id => enemiesMap.has(id));
+    const allTargetsExist = chain.targetEnemyIds.every((id) =>
+      enemiesMap.has(id)
+    );
     if (allTargetsExist) {
       activeElectricChains.push(chain);
     }

@@ -1,33 +1,33 @@
-import { EnemyType } from '../../types/game';
+import { EnemyType } from "../../types/game";
 
 // Типы анимаций врагов
 export interface EnemyAnimation {
   walk: {
     enabled: boolean;
     // Параметры процедурной анимации ходьбы
-    bobAmount?: number;      // Амплитуда покачивания вверх-вниз
-    swayAmount?: number;     // Амплитуда покачивания в стороны
-    tiltAmount?: number;     // Угол наклона
-    speed?: number;          // Скорость анимации
+    bobAmount?: number; // Амплитуда покачивания вверх-вниз
+    swayAmount?: number; // Амплитуда покачивания в стороны
+    tiltAmount?: number; // Угол наклона
+    speed?: number; // Скорость анимации
   };
   death: {
-    duration: number;        // Длительность анимации смерти в секундах
+    duration: number; // Длительность анимации смерти в секундах
     fadeOutDuration: number; // Длительность растворения после смерти
     // Параметры анимации смерти
-    flipOver?: boolean;      // Переворачиваться на спину
-    explode?: boolean;       // Взрыв
-    shrink?: boolean;        // Уменьшение
+    flipOver?: boolean; // Переворачиваться на спину
+    explode?: boolean; // Взрыв
+    shrink?: boolean; // Уменьшение
     knockbackDistance?: number; // Расстояние отлета (в пикселях)
   };
 }
 
 // Конфигурация 3D модели врага
 export interface EnemyModelConfig {
-  modelType: 'spider' | 'wolf' | 'cube';  // Тип модели
-  modelPath?: string;                      // Путь к модели (если не стандартная)
-  scale: number;                           // Масштаб модели
-  rotationOffset?: number;                 // Смещение вращения (если модель смотрит не туда)
-  animations: EnemyAnimation;              // Анимации
+  modelType: "spider" | "wolf" | "cube"; // Тип модели
+  modelPath?: string; // Путь к модели (если не стандартная)
+  scale: number; // Масштаб модели
+  rotationOffset?: number; // Смещение вращения (если модель смотрит не туда)
+  animations: EnemyAnimation; // Анимации
 }
 
 // Базовый класс врага
@@ -39,7 +39,7 @@ export interface EnemyClass {
   baseSpeed: number;
   baseReward: number;
   spawnDelay: number;
-  modelConfig: EnemyModelConfig;           // Конфигурация 3D модели
+  modelConfig: EnemyModelConfig; // Конфигурация 3D модели
 }
 
 // Константы задержки спавна для разных типов врагов
@@ -55,28 +55,28 @@ const SPAWN_DELAY = {
 // ============================================
 
 export const SPIDER_MODEL: EnemyModelConfig = {
-  modelType: 'spider',
+  modelType: "spider",
   scale: 0.02,
-  rotationOffset: Math.PI,  // Паук смотрит назад, поворачиваем на 180°
+  rotationOffset: Math.PI, // Паук смотрит назад, поворачиваем на 180°
   animations: {
     walk: {
       enabled: true,
-       bobAmount: 0.15,    // Покачивание вверх-вниз
-      swayAmount: 0.12,   // Покачивание в стороны
-      tiltAmount: 0.15,   // Наклон
-      speed: 40,         // Скорость анимации
+      bobAmount: 0.15, // Покачивание вверх-вниз
+      swayAmount: 0.12, // Покачивание в стороны
+      tiltAmount: 0.15, // Наклон
+      speed: 40, // Скорость анимации
     },
     death: {
-      duration: 2.0,      // 2 секунды переворачивания
+      duration: 2.0, // 2 секунды переворачивания
       fadeOutDuration: 1.0, // 1 секунда растворения
-      flipOver: true,     // Переворачивается на спину
+      flipOver: true, // Переворачивается на спину
       knockbackDistance: 30, // Отлетает на 30 пикселей
     },
   },
 };
 
 const WOLF_MODEL: EnemyModelConfig = {
-  modelType: 'wolf',
+  modelType: "wolf",
   scale: 0.03,
   rotationOffset: Math.PI / 2,
   animations: {
@@ -90,13 +90,13 @@ const WOLF_MODEL: EnemyModelConfig = {
     death: {
       duration: 1.5,
       fadeOutDuration: 1.0,
-      shrink: true,       // Уменьшается
+      shrink: true, // Уменьшается
     },
   },
 };
 
 const CUBE_MODEL: EnemyModelConfig = {
-  modelType: 'cube',
+  modelType: "cube",
   scale: 0.5,
   animations: {
     walk: {
@@ -107,7 +107,7 @@ const CUBE_MODEL: EnemyModelConfig = {
     death: {
       duration: 1.0,
       fadeOutDuration: 0.5,
-      explode: true,      // Взрывается
+      explode: true, // Взрывается
     },
   },
 };
@@ -119,8 +119,8 @@ const CUBE_MODEL: EnemyModelConfig = {
 
 // --- ПЕХОТА (5 типов) ---
 const SCOUT: EnemyClass = {
-  id: 'scout',
-  name: 'Разведчик',
+  id: "scout",
+  name: "Разведчик",
   type: EnemyType.INFANTRY,
   baseHealth: 8,
   baseSpeed: 75,
@@ -130,8 +130,8 @@ const SCOUT: EnemyClass = {
 };
 
 const SOLDIER: EnemyClass = {
-  id: 'soldier',
-  name: 'Солдат',
+  id: "soldier",
+  name: "Солдат",
   type: EnemyType.INFANTRY,
   baseHealth: 12,
   baseSpeed: 60,
@@ -141,8 +141,8 @@ const SOLDIER: EnemyClass = {
 };
 
 const VETERAN: EnemyClass = {
-  id: 'veteran',
-  name: 'Ветеран',
+  id: "veteran",
+  name: "Ветеран",
   type: EnemyType.INFANTRY,
   baseHealth: 18,
   baseSpeed: 55,
@@ -152,8 +152,8 @@ const VETERAN: EnemyClass = {
 };
 
 const COMMANDO: EnemyClass = {
-  id: 'commando',
-  name: 'Коммандо',
+  id: "commando",
+  name: "Коммандо",
   type: EnemyType.INFANTRY,
   baseHealth: 15,
   baseSpeed: 85,
@@ -163,8 +163,8 @@ const COMMANDO: EnemyClass = {
 };
 
 const HEAVY_INFANTRY: EnemyClass = {
-  id: 'heavy_infantry',
-  name: 'Тяжелая пехота',
+  id: "heavy_infantry",
+  name: "Тяжелая пехота",
   type: EnemyType.INFANTRY,
   baseHealth: 25,
   baseSpeed: 50,
@@ -175,8 +175,8 @@ const HEAVY_INFANTRY: EnemyClass = {
 
 // --- ЛЕГКИЕ ТАНКИ (3 типа) ---
 const LIGHT_TANK: EnemyClass = {
-  id: 'light_tank',
-  name: 'Легкий танк',
+  id: "light_tank",
+  name: "Легкий танк",
   type: EnemyType.TANK_SMALL,
   baseHealth: 100,
   baseSpeed: 55,
@@ -186,8 +186,8 @@ const LIGHT_TANK: EnemyClass = {
 };
 
 const FAST_TANK: EnemyClass = {
-  id: 'fast_tank',
-  name: 'Скоростной танк',
+  id: "fast_tank",
+  name: "Скоростной танк",
   // TODO temporary
   type: EnemyType.TANK_LARGE,
   baseHealth: 80,
@@ -198,8 +198,8 @@ const FAST_TANK: EnemyClass = {
 };
 
 const ARMORED_TRANSPORT: EnemyClass = {
-  id: 'armored_transport',
-  name: 'Бронетранспортер',
+  id: "armored_transport",
+  name: "Бронетранспортер",
   type: EnemyType.TANK_SMALL,
   baseHealth: 120,
   baseSpeed: 50,
@@ -210,8 +210,8 @@ const ARMORED_TRANSPORT: EnemyClass = {
 
 // --- СРЕДНИЕ ТАНКИ (4 типа) ---
 const MEDIUM_TANK: EnemyClass = {
-  id: 'medium_tank',
-  name: 'Средний танк',
+  id: "medium_tank",
+  name: "Средний танк",
   type: EnemyType.TANK_MEDIUM,
   baseHealth: 200,
   baseSpeed: 50,
@@ -221,8 +221,8 @@ const MEDIUM_TANK: EnemyClass = {
 };
 
 const BATTLE_TANK: EnemyClass = {
-  id: 'battle_tank',
-  name: 'Боевой танк',
+  id: "battle_tank",
+  name: "Боевой танк",
   type: EnemyType.TANK_MEDIUM,
   baseHealth: 250,
   baseSpeed: 55,
@@ -232,8 +232,8 @@ const BATTLE_TANK: EnemyClass = {
 };
 
 const ASSAULT_TANK: EnemyClass = {
-  id: 'assault_tank',
-  name: 'Штурмовой танк',
+  id: "assault_tank",
+  name: "Штурмовой танк",
   type: EnemyType.TANK_MEDIUM,
   baseHealth: 220,
   baseSpeed: 60,
@@ -243,8 +243,8 @@ const ASSAULT_TANK: EnemyClass = {
 };
 
 const SIEGE_TANK: EnemyClass = {
-  id: 'siege_tank',
-  name: 'Осадный танк',
+  id: "siege_tank",
+  name: "Осадный танк",
   type: EnemyType.TANK_MEDIUM,
   baseHealth: 300,
   baseSpeed: 45,
@@ -255,8 +255,8 @@ const SIEGE_TANK: EnemyClass = {
 
 // --- ТЯЖЕЛЫЕ ТАНКИ (3 типа) ---
 const HEAVY_TANK: EnemyClass = {
-  id: 'heavy_tank',
-  name: 'Тяжелый танк',
+  id: "heavy_tank",
+  name: "Тяжелый танк",
   type: EnemyType.TANK_LARGE,
   baseHealth: 400,
   baseSpeed: 45,
@@ -266,8 +266,8 @@ const HEAVY_TANK: EnemyClass = {
 };
 
 const BEHEMOTH: EnemyClass = {
-  id: 'behemoth',
-  name: 'Бегемот',
+  id: "behemoth",
+  name: "Бегемот",
   type: EnemyType.TANK_LARGE,
   baseHealth: 500,
   baseSpeed: 40,
@@ -277,8 +277,8 @@ const BEHEMOTH: EnemyClass = {
 };
 
 const JUGGERNAUT: EnemyClass = {
-  id: 'juggernaut',
-  name: 'Джаггернаут',
+  id: "juggernaut",
+  name: "Джаггернаут",
   type: EnemyType.TANK_LARGE,
   baseHealth: 600,
   baseSpeed: 35,
@@ -289,8 +289,8 @@ const JUGGERNAUT: EnemyClass = {
 
 // --- БОСС ---
 const BOSS: EnemyClass = {
-  id: 'boss',
-  name: 'ИМПЕРАТОР РАЗРУШЕНИЯ',
+  id: "boss",
+  name: "ИМПЕРАТОР РАЗРУШЕНИЯ",
   type: EnemyType.TANK_LARGE,
   baseHealth: 10000,
   baseSpeed: 30,
@@ -299,15 +299,17 @@ const BOSS: EnemyClass = {
   modelConfig: { ...SPIDER_MODEL, scale: 0.05 }, // Босс больше
 };
 
-
-
 // ============================================
 // КОНФИГУРАЦИЯ УРОВНЕЙ
 // Каждый уровень использует базовые типы врагов с модификаторами HP и скорости
 // ============================================
 
 // Функция для создания врага с модификаторами
-function createEnemy(baseEnemy: EnemyClass, healthMult: number = 1, speedMult: number = 1): EnemyClass {
+function createEnemy(
+  baseEnemy: EnemyClass,
+  healthMult: number = 1,
+  speedMult: number = 1
+): EnemyClass {
   return {
     ...baseEnemy,
     baseHealth: Math.round(baseEnemy.baseHealth * healthMult),
@@ -442,4 +444,3 @@ export const ENEMY_CLASSES_BY_LEVEL: Record<number, EnemyClass[]> = {
   9: LEVEL_9_ENEMIES,
   10: LEVEL_10_ENEMIES,
 };
-

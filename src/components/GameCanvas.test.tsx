@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { GameCanvas } from './GameCanvas';
-import type { GameState } from '../types/game';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { GameCanvas } from "./GameCanvas";
+import type { GameState } from "../types/game";
 
-describe('GameCanvas', () => {
+describe("GameCanvas", () => {
   let mockGameState: GameState;
   let mockCanvasContext: any;
 
@@ -21,21 +21,21 @@ describe('GameCanvas', () => {
         { x: 200, y: 50 },
         { x: 200, y: 200 },
       ],
-      gameStatus: 'playing',
+      gameStatus: "playing",
       selectedTowerLevel: null,
       currentLevel: 1,
       gameSpeed: 1,
     };
 
     mockCanvasContext = {
-      fillStyle: '',
-      strokeStyle: '',
+      fillStyle: "",
+      strokeStyle: "",
       lineWidth: 0,
-      font: '',
-      textAlign: '',
-      textBaseline: '',
-      lineCap: '',
-      lineJoin: '',
+      font: "",
+      textAlign: "",
+      textBaseline: "",
+      lineCap: "",
+      lineJoin: "",
       globalAlpha: 1,
       fillRect: vi.fn(),
       strokeRect: vi.fn(),
@@ -56,41 +56,49 @@ describe('GameCanvas', () => {
     HTMLCanvasElement.prototype.getContext = vi.fn(() => mockCanvasContext);
   });
 
-  it('should render canvas element', () => {
+  it("should render canvas element", () => {
     const onCanvasClick = vi.fn();
-    render(<GameCanvas gameState={mockGameState} onCanvasClick={onCanvasClick} />);
+    render(
+      <GameCanvas gameState={mockGameState} onCanvasClick={onCanvasClick} />
+    );
 
-    const canvas = document.querySelector('canvas');
+    const canvas = document.querySelector("canvas");
     expect(canvas).toBeInTheDocument();
   });
 
-  it('should have correct canvas dimensions', () => {
+  it("should have correct canvas dimensions", () => {
     const onCanvasClick = vi.fn();
-    render(<GameCanvas gameState={mockGameState} onCanvasClick={onCanvasClick} />);
+    render(
+      <GameCanvas gameState={mockGameState} onCanvasClick={onCanvasClick} />
+    );
 
-    const canvas = document.querySelector('canvas');
-    expect(canvas).toHaveAttribute('width', '800');
-    expect(canvas).toHaveAttribute('height', '600');
+    const canvas = document.querySelector("canvas");
+    expect(canvas).toHaveAttribute("width", "800");
+    expect(canvas).toHaveAttribute("height", "600");
   });
 
-  it('should call onCanvasClick when canvas is clicked', async () => {
+  it("should call onCanvasClick when canvas is clicked", async () => {
     const user = userEvent.setup();
     const onCanvasClick = vi.fn();
-    render(<GameCanvas gameState={mockGameState} onCanvasClick={onCanvasClick} />);
+    render(
+      <GameCanvas gameState={mockGameState} onCanvasClick={onCanvasClick} />
+    );
 
-    const canvas = document.querySelector('canvas')!;
+    const canvas = document.querySelector("canvas")!;
     await user.click(canvas);
 
     expect(onCanvasClick).toHaveBeenCalled();
   });
 
-  it('should calculate click coordinates correctly', async () => {
+  it("should calculate click coordinates correctly", async () => {
     const user = userEvent.setup();
     const onCanvasClick = vi.fn();
-    const { container } = render(<GameCanvas gameState={mockGameState} onCanvasClick={onCanvasClick} />);
+    const { container } = render(
+      <GameCanvas gameState={mockGameState} onCanvasClick={onCanvasClick} />
+    );
 
-    const canvas = container.querySelector('canvas')!;
-    
+    const canvas = container.querySelector("canvas")!;
+
     // Mock getBoundingClientRect
     canvas.getBoundingClientRect = vi.fn(() => ({
       left: 0,
@@ -109,7 +117,7 @@ describe('GameCanvas', () => {
     expect(onCanvasClick).toHaveBeenCalled();
   });
 
-  it('should change cursor to crosshair when tower is selected', () => {
+  it("should change cursor to crosshair when tower is selected", () => {
     const onCanvasClick = vi.fn();
     render(
       <GameCanvas
@@ -118,28 +126,34 @@ describe('GameCanvas', () => {
       />
     );
 
-    const canvas = document.querySelector('canvas');
-    expect(canvas).toHaveStyle({ cursor: 'crosshair' });
+    const canvas = document.querySelector("canvas");
+    expect(canvas).toHaveStyle({ cursor: "crosshair" });
   });
 
-  it('should have default cursor when no tower is selected', () => {
+  it("should have default cursor when no tower is selected", () => {
     const onCanvasClick = vi.fn();
-    render(<GameCanvas gameState={mockGameState} onCanvasClick={onCanvasClick} />);
+    render(
+      <GameCanvas gameState={mockGameState} onCanvasClick={onCanvasClick} />
+    );
 
-    const canvas = document.querySelector('canvas');
-    expect(canvas).toHaveStyle({ cursor: 'default' });
+    const canvas = document.querySelector("canvas");
+    expect(canvas).toHaveStyle({ cursor: "default" });
   });
 
-  it('should draw background', () => {
+  it("should draw background", () => {
     const onCanvasClick = vi.fn();
-    render(<GameCanvas gameState={mockGameState} onCanvasClick={onCanvasClick} />);
+    render(
+      <GameCanvas gameState={mockGameState} onCanvasClick={onCanvasClick} />
+    );
 
     expect(mockCanvasContext.fillRect).toHaveBeenCalled();
   });
 
-  it('should draw path when path is provided', () => {
+  it("should draw path when path is provided", () => {
     const onCanvasClick = vi.fn();
-    render(<GameCanvas gameState={mockGameState} onCanvasClick={onCanvasClick} />);
+    render(
+      <GameCanvas gameState={mockGameState} onCanvasClick={onCanvasClick} />
+    );
 
     expect(mockCanvasContext.beginPath).toHaveBeenCalled();
     expect(mockCanvasContext.moveTo).toHaveBeenCalled();
@@ -147,13 +161,13 @@ describe('GameCanvas', () => {
     expect(mockCanvasContext.stroke).toHaveBeenCalled();
   });
 
-  it('should draw enemies when enemies exist', () => {
+  it("should draw enemies when enemies exist", () => {
     const onCanvasClick = vi.fn();
     const gameStateWithEnemies = {
       ...mockGameState,
       enemies: [
         {
-          id: 'enemy-1',
+          id: "enemy-1",
           position: { x: 100, y: 100 },
           health: 50,
           maxHealth: 100,
@@ -165,20 +179,25 @@ describe('GameCanvas', () => {
       ],
     };
 
-    render(<GameCanvas gameState={gameStateWithEnemies} onCanvasClick={onCanvasClick} />);
+    render(
+      <GameCanvas
+        gameState={gameStateWithEnemies}
+        onCanvasClick={onCanvasClick}
+      />
+    );
 
     // Should draw enemy rectangle
     expect(mockCanvasContext.fillRect).toHaveBeenCalled();
     expect(mockCanvasContext.arc).toHaveBeenCalled();
   });
 
-  it('should draw towers when towers exist', () => {
+  it("should draw towers when towers exist", () => {
     const onCanvasClick = vi.fn();
     const gameStateWithTowers = {
       ...mockGameState,
       towers: [
         {
-          id: 'tower-1',
+          id: "tower-1",
           position: { x: 150, y: 150 },
           level: 1 as const,
           damage: 10,
@@ -190,34 +209,44 @@ describe('GameCanvas', () => {
       ],
     };
 
-    render(<GameCanvas gameState={gameStateWithTowers} onCanvasClick={onCanvasClick} />);
+    render(
+      <GameCanvas
+        gameState={gameStateWithTowers}
+        onCanvasClick={onCanvasClick}
+      />
+    );
 
     expect(mockCanvasContext.fillRect).toHaveBeenCalled();
     expect(mockCanvasContext.arc).toHaveBeenCalled();
   });
 
-  it('should draw projectiles when projectiles exist', () => {
+  it("should draw projectiles when projectiles exist", () => {
     const onCanvasClick = vi.fn();
     const gameStateWithProjectiles = {
       ...mockGameState,
       projectiles: [
         {
-          id: 'proj-1',
+          id: "proj-1",
           position: { x: 120, y: 120 },
-          targetEnemyId: 'enemy-1',
+          targetEnemyId: "enemy-1",
           damage: 10,
           speed: 300,
         },
       ],
     };
 
-    render(<GameCanvas gameState={gameStateWithProjectiles} onCanvasClick={onCanvasClick} />);
+    render(
+      <GameCanvas
+        gameState={gameStateWithProjectiles}
+        onCanvasClick={onCanvasClick}
+      />
+    );
 
     expect(mockCanvasContext.arc).toHaveBeenCalled();
     expect(mockCanvasContext.fill).toHaveBeenCalled();
   });
 
-  it('should redraw when game state changes', () => {
+  it("should redraw when game state changes", () => {
     const onCanvasClick = vi.fn();
     const { rerender } = render(
       <GameCanvas gameState={mockGameState} onCanvasClick={onCanvasClick} />
@@ -229,7 +258,7 @@ describe('GameCanvas', () => {
       ...mockGameState,
       enemies: [
         {
-          id: 'enemy-1',
+          id: "enemy-1",
           position: { x: 100, y: 100 },
           health: 100,
           maxHealth: 100,
@@ -241,19 +270,21 @@ describe('GameCanvas', () => {
       ],
     };
 
-    rerender(<GameCanvas gameState={updatedGameState} onCanvasClick={onCanvasClick} />);
+    rerender(
+      <GameCanvas gameState={updatedGameState} onCanvasClick={onCanvasClick} />
+    );
 
     const callCountAfter = mockCanvasContext.fillRect.mock.calls.length;
     expect(callCountAfter).toBeGreaterThan(callCountBefore);
   });
 
-  it('should draw multiple enemies', () => {
+  it("should draw multiple enemies", () => {
     const onCanvasClick = vi.fn();
     const gameStateWithMultipleEnemies = {
       ...mockGameState,
       enemies: [
         {
-          id: 'enemy-1',
+          id: "enemy-1",
           position: { x: 100, y: 100 },
           health: 100,
           maxHealth: 100,
@@ -263,7 +294,7 @@ describe('GameCanvas', () => {
           reward: 20,
         },
         {
-          id: 'enemy-2',
+          id: "enemy-2",
           position: { x: 150, y: 150 },
           health: 80,
           maxHealth: 100,
@@ -275,19 +306,24 @@ describe('GameCanvas', () => {
       ],
     };
 
-    render(<GameCanvas gameState={gameStateWithMultipleEnemies} onCanvasClick={onCanvasClick} />);
+    render(
+      <GameCanvas
+        gameState={gameStateWithMultipleEnemies}
+        onCanvasClick={onCanvasClick}
+      />
+    );
 
     // Multiple draw calls for multiple enemies
     expect(mockCanvasContext.fillRect.mock.calls.length).toBeGreaterThan(0);
   });
 
-  it('should draw multiple towers with different levels', () => {
+  it("should draw multiple towers with different levels", () => {
     const onCanvasClick = vi.fn();
     const gameStateWithMultipleTowers = {
       ...mockGameState,
       towers: [
         {
-          id: 'tower-1',
+          id: "tower-1",
           position: { x: 100, y: 200 },
           level: 1 as const,
           damage: 10,
@@ -297,7 +333,7 @@ describe('GameCanvas', () => {
           cost: 50,
         },
         {
-          id: 'tower-2',
+          id: "tower-2",
           position: { x: 300, y: 200 },
           level: 2 as const,
           damage: 25,
@@ -307,7 +343,7 @@ describe('GameCanvas', () => {
           cost: 150,
         },
         {
-          id: 'tower-3',
+          id: "tower-3",
           position: { x: 500, y: 200 },
           level: 3 as const,
           damage: 50,
@@ -319,13 +355,18 @@ describe('GameCanvas', () => {
       ],
     };
 
-    render(<GameCanvas gameState={gameStateWithMultipleTowers} onCanvasClick={onCanvasClick} />);
+    render(
+      <GameCanvas
+        gameState={gameStateWithMultipleTowers}
+        onCanvasClick={onCanvasClick}
+      />
+    );
 
     expect(mockCanvasContext.fillRect).toHaveBeenCalled();
     expect(mockCanvasContext.arc).toHaveBeenCalled();
   });
 
-  it('should handle empty path array', () => {
+  it("should handle empty path array", () => {
     const onCanvasClick = vi.fn();
     const gameStateWithEmptyPath = {
       ...mockGameState,
@@ -333,13 +374,20 @@ describe('GameCanvas', () => {
     };
 
     expect(() => {
-      render(<GameCanvas gameState={gameStateWithEmptyPath} onCanvasClick={onCanvasClick} />);
+      render(
+        <GameCanvas
+          gameState={gameStateWithEmptyPath}
+          onCanvasClick={onCanvasClick}
+        />
+      );
     }).not.toThrow();
   });
 
-  it('should clear canvas before redrawing', () => {
+  it("should clear canvas before redrawing", () => {
     const onCanvasClick = vi.fn();
-    render(<GameCanvas gameState={mockGameState} onCanvasClick={onCanvasClick} />);
+    render(
+      <GameCanvas gameState={mockGameState} onCanvasClick={onCanvasClick} />
+    );
 
     // Background fill acts as canvas clear
     expect(mockCanvasContext.fillRect).toHaveBeenCalled();

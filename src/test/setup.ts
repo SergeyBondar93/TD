@@ -1,6 +1,6 @@
-import { expect, afterEach, vi } from 'vitest';
-import { cleanup } from '@testing-library/react';
-import '@testing-library/jest-dom/vitest';
+import { expect, afterEach, vi } from "vitest";
+import { cleanup } from "@testing-library/react";
+import "@testing-library/jest-dom/vitest";
 
 // Cleanup after each test
 afterEach(() => {
@@ -9,10 +9,10 @@ afterEach(() => {
 
 // Mock canvas context
 HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
-  fillStyle: '',
-  strokeStyle: '',
+  fillStyle: "",
+  strokeStyle: "",
   lineWidth: 0,
-  font: '',
+  font: "",
   fillRect: vi.fn(),
   strokeRect: vi.fn(),
   fillText: vi.fn(),

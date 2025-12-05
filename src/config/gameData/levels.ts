@@ -1,8 +1,12 @@
-import type { LevelConfig, WaveConfig } from '../../types/game';
-import { ENEMY_CLASSES_BY_LEVEL, type EnemyClass } from './enemies';
+import type { LevelConfig, WaveConfig } from "../../types/game";
+import { ENEMY_CLASSES_BY_LEVEL, type EnemyClass } from "./enemies";
 
 // Функция для создания волны из класса врага
-function createWave(enemyClass: EnemyClass, count: number, level: number): WaveConfig {
+function createWave(
+  enemyClass: EnemyClass,
+  count: number,
+  level: number
+): WaveConfig {
   return {
     enemyCount: count,
     enemyLevel: level,
@@ -160,7 +164,7 @@ export const LEVELS: LevelConfig[] = [
       createWave(ENEMY_CLASSES_BY_LEVEL[10][3], 18, 10), // Тяжелый танк
       createWave(ENEMY_CLASSES_BY_LEVEL[10][4], 15, 10), // Бегемот
       createWave(ENEMY_CLASSES_BY_LEVEL[10][5], 12, 10), // Джаггернаут
-      createWave(ENEMY_CLASSES_BY_LEVEL[10][6], 1, 10),  // БОСС
+      createWave(ENEMY_CLASSES_BY_LEVEL[10][6], 1, 10), // БОСС
     ],
   },
 ];

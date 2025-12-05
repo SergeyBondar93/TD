@@ -1,4 +1,4 @@
-import type { Position } from '../../types/game';
+import type { Position } from "../../types/game";
 
 /**
  * Математические утилиты для игры
@@ -10,7 +10,11 @@ export function distance(pos1: Position, pos2: Position): number {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-export function distanceToSegment(point: Position, a: Position, b: Position): number {
+export function distanceToSegment(
+  point: Position,
+  a: Position,
+  b: Position
+): number {
   const dx = b.x - a.x;
   const dy = b.y - a.y;
   const lengthSquared = dx * dx + dy * dy;
@@ -31,7 +35,12 @@ export function distanceToSegment(point: Position, a: Position, b: Position): nu
 }
 
 // Функция для плавной интерполяции угла (учитывает переход через 0/2π)
-export function lerpAngle(current: number, target: number, speed: number, deltaTime: number): number {
+export function lerpAngle(
+  current: number,
+  target: number,
+  speed: number,
+  deltaTime: number
+): number {
   // Нормализуем углы в диапазон [0, 2π]
   const normalizeAngle = (angle: number) => {
     while (angle < 0) angle += Math.PI * 2;

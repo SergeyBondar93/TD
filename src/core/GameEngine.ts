@@ -1,34 +1,46 @@
-import type { 
-  Enemy, 
-  Tower, 
-  Projectile, 
-  LaserBeam, 
-  ElectricChain, 
-  FireProjectile, 
-  FlameStream, 
-  IceProjectile, 
+import type {
+  Enemy,
+  Tower,
+  Projectile,
+  LaserBeam,
+  ElectricChain,
+  FireProjectile,
+  FlameStream,
+  IceProjectile,
   IceStream,
   Position,
   GameState,
-  LevelConfig
-} from '../types/game';
-import { processEnemies } from './logic/enemies';
-import { processProjectiles, processFireProjectiles, processIceProjectiles, processLaserBeams, processElectricChains, processFlameStreams, processIceStreams } from './logic/projectiles';
-import { processTowerFire } from './logic/towers';
-import { updateTowerRotations, processWaveSpawn, type WaveSpawnState } from './logic/waves';
-import { getEnemy3DManager } from '../components/Enemy3DRenderer';
-import { GAME_SETTINGS } from '../config/settings';
-import { DEV_CONFIG } from '../config/dev';
-import { DEFAULT_PATH } from '../config/gameData/levels';
+  LevelConfig,
+} from "../types/game";
+import { processEnemies } from "./logic/enemies";
+import {
+  processProjectiles,
+  processFireProjectiles,
+  processIceProjectiles,
+  processLaserBeams,
+  processElectricChains,
+  processFlameStreams,
+  processIceStreams,
+} from "./logic/projectiles";
+import { processTowerFire } from "./logic/towers";
+import {
+  updateTowerRotations,
+  processWaveSpawn,
+  type WaveSpawnState,
+} from "./logic/waves";
+import { getEnemy3DManager } from "../components/Enemy3DRenderer";
+import { GAME_SETTINGS } from "../config/settings";
+import { DEV_CONFIG } from "../config/dev";
+import { DEFAULT_PATH } from "../config/gameData/levels";
 
 /**
  * GameEngine - централизованный класс для управления всей игровой логикой
- * 
+ *
  * Этот класс отвечает за:
  * - Обработку всех игровых расчетов (враги, башни, снаряды, эффекты)
  * - Независимую симуляцию игры с учетом скорости игры (GAME_SPEED)
  * - Предоставление актуального состояния для рендеринга на канве
- * 
+ *
  * Принцип работы:
  * - update() вызывается с произвольной частотой и обрабатывает логику
  * - getState() возвращает текущее состояние для рендеринга на 60 FPS
@@ -51,7 +63,7 @@ export class GameEngine {
   private lives: number = 0;
   private currentWave: number = 0;
   private currentLevel: number | null = null;
-  private gameStatus: 'menu' | 'playing' | 'paused' | 'won' | 'lost' = 'menu';
+  private gameStatus: "menu" | "playing" | "paused" | "won" | "lost" = "menu";
   private gameSpeed: number = 1;
 
   // Путь для врагов (по умолчанию используем DEFAULT_PATH для отображения)
@@ -91,9 +103,9 @@ export class GameEngine {
     this.lives = initialLives;
     this.currentLevel = levelConfig.level;
     this.currentWave = 0;
-    this.gameStatus = 'playing';
+    this.gameStatus = "playing";
     this.gameSpeed = DEV_CONFIG.GAME_SPEED || 1;
-    
+
     // Очищаем все объекты
     this.enemies = [];
     this.towers = [];
@@ -104,7 +116,7 @@ export class GameEngine {
     this.flameStreams = [];
     this.iceProjectiles = [];
     this.iceStreams = [];
-    
+
     // Сбрасываем состояние спавна
     this.waveSpawnState = null;
     this.gameTime = 0;
@@ -145,7 +157,7 @@ export class GameEngine {
    * Вызывается с произвольной частотой (может быть очень часто на высоких скоростях)
    */
   update(currentTime: number): void {
-    if (this.gameStatus !== 'playing' || !this.levelConfig) {
+    if (this.gameStatus !== "playing" || !this.levelConfig) {
       this.lastUpdateTime = currentTime;
       return;
     }
@@ -156,18 +168,18 @@ export class GameEngine {
 
     // Применяем скорость игры
     let adjustedDeltaTime = deltaTime * this.gameSpeed;
-    
+
     // КРИТИЧНО: Ограничиваем максимальный шаг симуляции
     // На высоких скоростях разбиваем большие шаги на несколько маленьких
     // Это предотвращает "телепортацию" объектов
     const MAX_STEP = 33.33; // ~30 FPS worth of time (в миллисекундах)
-    
+
     while (adjustedDeltaTime > MAX_STEP) {
       this.gameTime += MAX_STEP;
       this.performUpdateStep(MAX_STEP);
       adjustedDeltaTime -= MAX_STEP;
     }
-    
+
     // Обрабатываем остаток
     if (adjustedDeltaTime > 0) {
       this.gameTime += adjustedDeltaTime;
@@ -248,20 +260,18 @@ export class GameEngine {
     );
 
     // Удаление врагов после завершения анимации смерти
-    const enemiesAfterDeath = processedEnemies.activeEnemies.filter(
-      (enemy) => {
-        if (enemy.isDying && enemy.deathStartTime) {
-          const currentTime = Date.now() / 1000;
-          const elapsed = currentTime - enemy.deathStartTime;
+    const enemiesAfterDeath = processedEnemies.activeEnemies.filter((enemy) => {
+      if (enemy.isDying && enemy.deathStartTime) {
+        const currentTime = Date.now() / 1000;
+        const elapsed = currentTime - enemy.deathStartTime;
 
-          if (elapsed >= GAME_SETTINGS.ENEMY_DEATH_ANIMATION_DURATION) {
-            this.enemy3DManager.removeEnemy(enemy.id);
-            return false;
-          }
+        if (elapsed >= GAME_SETTINGS.ENEMY_DEATH_ANIMATION_DURATION) {
+          this.enemy3DManager.removeEnemy(enemy.id);
+          return false;
         }
-        return true;
       }
-    );
+      return true;
+    });
 
     this.enemies = enemiesAfterDeath;
 
@@ -269,7 +279,7 @@ export class GameEngine {
     if (processedEnemies.lostLives > 0) {
       this.lives -= processedEnemies.lostLives;
       if (this.lives <= 0) {
-        this.gameStatus = 'lost';
+        this.gameStatus = "lost";
       }
     }
 
@@ -303,10 +313,10 @@ export class GameEngine {
         enemiesAfterFire,
         this.gameTime
       );
-      
+
       updatedTowers.push(fireResult.updatedTower);
       enemiesAfterFire = fireResult.updatedEnemies;
-      
+
       this.projectiles.push(...fireResult.projectiles);
       this.laserBeams.push(...fireResult.laserBeams);
       this.electricChains.push(...fireResult.electricChains);
@@ -426,12 +436,11 @@ export class GameEngine {
 
     // Проверка победы
     const allWavesCompleted =
-      !this.waveSpawnState &&
-      this.currentWave >= this.levelConfig.waves.length;
+      !this.waveSpawnState && this.currentWave >= this.levelConfig.waves.length;
     const noEnemiesLeft = this.enemies.length === 0;
 
-    if (allWavesCompleted && noEnemiesLeft && this.gameStatus === 'playing') {
-      this.gameStatus = 'won';
+    if (allWavesCompleted && noEnemiesLeft && this.gameStatus === "playing") {
+      this.gameStatus = "won";
     }
   }
 
@@ -461,17 +470,17 @@ export class GameEngine {
   }
 
   // Методы для управления игровым состоянием
-  
+
   addTower(tower: Tower): void {
     this.towers.push(tower);
   }
 
   removeTower(towerId: string): void {
-    this.towers = this.towers.filter(t => t.id !== towerId);
+    this.towers = this.towers.filter((t) => t.id !== towerId);
   }
 
   updateTower(towerId: string, updates: Partial<Tower>): void {
-    this.towers = this.towers.map(t => 
+    this.towers = this.towers.map((t) =>
       t.id === towerId ? { ...t, ...updates } : t
     );
   }
@@ -492,7 +501,7 @@ export class GameEngine {
     return this.gameSpeed;
   }
 
-  setGameStatus(status: 'menu' | 'playing' | 'paused' | 'won' | 'lost'): void {
+  setGameStatus(status: "menu" | "playing" | "paused" | "won" | "lost"): void {
     this.gameStatus = status;
   }
 
@@ -542,7 +551,7 @@ export class GameEngine {
     this.lives = 0;
     this.currentWave = 0;
     this.currentLevel = null;
-    this.gameStatus = 'menu';
+    this.gameStatus = "menu";
     this.waveSpawnState = null;
     this.gameTime = 0;
   }

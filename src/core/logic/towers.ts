@@ -1,7 +1,18 @@
-import type { Enemy, Tower, Position, Projectile, LaserBeam, ElectricChain, FireProjectile, FlameStream, IceProjectile, IceStream } from '../../types/game';
-import { WeaponType as WeaponTypeEnum } from '../../types/game';
-import { GAME_SETTINGS } from '../../config/settings';
-import { distance, distanceToSegment, generateId } from './math';
+import type {
+  Enemy,
+  Tower,
+  Position,
+  Projectile,
+  LaserBeam,
+  ElectricChain,
+  FireProjectile,
+  FlameStream,
+  IceProjectile,
+  IceStream,
+} from "../../types/game";
+import { WeaponType as WeaponTypeEnum } from "../../types/game";
+import { GAME_SETTINGS } from "../../config/settings";
+import { distance, distanceToSegment, generateId } from "./math";
 
 /**
  * Логика башен
@@ -24,7 +35,7 @@ export function findClosestEnemyInRange(
     if (enemy.isDying) {
       continue;
     }
-    
+
     if (isEnemyInRange(tower, enemy)) {
       const dist = distance(tower.position, enemy.position);
       if (dist < minDistance) {
@@ -54,7 +65,7 @@ export function findEnemyChain(
 
     for (const enemy of enemies) {
       if (used.has(enemy.id)) continue;
-      
+
       // Игнорируем умирающих врагов
       if (enemy.isDying) continue;
 
@@ -86,10 +97,10 @@ export function findEnemiesInCone(
   const targetAngle = Math.atan2(dy, dx);
   const coneAngleRad = (coneAngle * Math.PI) / 180;
 
-  return enemies.filter(enemy => {
+  return enemies.filter((enemy) => {
     // Игнорируем умирающих врагов
     if (enemy.isDying) return false;
-    
+
     const dist = distance(towerPosition, enemy.position);
     if (dist > range) return false;
 
@@ -124,7 +135,7 @@ export function canPlaceTower(
   for (let i = 0; i < path.length - 1; i++) {
     const p1 = path[i];
     const p2 = path[i + 1];
-    
+
     const dist = distanceToSegment(position, p1, p2);
     if (dist < towerSize) {
       return false;
@@ -160,25 +171,37 @@ export function processTowerFire(
   const iceStreams: IceStream[] = [];
 
   // Создаем копии врагов для модификации (не мутируем оригинальный массив)
-  const enemiesMap = new Map(enemies.map(e => [e.id, { ...e }]));
+  const enemiesMap = new Map(enemies.map((e) => [e.id, { ...e }]));
 
   // Башня не может атаковать во время строительства или улучшения
   if (tower.buildTimeRemaining > 0) {
-    return { 
-      updatedTower: tower, 
-      updatedEnemies: Array.from(enemiesMap.values()), 
-      projectiles, laserBeams, electricChains, fireProjectiles, flameStreams, iceProjectiles, iceStreams 
+    return {
+      updatedTower: tower,
+      updatedEnemies: Array.from(enemiesMap.values()),
+      projectiles,
+      laserBeams,
+      electricChains,
+      fireProjectiles,
+      flameStreams,
+      iceProjectiles,
+      iceStreams,
     };
   }
 
   const fireInterval = 1000 / tower.fireRate;
   let timeSinceLastFire = currentTime - tower.lastFireTime;
-  
+
   if (timeSinceLastFire < fireInterval) {
-    return { 
-      updatedTower: tower, 
-      updatedEnemies: Array.from(enemiesMap.values()), 
-      projectiles, laserBeams, electricChains, fireProjectiles, flameStreams, iceProjectiles, iceStreams 
+    return {
+      updatedTower: tower,
+      updatedEnemies: Array.from(enemiesMap.values()),
+      projectiles,
+      laserBeams,
+      electricChains,
+      fireProjectiles,
+      flameStreams,
+      iceProjectiles,
+      iceStreams,
     };
   }
 
@@ -187,13 +210,22 @@ export function processTowerFire(
   let updatedTower = tower;
 
   // Проверяем цель и поворот ОДИН РАЗ перед всеми выстрелами
-  const target = findClosestEnemyInRange(updatedTower, Array.from(enemiesMap.values()));
+  const target = findClosestEnemyInRange(
+    updatedTower,
+    Array.from(enemiesMap.values())
+  );
 
   if (!target) {
-    return { 
-      updatedTower: { ...updatedTower, currentTarget: undefined }, 
-      updatedEnemies: Array.from(enemiesMap.values()), 
-      projectiles, laserBeams, electricChains, fireProjectiles, flameStreams, iceProjectiles, iceStreams 
+    return {
+      updatedTower: { ...updatedTower, currentTarget: undefined },
+      updatedEnemies: Array.from(enemiesMap.values()),
+      projectiles,
+      laserBeams,
+      electricChains,
+      fireProjectiles,
+      flameStreams,
+      iceProjectiles,
+      iceStreams,
     };
   }
 
@@ -204,33 +236,49 @@ export function processTowerFire(
 
   // Проверяем, повернулась ли башня достаточно близко к цели
   const currentRotation = updatedTower.rotation ?? 0;
-  
+
   let angleDiff = targetRotation - currentRotation;
   while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
   while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-  
+
   // Если башня не довернулась, обновляем targetRotation без выстрела
   if (Math.abs(angleDiff) > GAME_SETTINGS.TOWER_ROTATION_THRESHOLD) {
-    updatedTower = { ...updatedTower, currentTarget: target.id, targetRotation };
-    return { 
-      updatedTower, 
-      updatedEnemies: Array.from(enemiesMap.values()), 
-      projectiles, laserBeams, electricChains, fireProjectiles, flameStreams, iceProjectiles, iceStreams 
+    updatedTower = {
+      ...updatedTower,
+      currentTarget: target.id,
+      targetRotation,
+    };
+    return {
+      updatedTower,
+      updatedEnemies: Array.from(enemiesMap.values()),
+      projectiles,
+      laserBeams,
+      electricChains,
+      fireProjectiles,
+      flameStreams,
+      iceProjectiles,
+      iceStreams,
     };
   }
 
   // Стреляем несколько раз, если прошло достаточно времени
   // ВАЖНО: Сначала наносим весь урон, потом создаем визуальные эффекты
-  
+
   // 1. НАНОСИМ УРОН за все выстрелы (без визуализации)
   const totalDamage = updatedTower.damage * shotsToFire;
-  
+
   // Обновляем lastFireTime на все выстрелы сразу
   const finalShotTime = tower.lastFireTime + fireInterval * shotsToFire;
-  updatedTower = { ...updatedTower, lastFireTime: finalShotTime, currentTarget: target.id, targetRotation };
+  updatedTower = {
+    ...updatedTower,
+    lastFireTime: finalShotTime,
+    currentTarget: target.id,
+    targetRotation,
+  };
 
   // 2. Ограничиваем визуальные эффекты для производительности
-  const visualEffectInterval = 1000 / GAME_SETTINGS.MAX_VISUAL_EFFECTS_PER_SECOND;
+  const visualEffectInterval =
+    1000 / GAME_SETTINGS.MAX_VISUAL_EFFECTS_PER_SECOND;
   const visualShotsToShow = Math.min(
     shotsToFire,
     Math.max(1, Math.floor(timeSinceLastFire / visualEffectInterval))
@@ -239,8 +287,12 @@ export function processTowerFire(
   // Наносим урон в зависимости от типа оружия
   if (updatedTower.weaponType === WeaponTypeEnum.ELECTRIC) {
     const chainCount = updatedTower.chainCount || 3;
-    const enemyChain = findEnemyChain(target, Array.from(enemiesMap.values()), chainCount);
-    
+    const enemyChain = findEnemyChain(
+      target,
+      Array.from(enemiesMap.values()),
+      chainCount
+    );
+
     // Наносим урон всем врагам в цепи (используем enemiesMap для правильного обновления)
     for (const chainEnemy of enemyChain) {
       const enemyInMap = enemiesMap.get(chainEnemy.id);
@@ -248,14 +300,14 @@ export function processTowerFire(
         enemyInMap.health -= totalDamage;
       }
     }
-    
+
     // Создаем визуальные эффекты (ограниченное количество)
     for (let i = 0; i < visualShotsToShow; i++) {
       const shotTime = tower.lastFireTime + fireInterval * (i + 1);
       electricChains.push({
         id: generateId(),
         towerId: updatedTower.id,
-        targetEnemyIds: enemyChain.map(e => e.id),
+        targetEnemyIds: enemyChain.map((e) => e.id),
         damage: 0,
         startTime: shotTime,
         chainCount: updatedTower.chainCount || 3,
@@ -266,7 +318,7 @@ export function processTowerFire(
     if (targetInMap) {
       targetInMap.health -= totalDamage;
     }
-    
+
     for (let i = 0; i < visualShotsToShow; i++) {
       const shotTime = tower.lastFireTime + fireInterval * (i + 1);
       laserBeams.push({
@@ -285,20 +337,20 @@ export function processTowerFire(
       updatedTower.range,
       updatedTower.areaRadius || 60
     );
-    
+
     for (const coneEnemy of enemiesInCone) {
       const enemyInMap = enemiesMap.get(coneEnemy.id);
       if (enemyInMap) {
         enemyInMap.health -= totalDamage;
       }
     }
-    
+
     for (let i = 0; i < visualShotsToShow; i++) {
       const shotTime = tower.lastFireTime + fireInterval * (i + 1);
       flameStreams.push({
         id: generateId(),
         towerId: updatedTower.id,
-        targetEnemyIds: enemiesInCone.map(e => e.id),
+        targetEnemyIds: enemiesInCone.map((e) => e.id),
         damage: 0,
         startTime: shotTime,
         range: updatedTower.range,
@@ -312,7 +364,7 @@ export function processTowerFire(
       updatedTower.range,
       updatedTower.areaRadius || 50
     );
-    
+
     for (const coneEnemy of enemiesInCone) {
       const enemyInMap = enemiesMap.get(coneEnemy.id);
       if (enemyInMap) {
@@ -320,13 +372,13 @@ export function processTowerFire(
         enemyInMap.slowEffect = updatedTower.slowEffect || 0.35;
       }
     }
-    
+
     for (let i = 0; i < visualShotsToShow; i++) {
       const shotTime = tower.lastFireTime + fireInterval * (i + 1);
       iceStreams.push({
         id: generateId(),
         towerId: updatedTower.id,
-        targetEnemyIds: enemiesInCone.map(e => e.id),
+        targetEnemyIds: enemiesInCone.map((e) => e.id),
         damage: 0,
         slowEffect: updatedTower.slowEffect || 0.35,
         slowDuration: updatedTower.slowDuration || 3000,

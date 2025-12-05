@@ -1,7 +1,7 @@
-import { WeaponType } from '../../types/game';
-import type { Position, Tower } from '../../types/game';
-import { DEV_CONFIG } from '../dev';
-import { GAME_SETTINGS } from '../settings';
+import { WeaponType } from "../../types/game";
+import type { Position, Tower } from "../../types/game";
+import { DEV_CONFIG } from "../dev";
+import { GAME_SETTINGS } from "../settings";
 
 export interface TowerStats {
   level: 1 | 2 | 3 | 4 | 5;
@@ -21,10 +21,19 @@ export interface TowerStats {
 }
 
 // Функция для генерации всех уровней улучшений башни
-function generateTowerUpgrades(baseTower: TowerStats, maxUpgrades: number = 5): TowerStats[] {
+function generateTowerUpgrades(
+  baseTower: TowerStats,
+  maxUpgrades: number = 5
+): TowerStats[] {
   const upgrades: TowerStats[] = [];
-  const { UPGRADE_DAMAGE_MULTIPLIER, UPGRADE_RANGE_MULTIPLIER, UPGRADE_FIRE_RATE_MULTIPLIER, UPGRADE_COST_MULTIPLIER, BASE_UPGRADE_TIME } = GAME_SETTINGS;
-  
+  const {
+    UPGRADE_DAMAGE_MULTIPLIER,
+    UPGRADE_RANGE_MULTIPLIER,
+    UPGRADE_FIRE_RATE_MULTIPLIER,
+    UPGRADE_COST_MULTIPLIER,
+    BASE_UPGRADE_TIME,
+  } = GAME_SETTINGS;
+
   for (let i = 0; i <= maxUpgrades; i++) {
     upgrades.push({
       ...baseTower,
@@ -32,11 +41,17 @@ function generateTowerUpgrades(baseTower: TowerStats, maxUpgrades: number = 5): 
       damage: baseTower.damage * Math.pow(UPGRADE_DAMAGE_MULTIPLIER, i),
       range: baseTower.range * Math.pow(UPGRADE_RANGE_MULTIPLIER, i),
       fireRate: baseTower.fireRate * Math.pow(UPGRADE_FIRE_RATE_MULTIPLIER, i),
-      upgradeCost: i < maxUpgrades ? baseTower.upgradeCost! * Math.pow(UPGRADE_COST_MULTIPLIER, i) : undefined,
-      buildTime: i === 0 ? baseTower.buildTime : (DEV_CONFIG.DEV_BUILD_TIME || BASE_UPGRADE_TIME) * 1000, // Базовое строительство или фиксированное время улучшения
+      upgradeCost:
+        i < maxUpgrades
+          ? baseTower.upgradeCost! * Math.pow(UPGRADE_COST_MULTIPLIER, i)
+          : undefined,
+      buildTime:
+        i === 0
+          ? baseTower.buildTime
+          : (DEV_CONFIG.DEV_BUILD_TIME || BASE_UPGRADE_TIME) * 1000, // Базовое строительство или фиксированное время улучшения
     });
   }
-  
+
   return upgrades;
 }
 
@@ -52,7 +67,8 @@ const BASE_TOWER_STATS: Record<1 | 2 | 3 | 4 | 5, TowerStats> = {
     size: 30,
     weaponType: WeaponType.PROJECTILE,
     upgradeCost: 10,
-    buildTime: (DEV_CONFIG.DEV_BUILD_TIME || GAME_SETTINGS.BASE_BUILD_TIME) * 1000 * 1, // Время строительства уровня 1
+    buildTime:
+      (DEV_CONFIG.DEV_BUILD_TIME || GAME_SETTINGS.BASE_BUILD_TIME) * 1000 * 1, // Время строительства уровня 1
   },
   2: {
     level: 2,
@@ -65,7 +81,8 @@ const BASE_TOWER_STATS: Record<1 | 2 | 3 | 4 | 5, TowerStats> = {
     weaponType: WeaponType.ELECTRIC,
     chainCount: 3, // Бьет по 3 врагам
     upgradeCost: 20,
-    buildTime: (DEV_CONFIG.DEV_BUILD_TIME || GAME_SETTINGS.BASE_BUILD_TIME) * 1000 * 2, // Время строительства уровня 2
+    buildTime:
+      (DEV_CONFIG.DEV_BUILD_TIME || GAME_SETTINGS.BASE_BUILD_TIME) * 1000 * 2, // Время строительства уровня 2
   },
   3: {
     level: 3,
@@ -77,7 +94,8 @@ const BASE_TOWER_STATS: Record<1 | 2 | 3 | 4 | 5, TowerStats> = {
     size: 40,
     weaponType: WeaponType.LASER,
     upgradeCost: 30,
-    buildTime: (DEV_CONFIG.DEV_BUILD_TIME || GAME_SETTINGS.BASE_BUILD_TIME) * 1000 * 3, // Время строительства уровня 3
+    buildTime:
+      (DEV_CONFIG.DEV_BUILD_TIME || GAME_SETTINGS.BASE_BUILD_TIME) * 1000 * 3, // Время строительства уровня 3
   },
   4: {
     level: 4,
@@ -90,7 +108,8 @@ const BASE_TOWER_STATS: Record<1 | 2 | 3 | 4 | 5, TowerStats> = {
     weaponType: WeaponType.FIRE,
     areaRadius: 42, // Угол конуса огня (уменьшен на 30%)
     upgradeCost: 25,
-    buildTime: (DEV_CONFIG.DEV_BUILD_TIME || GAME_SETTINGS.BASE_BUILD_TIME) * 1000 * 4, // Время строительства уровня 4
+    buildTime:
+      (DEV_CONFIG.DEV_BUILD_TIME || GAME_SETTINGS.BASE_BUILD_TIME) * 1000 * 4, // Время строительства уровня 4
   },
   5: {
     level: 5,
@@ -105,7 +124,8 @@ const BASE_TOWER_STATS: Record<1 | 2 | 3 | 4 | 5, TowerStats> = {
     slowDuration: 3000, // 3 секунды
     areaRadius: 50, // Угол конуса льда
     upgradeCost: 40,
-    buildTime: (DEV_CONFIG.DEV_BUILD_TIME || GAME_SETTINGS.BASE_BUILD_TIME) * 1000 * 5, // Время строительства уровня 5
+    buildTime:
+      (DEV_CONFIG.DEV_BUILD_TIME || GAME_SETTINGS.BASE_BUILD_TIME) * 1000 * 5, // Время строительства уровня 5
   },
 };
 
@@ -129,7 +149,7 @@ export function createTowerFromStats(params: {
   const { id, position, towerLevel, upgradeLevel = 0 } = params;
   const stats = TOWER_STATS[towerLevel][upgradeLevel];
   const baseStats = TOWER_STATS[towerLevel][0];
-  
+
   return {
     id,
     position,

@@ -421,13 +421,22 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
             enemyHPSpritesRef.current.set(enemy.id, hpSprite);
           }
 
-          // Обновляем позицию только для живых врагов
+          // Обновляем позицию и масштаб только для живых врагов
           if (mesh && !enemy.isDying) {
             mesh.position.set(
               enemy.position.x,
-              0,
+              enemy.z ?? 0, // Используем z из врага, если задан (для дебаггера)
               enemy.position.y
             );
+            
+            // Обновляем масштаб модели при изменении размера врага
+            if (enemy.modelConfig) {
+              const configScale = enemy.modelConfig.scale || 100;
+              const configScaleFactor = configScale / 100;
+              const sizeScale = enemy.size / 100;
+              const totalScale = configScaleFactor * sizeScale;
+              mesh.scale.set(totalScale, totalScale, totalScale);
+            }
             
             // Обновляем поворот модели (с поправкой на -90 градусов)
             const rotation = enemy.rotation ?? 0;
@@ -439,7 +448,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
           if (hpSprite && !enemy.isDying) {
             hpSprite.position.set(
               enemy.position.x,
-              enemy.size / 2 + 15,
+              (enemy.z ?? 0) + enemy.size / 2 + 15, // Учитываем высоту врага
               enemy.position.y
             );
             
@@ -508,7 +517,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
                   // Отскок происходит быстро в начале, затем замедляется
                   mesh.position.x = enemy.position.x + knockbackOffset.x;
                   mesh.position.z = enemy.position.y + knockbackOffset.z; // y в игровых координатах = z в 3D
-                  mesh.position.y = 0; // Остаемся на земле
+                  mesh.position.y = enemy.z ?? 0; // Используем z из врага, если задан
                   
                   // Логируем для отладки (можно убрать позже)
                   if (Math.random() < 0.01) { // Логируем только 1% кадров чтобы не засорять консоль
@@ -526,7 +535,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
                   // Если нет knockbackOffset, все равно применяем базовую позицию
                   mesh.position.x = enemy.position.x;
                   mesh.position.z = enemy.position.y;
-                  mesh.position.y = 0;
+                  mesh.position.y = enemy.z ?? 0; // Используем z из врага, если задан
                 }
               }
             }

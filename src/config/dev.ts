@@ -24,7 +24,7 @@ export const DEV_CONFIG = {
   AUTO_START_LEVEL: 10,
 
   // Начальная скорость игры (для отладки)
-  GAME_SPEED: 0.05,
+  GAME_SPEED: 0.01,
   // GAME_SPEED: 1.05,
 
   // Скрывать цифры HP у пехоты
@@ -41,4 +41,7 @@ export const DEV_CONFIG = {
 
   // Показывать отладочные боксы у 3D моделей врагов
   // SHOW_ENEMY_3D_BOXES: true,
+
+  // Показывать dev врага на позиции (230, 206)
+  SHOW_DEV_ENEMY: true,
 };

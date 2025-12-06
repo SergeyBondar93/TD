@@ -5,6 +5,7 @@ import { LevelSelect } from "./components/LevelSelect";
 import { GameOver } from "./components/GameOver";
 import { DebugInfo } from "./components/DebugInfo";
 import { TowerInfo } from "./components/TowerInfo";
+import { DevEnemyDebugger } from "./components/DevEnemyDebugger";
 import { GameEngine } from "./core/GameEngine";
 import { useUIStore } from "./stores/uiStore";
 import type { GameState, Enemy } from "./types/game";
@@ -12,6 +13,7 @@ import { EnemyType, ENEMY_SIZES } from "./types/game";
 import { TOWER_STATS, createTowerFromStats } from "./config/gameData/towers";
 import { LEVELS, DEFAULT_PATH } from "./config/gameData/levels";
 import { DEV_CONFIG } from "./config/dev";
+import { SPIDER_MODEL } from "./config/gameData/enemies";
 import { canPlaceTower } from "./core/logic/towers";
 import "./App.css";
 
@@ -85,6 +87,26 @@ function App() {
           const enemies = engine.getEnemies();
           enemies.push(e);
         });
+      }
+
+      // Создаем dev врага если включен флаг
+      if (DEV_CONFIG.SHOW_DEV_ENEMY) {
+        const devEnemy: Enemy = {
+          id: "dev-enemy",
+          position: { x: 343, y: 330 },
+          health: 100,
+          maxHealth: 100,
+          speed: 50,
+          level: 1,
+          pathIndex: 0,
+          reward: 20,
+          type: EnemyType.INFANTRY,
+          size: ENEMY_SIZES[EnemyType.TANK_LARGE],
+          pathOffset: 0,
+          modelConfig: SPIDER_MODEL,
+        };
+        const enemies = engine.getEnemies();
+        enemies.push(devEnemy);
       }
 
       // Автоматически размещаем башни если включен флаг
@@ -240,6 +262,12 @@ function App() {
     setGameState(gameEngineRef.current.getState());
   }, []);
 
+  // Обновление dev врага
+  const handleDevEnemyUpdate = useCallback((updates: Partial<Enemy>) => {
+    gameEngineRef.current.updateEnemy("dev-enemy", updates);
+    setGameState(gameEngineRef.current.getState());
+  }, []);
+
   // Автоматический запуск уровня при монтировании (если включен DEV_CONFIG.AUTO_START_LEVEL)
   useEffect(() => {
     if (
@@ -315,6 +343,7 @@ function App() {
   // Экран игры
   const levelConfig = LEVELS[gameState.currentLevel - 1];
   const canStartWave = gameEngineRef.current.canStartWave();
+  const devEnemy = gameState.enemies.find((e) => e.id === "dev-enemy") || null;
 
   return (
     <div className="app-container" style={styles.app}>
@@ -324,6 +353,8 @@ function App() {
           onGameSpeedChange={handleGameSpeedChange}
         />
       )}
+
+      <DevEnemyDebugger enemy={devEnemy} onUpdate={handleDevEnemyUpdate} />
 
       <div className="app-main-content" style={styles.mainContent}>
         <div className="app-game-section" style={styles.gameSection}>

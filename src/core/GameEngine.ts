@@ -485,6 +485,12 @@ export class GameEngine {
     );
   }
 
+  updateEnemy(enemyId: string, updates: Partial<Enemy>): void {
+    this.enemies = this.enemies.map((e) =>
+      e.id === enemyId ? { ...e, ...updates } : e
+    );
+  }
+
   setMoney(money: number): void {
     this.money = money;
   }

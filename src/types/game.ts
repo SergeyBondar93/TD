@@ -51,6 +51,7 @@ export interface Enemy {
   isDying?: boolean; // Враг начал анимацию смерти
   deathStartTime?: number; // Время начала анимации смерти
   modelConfig?: EnemyModelConfig; // Конфигурация 3D модели
+  z?: number; // Высота над землей в 3D (для дебаггера)
 }
 
 export interface Tower {

@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { loadSpiderModel } from "../utils/modelLoader";
+import { loadSpiderModel_Collada, loadSpiderModel_MTL } from "../utils/modelLoader";
 import type { LoadedModel } from "../utils/modelLoader";
 import type { EnemyModelConfig } from "../config/gameData/enemies";
 
@@ -60,15 +60,12 @@ class Enemy3DManager {
 
   private async loadModel() {
     try {
-      console.log("[Enemy3DManager] Starting to load base model...");
-
       // Загружаем базовую модель паука
-      this.baseModel = await loadSpiderModel();
+      // this.baseModel = await loadSpiderModel_MTL();
+      this.baseModel = await loadSpiderModel_Collada();
       this.isModelLoaded = true;
-
-      console.log("[Enemy3DManager] Base model loaded successfully!");
     } catch (error) {
-      console.error("[Enemy3DManager] Failed to load base model:", error);
+      // Failed to load base model
     }
   }
 
@@ -96,7 +93,6 @@ class Enemy3DManager {
     // НЕ применяем scale здесь - он будет применен в Game3DCanvas вместе с sizeScale
     // Просто сохраняем значение scale из конфигурации
     const configScale = config.scale / 100;
-
     // Добавляем модель в группу
     enemyGroup.add(modelClone);
 
@@ -148,7 +144,6 @@ class Enemy3DManager {
 
         return enemyModel;
     } catch (error) {
-      console.error("[Enemy3DManager] Failed to create enemy model:", error);
       return null;
     }
   }
@@ -193,16 +188,6 @@ class Enemy3DManager {
       z: 0, // Не поднимаем паука вверх
     };
     
-    console.log('[Enemy3DRenderer] Generated knockback offset:', {
-      enemyId,
-      baseDistance,
-      angle: (angle * 180 / Math.PI).toFixed(1),
-      distance: distance.toFixed(3),
-      knockbackOffset: {
-        x: enemy.knockbackOffset.x.toFixed(2),
-        y: enemy.knockbackOffset.y.toFixed(2),
-      },
-    });
 
     // Генерируем случайные углы вращения при смерти
     const flipOver = enemy.config.animations.death.flipOver;
@@ -218,16 +203,6 @@ class Enemy3DManager {
         y: randomY,
         z: randomZ,
       };
-      
-      console.log('[Enemy3DRenderer] Generated random flip rotation:', {
-        enemyId,
-        randomX: randomX.toFixed(3),
-        randomY: randomY.toFixed(3),
-        randomZ: randomZ.toFixed(3),
-        randomX_degrees: (randomX * 180 / Math.PI).toFixed(1),
-        randomY_degrees: (randomY * 180 / Math.PI).toFixed(1),
-        randomZ_degrees: (randomZ * 180 / Math.PI).toFixed(1),
-      });
     }
   }
 
@@ -349,16 +324,6 @@ class Enemy3DManager {
       const deathConfig = config.animations.death;
       const flipOver = deathConfig.flipOver;
 
-      console.log('[Enemy3DRenderer] updateDeathAnimation:', {
-        enemyId,
-        deathProgress: deathProgress.toFixed(3),
-        elapsed: elapsed.toFixed(3),
-        deathDuration,
-        flipOver,
-        modelHeight,
-        knockbackOffset,
-      });
-
       // Определяем функцию плавности из конфигурации
       let easeOut: number;
       if (flipOver?.easeFunction === 'easeOut') {
@@ -368,23 +333,12 @@ class Enemy3DManager {
         easeOut = 1 - Math.pow(1 - deathProgress, 3);
       }
 
-      console.log('[Enemy3DRenderer] easeOut:', easeOut.toFixed(3));
-
       // Применяем переворачивание согласно конфигурации flipOver
       if (flipOver && randomFlipRotation) {
         // Используем заранее сгенерированные случайные углы вращения
         const flipX = easeOut * randomFlipRotation.x;
         const flipY = easeOut * randomFlipRotation.y;
         const flipZ = easeOut * randomFlipRotation.z;
-        
-        console.log('[Enemy3DRenderer] Applying random flip rotation:', {
-          flipX: flipX.toFixed(3),
-          flipY: flipY.toFixed(3),
-          flipZ: flipZ.toFixed(3),
-          flipX_degrees: (flipX * 180 / Math.PI).toFixed(1),
-          flipY_degrees: (flipY * 180 / Math.PI).toFixed(1),
-          flipZ_degrees: (flipZ * 180 / Math.PI).toFixed(1),
-        });
         
         modelClone.rotation.x = flipX;
         modelClone.rotation.y = flipY;
@@ -396,12 +350,6 @@ class Enemy3DManager {
         if (Math.abs(flipX) > 0.1) {
           const yOffset = (modelHeight / 2) * (1 - Math.cos(flipX));
           const newY = -modelHeight / 2 + yOffset;
-          console.log('[Enemy3DRenderer] Y compensation:', {
-            modelHeight,
-            yOffset: yOffset.toFixed(3),
-            newY: newY.toFixed(3),
-            oldY: modelClone.position.y.toFixed(3),
-          });
           modelClone.position.y = newY;
         }
       } else if (flipOver) {
@@ -419,7 +367,6 @@ class Enemy3DManager {
           modelClone.position.y = -modelHeight / 2 + yOffset;
         }
       } else {
-        console.log('[Enemy3DRenderer] No flipOver config, using default rotation');
         // Если flipOver не задан, используем стандартное переворачивание по оси X
         modelClone.rotation.x = easeOut * Math.PI;
         const yOffset = (modelHeight / 2) * (1 - Math.cos(easeOut * Math.PI));

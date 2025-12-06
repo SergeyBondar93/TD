@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
 import { MTLLoader } from "three/addons/loaders/MTLLoader.js";
+import { ColladaLoader } from "three/examples/jsm/loaders/ColladaLoader.js";
 
 export interface LoadedModel {
   scene: THREE.Group;
@@ -9,35 +10,25 @@ export interface LoadedModel {
 }
 
 let spiderModel: LoadedModel | null = null;
+let spiderModel_Collada: LoadedModel | null = null;
 let isLoadingSpider = false;
+let isLoadingSpider_Collada = false;
 const spiderLoadCallbacks: ((model: LoadedModel) => void)[] = [];
-
-export async function loadSpiderModel(): Promise<LoadedModel> {
-  console.log(
-    "[ModelLoader] loadSpiderModel called, isLoadingSpider:",
-    isLoadingSpider,
-    "spiderModel:",
-    spiderModel
-  );
-
+const spiderLoadCallbacks_Collada: ((model: LoadedModel) => void)[] = [];
+export async function loadSpiderModel_MTL(): Promise<LoadedModel> {
   // Если модель уже загружена, возвращаем её
   if (spiderModel) {
-    console.log("[ModelLoader] Returning cached spider model");
     return spiderModel;
   }
 
   // Если идёт загрузка, ждём её завершения
   if (isLoadingSpider) {
-    console.log("[ModelLoader] Already loading spider, waiting...");
     return new Promise((resolve) => {
       spiderLoadCallbacks.push(resolve);
     });
   }
 
   isLoadingSpider = true;
-  console.log(
-    "[ModelLoader] Starting to load spider model from /models/spider/"
-  );
 
   return new Promise((resolve, reject) => {
     const mtlLoader = new MTLLoader();
@@ -47,7 +38,6 @@ export async function loadSpiderModel(): Promise<LoadedModel> {
       "Only_Spider_with_Animations_Export.mtl",
       (materials) => {
         materials.preload();
-        console.log("[ModelLoader] MTL materials loaded");
 
         const objLoader = new OBJLoader();
         objLoader.setMaterials(materials);
@@ -56,32 +46,6 @@ export async function loadSpiderModel(): Promise<LoadedModel> {
         objLoader.load(
           "Only_Spider_with_Animations_Export.obj",
           (object) => {
-            console.log(
-              "[ModelLoader] Spider OBJ loaded successfully!",
-              object
-            );
-            console.log(
-              "[ModelLoader] Spider children count:",
-              object.children.length
-            );
-
-            // Диагностика структуры модели - ищем ноги
-            object.traverse((child) => {
-              console.log(
-                "[ModelLoader] Child:",
-                child.type,
-                child.name,
-                child
-              );
-              if (child instanceof THREE.Mesh) {
-                console.log(
-                  "[ModelLoader] Mesh:",
-                  child.name,
-                  "Geometry:",
-                  child.geometry
-                );
-              }
-            });
 
             // OBJ не имеет анимаций, создаём пустой массив
             const scene = object as THREE.Group;
@@ -95,18 +59,13 @@ export async function loadSpiderModel(): Promise<LoadedModel> {
             spiderLoadCallbacks.forEach((cb) => cb(spiderModel!));
             spiderLoadCallbacks.length = 0;
 
-            console.log("[ModelLoader] Spider model ready to use");
             resolve(spiderModel);
           },
           (progress) => {
-            console.log(
-              "[ModelLoader] Loading spider progress:",
-              ((progress.loaded / progress.total) * 100).toFixed(2) + "%"
-            );
+            // Loading progress
           },
           (error) => {
             isLoadingSpider = false;
-            console.error("[ModelLoader] Error loading spider model:", error);
             reject(error);
           }
         );
@@ -114,7 +73,45 @@ export async function loadSpiderModel(): Promise<LoadedModel> {
       undefined,
       (error) => {
         isLoadingSpider = false;
-        console.error("[ModelLoader] Error loading spider MTL:", error);
+        reject(error);
+      }
+    );
+  });
+}
+
+export async function loadSpiderModel_Collada(): Promise<LoadedModel> {
+  if (spiderModel_Collada) {
+    return spiderModel_Collada;
+  }
+
+  if (isLoadingSpider_Collada) {
+    return new Promise((resolve) => {
+      spiderLoadCallbacks_Collada.push(resolve);
+    });
+  }
+
+  isLoadingSpider_Collada = true;
+
+  return new Promise((resolve, reject) => {
+    const loader = new ColladaLoader();
+    loader.setPath("/models/spider/dae/");
+    loader.load(
+      "spider.dae",
+      (object) => {
+        const scene = object.scene as unknown as THREE.Group;
+        const animations: THREE.AnimationClip[] = [];
+        const mixer = new THREE.AnimationMixer(scene);
+        spiderModel_Collada = { scene, animations, mixer };
+        isLoadingSpider_Collada = false;
+        spiderLoadCallbacks_Collada.forEach((cb) => cb(spiderModel_Collada!));
+        spiderLoadCallbacks_Collada.length = 0;
+        resolve(spiderModel_Collada!);
+      },
+      (progress) => {
+        // Loading progress
+      },
+      (error) => {
+        isLoadingSpider_Collada = false;
         reject(error);
       }
     );

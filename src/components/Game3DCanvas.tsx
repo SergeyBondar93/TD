@@ -128,7 +128,6 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
     renderer.setSize(CANVAS_WIDTH, CANVAS_HEIGHT);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    console.log('!!!', renderer.domElement)
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
@@ -195,10 +194,8 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
 
     // Cleanup
     return () => {
-      console.log('!!CLEAN START')
       cleanupWheel();
       if (container && renderer.domElement && container.contains(renderer.domElement)) {
-        console.log('!!CLEAN END')
         container.removeChild(renderer.domElement);
       }
       renderer.dispose();
@@ -518,19 +515,6 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
                   mesh.position.x = enemy.position.x + knockbackOffset.x;
                   mesh.position.z = enemy.position.y + knockbackOffset.z; // y в игровых координатах = z в 3D
                   mesh.position.y = enemy.z ?? 0; // Используем z из врага, если задан
-                  
-                  // Логируем для отладки (можно убрать позже)
-                  if (Math.random() < 0.01) { // Логируем только 1% кадров чтобы не засорять консоль
-                    console.log('[Game3DCanvas] Applying knockback:', {
-                      enemyId: enemy.id,
-                      baseX: enemy.position.x.toFixed(2),
-                      baseZ: enemy.position.y.toFixed(2),
-                      offsetX: knockbackOffset.x.toFixed(2),
-                      offsetZ: knockbackOffset.z.toFixed(2),
-                      finalX: mesh.position.x.toFixed(2),
-                      finalZ: mesh.position.z.toFixed(2),
-                    });
-                  }
                 } else {
                   // Если нет knockbackOffset, все равно применяем базовую позицию
                   mesh.position.x = enemy.position.x;

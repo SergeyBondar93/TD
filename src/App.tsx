@@ -7,7 +7,7 @@ import { DebugInfo } from "./components/DebugInfo";
 import { TowerInfo } from "./components/TowerInfo";
 import { GameEngine } from "./core/GameEngine";
 import { useUIStore } from "./stores/uiStore";
-import type { GameState, Enemy } from "./types/game";
+import type { GameState } from "./types/game";
 import { TOWER_STATS, createTowerFromStats } from "./config/gameData/towers";
 import { LEVELS, DEFAULT_PATH } from "./config/gameData/levels";
 import { DEV_CONFIG } from "./config/dev";

@@ -504,7 +504,6 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
         const scene = sceneRef.current;
         const currentEnemyIds = new Set(gameState.enemies.map((e) => e.id));
         const enemy3DManager = enemy3DManagerRef.current;
-        const isLoaded = enemy3DManager.isLoaded();
 
         // Удаляем врагов которых больше нет
         enemyMeshesRef.current.forEach((mesh, id) => {
@@ -667,59 +666,6 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
             hpSprite.visible = false;
           }
 
-          // Обрабатываем анимацию смерти
-          if (isLoaded && enemy.modelConfig && mesh) {
-            if (enemy.isDying && enemy.deathStartTime) {
-              const is3DDying = enemy3DManager.isEnemyDying(enemy.id);
-              if (!is3DDying) {
-                // Сохраняем начальную позицию при начале анимации смерти
-                enemy3DManager.startDeathAnimation(
-                  enemy.id,
-                  enemy.deathStartTime
-                );
-              }
-
-              // Обновляем анимацию смерти (переворачивание)
-              enemy3DManager.updateDeathAnimation(
-                enemy.id,
-                deltaTime,
-                gameState.gameSpeed
-              );
-
-              // Применяем отскок к позиции mesh в сцене
-              const currentTime = Date.now() / 1000;
-              const elapsed = currentTime - enemy.deathStartTime!;
-              const deathDuration =
-                enemy.modelConfig?.animations.death.duration || 2.0;
-
-              if (elapsed < deathDuration) {
-                const knockbackOffset = enemy3DManager.getKnockbackOffset(
-                  enemy.id,
-                  elapsed,
-                  deathDuration
-                );
-                if (knockbackOffset) {
-                  // Применяем отскок к позиции mesh относительно начальной позиции врага
-                  // Отскок происходит быстро в начале, затем замедляется
-                  mesh.position.x = enemy.position.x + knockbackOffset.x;
-                  mesh.position.z = enemy.position.y + knockbackOffset.z; // y в игровых координатах = z в 3D
-                  mesh.position.y = enemy.z ?? 0; // Используем z из врага, если задан
-                } else {
-                  // Если нет knockbackOffset, все равно применяем базовую позицию
-                  mesh.position.x = enemy.position.x;
-                  mesh.position.z = enemy.position.y;
-                  mesh.position.y = enemy.z ?? 0; // Используем z из врага, если задан
-                }
-              }
-            }
-
-            // Обновляем анимацию модели
-            enemy3DManager.updateAnimation(
-              enemy.id,
-              deltaTime,
-              gameState.gameSpeed
-            );
-          }
         });
 
         // Обновляем башни

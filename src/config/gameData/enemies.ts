@@ -71,45 +71,8 @@ export const SPIDER_MODEL: EnemyModelConfig = {
     death: {
       duration: 2.0, // 2 секунды переворачивания
       fadeOutDuration: 1.0, // 1 секунда растворения
-      flipOver: { x: 0.2, y: 0.2 , z: 0.2, easeFunction: 'easeOut' }, // Переворачивается на спину с координатами отлета
+      flipOver: { x: 0.2, y: 0.2, z: 0.2, easeFunction: "easeOut" }, // Переворачивается на спину с координатами отлета
       knockbackDistance: 15, // Отлетает на 8 единиц (уменьшено чтобы не обрезался)
-    },
-  },
-};
-
-const WOLF_MODEL: EnemyModelConfig = {
-  modelType: "wolf",
-  scale: 30, // 30% от базового размера
-  rotationOffset: Math.PI / 2,
-  animations: {
-    walk: {
-      enabled: true,
-      bobAmount: 0.03,
-      swayAmount: 0.01,
-      tiltAmount: 0.03,
-      speed: 6,
-    },
-    death: {
-      duration: 1.5,
-      fadeOutDuration: 1.0,
-      shrink: true, // Уменьшается
-    },
-  },
-};
-
-const CUBE_MODEL: EnemyModelConfig = {
-  modelType: "cube",
-  scale: 50, // 50% от базового размера
-  animations: {
-    walk: {
-      enabled: true,
-      bobAmount: 0.1,
-      speed: 4,
-    },
-    death: {
-      duration: 1.0,
-      fadeOutDuration: 0.5,
-      explode: true, // Взрывается
     },
   },
 };
@@ -190,7 +153,6 @@ const LIGHT_TANK: EnemyClass = {
 const FAST_TANK: EnemyClass = {
   id: "fast_tank",
   name: "Скоростной танк",
-  // TODO temporary
   type: EnemyType.TANK_LARGE,
   baseHealth: 80,
   baseSpeed: 70,

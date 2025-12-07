@@ -2,6 +2,7 @@ import React from "react";
 import type { Tower } from "../types/game";
 import { WeaponType } from "../types/game";
 import { TOWER_STATS } from "../config/gameData/towers";
+import { calculateTowerSellValue } from "../core/logic/towers";
 
 interface TowerInfoProps {
   tower: Tower | null;
@@ -29,23 +30,7 @@ export const TowerInfo: React.FC<TowerInfoProps> = ({
     canUpgrade && nextUpgradeStats ? (nextUpgradeStats.upgradeCost ?? 0) : 0;
   const canAffordUpgrade = money >= upgradeCost;
   const isBuilding = tower.buildTimeRemaining > 0;
-
-  // Расчет стоимости продажи (70% от базовой стоимости + все улучшения + улучшения в очереди)
-  const completedUpgrades = Array.from(
-    { length: tower.upgradeLevel },
-    (_, i) => {
-      const stats = TOWER_STATS[tower.level][i + 1];
-      return stats?.upgradeCost ?? 0;
-    }
-  ).reduce((sum, cost) => sum + cost, 0);
-
-  const queuedUpgrades = Array.from({ length: tower.upgradeQueue }, (_, i) => {
-    const stats = TOWER_STATS[tower.level][tower.upgradeLevel + i + 1];
-    return stats?.upgradeCost ?? 0;
-  }).reduce((sum, cost) => sum + cost, 0);
-
-  const totalInvested = tower.cost + completedUpgrades + queuedUpgrades;
-  const sellValue = Math.round(totalInvested * 0.7);
+  const sellValue = calculateTowerSellValue(tower);
 
   const getWeaponTypeName = (type: WeaponType): string => {
     switch (type) {

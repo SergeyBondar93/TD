@@ -45,7 +45,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  
+
   // Camera control state (Warcraft 3 style)
   const cameraStateRef = useRef({
     distance: CAMERA_DISTANCE_DEFAULT, // Текущая дистанция от цели
@@ -59,7 +59,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
     dragStartTargetX: 0,
     dragStartTargetZ: 0,
   });
-  
+
   // Храним 3D объекты врагов
   const enemyMeshesRef = useRef<Map<string, THREE.Mesh>>(new Map());
   const enemyHPSpritesRef = useRef<Map<string, THREE.Sprite>>(new Map());
@@ -75,7 +75,9 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
   const lastFrameTimeRef = useRef(Date.now());
   const raycasterRef = useRef(new THREE.Raycaster());
   const mouseRef = useRef(new THREE.Vector2());
-  const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
+  const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(
+    null
+  );
   const previewMeshRef = useRef<THREE.Mesh | null>(null);
   const rangeCircleRef = useRef<THREE.Line | null>(null);
   const groundRef = useRef<THREE.Mesh | null>(null);
@@ -98,20 +100,20 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
       0.1,
       2000
     );
-    
+
     // Инициализируем начальную позицию камеры
     const centerX = CANVAS_PADDING + GAME_WIDTH / 2;
     const centerZ = CANVAS_PADDING + GAME_HEIGHT / 2;
     cameraStateRef.current.targetX = centerX;
     cameraStateRef.current.targetZ = centerZ;
-    
+
     // Устанавливаем камеру с углом 20 градусов (по умолчанию)
     const updateCameraPosition = () => {
       const state = cameraStateRef.current;
       const angleRad = (state.angle * Math.PI) / 180;
       const height = state.distance * Math.sin(angleRad);
       const horizontalDist = state.distance * Math.cos(angleRad);
-      
+
       camera.position.set(
         state.targetX,
         height,
@@ -119,7 +121,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
       );
       camera.lookAt(state.targetX, 0, state.targetZ);
     };
-    
+
     updateCameraPosition();
     cameraRef.current = camera;
 
@@ -135,23 +137,31 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
       const state = cameraStateRef.current;
-      
+
       // Изменяем целевую дистанцию в зависимости от направления скролла
       const zoomDelta = e.deltaY * 0.5;
-      state.targetDistance = Math.max(CAMERA_DISTANCE_MIN, Math.min(CAMERA_DISTANCE_MAX, state.targetDistance + zoomDelta));
-      
+      state.targetDistance = Math.max(
+        CAMERA_DISTANCE_MIN,
+        Math.min(CAMERA_DISTANCE_MAX, state.targetDistance + zoomDelta)
+      );
+
       // Вычисляем целевой угол в зависимости от дистанции
       // distance MIN (близко) -> angle NEAR (30 градусов)
       // distance MAX (далеко) -> angle FAR (85 градусов)
-      const t = (state.targetDistance - CAMERA_DISTANCE_MIN) / (CAMERA_DISTANCE_MAX - CAMERA_DISTANCE_MIN); // 0 to 1
-      state.targetAngle = CAMERA_ANGLE_NEAR + t * (CAMERA_ANGLE_FAR - CAMERA_ANGLE_NEAR); // от 30 до 85 градусов
+      const t =
+        (state.targetDistance - CAMERA_DISTANCE_MIN) /
+        (CAMERA_DISTANCE_MAX - CAMERA_DISTANCE_MIN); // 0 to 1
+      state.targetAngle =
+        CAMERA_ANGLE_NEAR + t * (CAMERA_ANGLE_FAR - CAMERA_ANGLE_NEAR); // от 30 до 85 градусов
     };
-    
-    renderer.domElement.addEventListener('wheel', handleWheel, { passive: false });
-    
+
+    renderer.domElement.addEventListener("wheel", handleWheel, {
+      passive: false,
+    });
+
     // Cleanup для wheel listener
     const cleanupWheel = () => {
-      renderer.domElement.removeEventListener('wheel', handleWheel);
+      renderer.domElement.removeEventListener("wheel", handleWheel);
     };
 
     // Освещение
@@ -184,7 +194,10 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
 
     // Граница игрового поля
     const borderGeometry = new THREE.EdgesGeometry(groundGeometry);
-    const borderMaterial = new THREE.LineBasicMaterial({ color: 0x0f3460, linewidth: 2 });
+    const borderMaterial = new THREE.LineBasicMaterial({
+      color: 0x0f3460,
+      linewidth: 2,
+    });
     const border = new THREE.LineSegments(borderGeometry, borderMaterial);
     border.rotation.x = -Math.PI / 2;
     border.position.set(centerX, 0.1, centerZ);
@@ -195,7 +208,11 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
     // Cleanup
     return () => {
       cleanupWheel();
-      if (container && renderer.domElement && container.contains(renderer.domElement)) {
+      if (
+        container &&
+        renderer.domElement &&
+        container.contains(renderer.domElement)
+      ) {
         container.removeChild(renderer.domElement);
       }
       renderer.dispose();
@@ -209,8 +226,10 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
     const scene = sceneRef.current;
 
     // Удаляем старый путь
-    const oldPaths = scene.children.filter(child => child.name === "enemyPath");
-    oldPaths.forEach(obj => scene.remove(obj));
+    const oldPaths = scene.children.filter(
+      (child) => child.name === "enemyPath"
+    );
+    oldPaths.forEach((obj) => scene.remove(obj));
 
     // Рисуем путь как полоски (BoxGeometry для каждого сегмента)
     for (let i = 0; i < path.length - 1; i++) {
@@ -218,27 +237,27 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
       const startY = path[i].y;
       const endX = path[i + 1].x;
       const endY = path[i + 1].y;
-      
+
       const centerX = (startX + endX) / 2;
       const centerY = (startY + endY) / 2;
-      
+
       const dx = endX - startX;
       const dy = endY - startY;
       const length = Math.sqrt(dx * dx + dy * dy);
       const width = 40;
-      
+
       // Создаем тонкий бокс для пути
       const geometry = new THREE.BoxGeometry(
         Math.abs(dx) > 0.1 ? length : width,
         0.5,
         Math.abs(dy) > 0.1 ? length : width
       );
-      
+
       const material = new THREE.MeshStandardMaterial({
         color: 0x4a90e2,
         roughness: 0.7,
       });
-      
+
       const pathSegment = new THREE.Mesh(geometry, material);
       pathSegment.position.set(centerX, 0.3, centerY);
       pathSegment.receiveShadow = true;
@@ -250,9 +269,9 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
   // Preview башни при наведении
   useEffect(() => {
     if (!sceneRef.current || !isInitialized) return;
-    
+
     const scene = sceneRef.current;
-    
+
     // Удаляем старый preview
     if (previewMeshRef.current) {
       scene.remove(previewMeshRef.current);
@@ -262,13 +281,13 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
       scene.remove(rangeCircleRef.current);
       rangeCircleRef.current = null;
     }
-    
+
     // Если нет выбранной башни или позиции мыши - ничего не рисуем
     if (!selectedTowerLevel || !mousePos) return;
-    
+
     const towerConfig = TOWER_STATS[selectedTowerLevel][0];
     if (!towerConfig) return;
-    
+
     // Проверяем можно ли поставить башню
     const canPlace = canPlaceTower(
       { x: mousePos.x, y: mousePos.y },
@@ -276,7 +295,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
       path,
       towerConfig.size
     );
-    
+
     // Создаем preview башни
     const geometry = new THREE.CylinderGeometry(
       towerConfig.size / 2,
@@ -294,7 +313,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
     previewMesh.position.set(mousePos.x, towerConfig.size / 2, mousePos.y);
     scene.add(previewMesh);
     previewMeshRef.current = previewMesh;
-    
+
     // Создаем круг радиуса атаки
     const segments = 64;
     const circlePoints: THREE.Vector3[] = [];
@@ -304,8 +323,10 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
       const z = mousePos.y + Math.sin(angle) * towerConfig.range;
       circlePoints.push(new THREE.Vector3(x, 1, z));
     }
-    
-    const circleGeometry = new THREE.BufferGeometry().setFromPoints(circlePoints);
+
+    const circleGeometry = new THREE.BufferGeometry().setFromPoints(
+      circlePoints
+    );
     const circleMaterial = new THREE.LineBasicMaterial({
       color: canPlace ? 0x00ff00 : 0xff0000,
       transparent: true,
@@ -314,7 +335,6 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
     const rangeCircle = new THREE.Line(circleGeometry, circleMaterial);
     scene.add(rangeCircle);
     rangeCircleRef.current = rangeCircle;
-    
   }, [mousePos, selectedTowerLevel, gameState.towers, path, isInitialized]);
 
   // Анимационный цикл
@@ -334,19 +354,21 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
       // Плавное изменение позиции камеры
       const state = cameraStateRef.current;
       const camera = cameraRef.current;
-      
+
       if (camera) {
         // Плавная интерполяция дистанции
-        state.distance += (state.targetDistance - state.distance) * CAMERA_TRANSITION_SPEED;
-        
+        state.distance +=
+          (state.targetDistance - state.distance) * CAMERA_TRANSITION_SPEED;
+
         // Плавная интерполяция угла
-        state.angle += (state.targetAngle - state.angle) * CAMERA_TRANSITION_SPEED;
-        
+        state.angle +=
+          (state.targetAngle - state.angle) * CAMERA_TRANSITION_SPEED;
+
         // Обновляем позицию камеры
         const angleRad = (state.angle * Math.PI) / 180;
         const height = state.distance * Math.sin(angleRad);
         const horizontalDist = state.distance * Math.cos(angleRad);
-        
+
         camera.position.set(
           state.targetX,
           height,
@@ -383,35 +405,41 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
 
           if (!mesh) {
             // Используем 3D модель напрямую вместо плоскости (не клонируем!)
-            const enemy3DModel = enemy3DManager.getOrCreateEnemy(enemy.id, enemy.modelConfig);
-            
+            const enemy3DModel = enemy3DManager.getOrCreateEnemy(
+              enemy.id,
+              enemy.modelConfig
+            );
+
             if (enemy3DModel) {
               // Используем модель напрямую, а не клонируем
               mesh = enemy3DModel;
               mesh.position.y = 0; // На уровне земли
               mesh.castShadow = true;
               mesh.receiveShadow = true;
-              
+
               // Применяем масштаб ОДИН РАЗ при создании модели
               // Объединяем scale из конфигурации модели и scale от размера врага
               const configScale = enemy.modelConfig?.scale || 100;
               const configScaleFactor = configScale / 100; // Например, 20% = 0.2
               const sizeScale = enemy.size / 100; // Например, 20 = 0.2
               const totalScale = configScaleFactor * sizeScale; // Итоговый scale
-              
+
               // Применяем scale один раз
               mesh.scale.set(totalScale, totalScale, totalScale);
-              
+
               scene.add(mesh);
               enemyMeshesRef.current.set(enemy.id, mesh);
             }
-            
+
             // Создаем HP sprite
-            const hpCanvas = document.createElement('canvas');
+            const hpCanvas = document.createElement("canvas");
             hpCanvas.width = 128;
             hpCanvas.height = 32;
             const hpTexture = new THREE.CanvasTexture(hpCanvas);
-            const spriteMaterial = new THREE.SpriteMaterial({ map: hpTexture, transparent: true });
+            const spriteMaterial = new THREE.SpriteMaterial({
+              map: hpTexture,
+              transparent: true,
+            });
             const hpSprite = new THREE.Sprite(spriteMaterial);
             hpSprite.scale.set(enemy.size * 1.2, enemy.size * 0.3, 1);
             scene.add(hpSprite);
@@ -425,7 +453,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
               enemy.z ?? 0, // Используем z из врага, если задан (для дебаггера)
               enemy.position.y
             );
-            
+
             // Обновляем масштаб модели при изменении размера врага
             if (enemy.modelConfig) {
               const configScale = enemy.modelConfig.scale || 100;
@@ -434,12 +462,12 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
               const totalScale = configScaleFactor * sizeScale;
               mesh.scale.set(totalScale, totalScale, totalScale);
             }
-            
+
             // Обновляем поворот модели (с поправкой на -90 градусов)
             const rotation = enemy.rotation ?? 0;
             mesh.rotation.y = -rotation - Math.PI / 2; // Поправка на -90 градусов
           }
-          
+
           // Обновляем HP sprite
           const hpSprite = enemyHPSpritesRef.current.get(enemy.id);
           if (hpSprite && !enemy.isDying) {
@@ -448,43 +476,51 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
               (enemy.z ?? 0) + enemy.size / 2 + 15, // Учитываем высоту врага
               enemy.position.y
             );
-            
+
             // Рисуем HP на canvas
             const hpMaterial = hpSprite.material as THREE.SpriteMaterial;
             const hpTexture = hpMaterial.map as THREE.CanvasTexture;
             const hpCanvas = hpTexture.image as HTMLCanvasElement;
-            const ctx = hpCanvas.getContext('2d');
-            
+            const ctx = hpCanvas.getContext("2d");
+
             if (ctx) {
               ctx.clearRect(0, 0, hpCanvas.width, hpCanvas.height);
-              
+
               const barWidth = 100;
               const barHeight = 8;
               const barX = 14;
               const barY = 4;
-              
+
               // Фон HP
-              ctx.fillStyle = '#333';
+              ctx.fillStyle = "#333";
               ctx.fillRect(barX, barY, barWidth, barHeight);
-              
+
               // Текущий HP
-              const healthPercent = Math.max(0, Math.min(1, enemy.health / enemy.maxHealth));
-              ctx.fillStyle = healthPercent > 0.5 ? '#0f0' : healthPercent > 0.25 ? '#ff0' : '#f00';
+              const healthPercent = Math.max(
+                0,
+                Math.min(1, enemy.health / enemy.maxHealth)
+              );
+              ctx.fillStyle =
+                healthPercent > 0.5
+                  ? "#0f0"
+                  : healthPercent > 0.25
+                    ? "#ff0"
+                    : "#f00";
               ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
-              
+
               // Текст HP
-              ctx.fillStyle = '#fff';
-              ctx.font = 'bold 12px Arial';
-              ctx.textAlign = 'center';
+              ctx.fillStyle = "#fff";
+              ctx.font = "bold 12px Arial";
+              ctx.textAlign = "center";
               ctx.fillText(
                 `${Math.ceil(enemy.health)}/${enemy.maxHealth}`,
                 hpCanvas.width / 2,
                 barY + barHeight + 12
               );
-              
+
               hpTexture.needsUpdate = true;
             }
-            
+
             hpSprite.visible = true;
           } else if (hpSprite) {
             hpSprite.visible = false;
@@ -496,19 +532,31 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
               const is3DDying = enemy3DManager.isEnemyDying(enemy.id);
               if (!is3DDying) {
                 // Сохраняем начальную позицию при начале анимации смерти
-                enemy3DManager.startDeathAnimation(enemy.id, enemy.deathStartTime);
+                enemy3DManager.startDeathAnimation(
+                  enemy.id,
+                  enemy.deathStartTime
+                );
               }
-              
+
               // Обновляем анимацию смерти (переворачивание)
-              enemy3DManager.updateDeathAnimation(enemy.id, deltaTime, gameState.gameSpeed);
-              
+              enemy3DManager.updateDeathAnimation(
+                enemy.id,
+                deltaTime,
+                gameState.gameSpeed
+              );
+
               // Применяем отскок к позиции mesh в сцене
               const currentTime = Date.now() / 1000;
               const elapsed = currentTime - enemy.deathStartTime!;
-              const deathDuration = enemy.modelConfig?.animations.death.duration || 2.0;
-              
+              const deathDuration =
+                enemy.modelConfig?.animations.death.duration || 2.0;
+
               if (elapsed < deathDuration) {
-                const knockbackOffset = enemy3DManager.getKnockbackOffset(enemy.id, elapsed, deathDuration);
+                const knockbackOffset = enemy3DManager.getKnockbackOffset(
+                  enemy.id,
+                  elapsed,
+                  deathDuration
+                );
                 if (knockbackOffset) {
                   // Применяем отскок к позиции mesh относительно начальной позиции врага
                   // Отскок происходит быстро в начале, затем замедляется
@@ -523,9 +571,13 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
                 }
               }
             }
-            
+
             // Обновляем анимацию модели
-            enemy3DManager.updateAnimation(enemy.id, deltaTime, gameState.gameSpeed);
+            enemy3DManager.updateAnimation(
+              enemy.id,
+              deltaTime,
+              gameState.gameSpeed
+            );
           }
         });
 
@@ -570,7 +622,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
             mesh.receiveShadow = true;
             scene.add(mesh);
             towerMeshesRef.current.set(tower.id, mesh);
-            
+
             // Создаем стрелку направления
             const arrowLength = tower.size * 0.6;
             const arrowWidth = tower.size * 0.25;
@@ -579,7 +631,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
             arrowShape.lineTo(0, -arrowWidth);
             arrowShape.lineTo(0, arrowWidth);
             arrowShape.closePath();
-            
+
             const arrowGeometry = new THREE.ShapeGeometry(arrowShape);
             const arrowMaterial = new THREE.MeshBasicMaterial({
               color: 0xffffff,
@@ -592,7 +644,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
             arrowMesh.rotation.x = -Math.PI / 2; // Лежит горизонтально
             scene.add(arrowMesh);
             towerArrowsRef.current.set(tower.id, arrowMesh);
-            
+
             // Создаем круг радиуса атаки
             const segments = 64;
             const circlePoints: THREE.Vector3[] = [];
@@ -602,8 +654,10 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
               const z = tower.position.y + Math.sin(angle) * tower.range;
               circlePoints.push(new THREE.Vector3(x, 0.5, z));
             }
-            
-            const circleGeometry = new THREE.BufferGeometry().setFromPoints(circlePoints);
+
+            const circleGeometry = new THREE.BufferGeometry().setFromPoints(
+              circlePoints
+            );
             const circleMaterial = new THREE.LineBasicMaterial({
               color: 0x888888,
               transparent: true,
@@ -614,12 +668,8 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
             towerRangeCirclesRef.current.set(tower.id, rangeCircle);
           }
 
-          mesh.position.set(
-            tower.position.x,
-            tower.size / 2,
-            tower.position.y
-          );
-          
+          mesh.position.set(tower.position.x, tower.size / 2, tower.position.y);
+
           // Подсвечиваем выбранную башню зеленым
           const isSelected = selectedTowerId === tower.id;
           const material = mesh.material as THREE.MeshStandardMaterial;
@@ -630,7 +680,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
             material.color.setHex(0x888888); // Обычный серый цвет
             material.emissive.setHex(0x000000); // Без свечения
           }
-          
+
           // Обновляем стрелку направления
           const arrowMesh = towerArrowsRef.current.get(tower.id);
           if (arrowMesh) {
@@ -641,12 +691,13 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
             );
             arrowMesh.rotation.z = -(tower.rotation ?? 0);
           }
-          
+
           // Обновляем круг радиуса - подсвечиваем зеленым если башня выбрана
           const rangeCircle = towerRangeCirclesRef.current.get(tower.id);
           if (rangeCircle) {
             // Обновляем цвет и прозрачность
-            const circleMaterial = rangeCircle.material as THREE.LineBasicMaterial;
+            const circleMaterial =
+              rangeCircle.material as THREE.LineBasicMaterial;
             if (isSelected) {
               circleMaterial.color.setHex(0x00ff00); // Зеленый цвет
               circleMaterial.opacity = 0.6; // Более яркая прозрачность
@@ -654,7 +705,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
               circleMaterial.color.setHex(0x888888); // Обычный серый цвет
               circleMaterial.opacity = 0.3; // Обычная прозрачность
             }
-            
+
             // Обновляем позицию круга радиуса если башня двигалась или радиус изменился
             const segments = 64;
             const circlePoints: THREE.Vector3[] = [];
@@ -669,7 +720,9 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
         });
 
         // Обновляем снаряды
-        const currentProjectileIds = new Set(gameState.projectiles.map((p) => p.id));
+        const currentProjectileIds = new Set(
+          gameState.projectiles.map((p) => p.id)
+        );
 
         projectileMeshesRef.current.forEach((mesh, id) => {
           if (!currentProjectileIds.has(id)) {
@@ -692,32 +745,34 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
             projectileMeshesRef.current.set(projectile.id, mesh);
           }
 
-          mesh.position.set(
-            projectile.position.x,
-            10,
-            projectile.position.y
-          );
+          mesh.position.set(projectile.position.x, 10, projectile.position.y);
         });
 
         // Очищаем старые лазерные лучи
-        laserLinesRef.current.forEach(line => scene.remove(line));
+        laserLinesRef.current.forEach((line) => scene.remove(line));
         laserLinesRef.current = [];
 
         // Рисуем лазерные лучи
         gameState.laserBeams?.forEach((laser) => {
           const tower = gameState.towers.find((t) => t.id === laser.towerId);
-          const enemy = gameState.enemies.find((e) => e.id === laser.targetEnemyId);
+          const enemy = gameState.enemies.find(
+            (e) => e.id === laser.targetEnemyId
+          );
           if (tower && enemy) {
             const points = [
-              new THREE.Vector3(tower.position.x, tower.size / 2 + 5, tower.position.y),
-              new THREE.Vector3(enemy.position.x, 5, enemy.position.y)
+              new THREE.Vector3(
+                tower.position.x,
+                tower.size / 2 + 5,
+                tower.position.y
+              ),
+              new THREE.Vector3(enemy.position.x, 5, enemy.position.y),
             ];
             const geometry = new THREE.BufferGeometry().setFromPoints(points);
             const material = new THREE.LineBasicMaterial({
               color: 0xff0000,
               linewidth: 3,
               transparent: true,
-              opacity: 0.8
+              opacity: 0.8,
             });
             const line = new THREE.Line(geometry, material);
             scene.add(line);
@@ -726,7 +781,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
         });
 
         // Очищаем старые огненные потоки
-        flameLinesRef.current.forEach(line => scene.remove(line));
+        flameLinesRef.current.forEach((line) => scene.remove(line));
         flameLinesRef.current = [];
 
         // Рисуем огненные потоки
@@ -734,22 +789,32 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
           const tower = gameState.towers.find((t) => t.id === stream.towerId);
           if (tower) {
             // Для огненного оружия может быть несколько целей (конус)
-            const targetEnemyIds = 'targetEnemyIds' in stream ? stream.targetEnemyIds : 
-                                   'targetEnemyId' in stream ? [stream.targetEnemyId] : [];
-            
+            const targetEnemyIds =
+              "targetEnemyIds" in stream
+                ? stream.targetEnemyIds
+                : "targetEnemyId" in stream
+                  ? [stream.targetEnemyId]
+                  : [];
+
             targetEnemyIds.forEach((enemyId) => {
               const enemy = gameState.enemies.find((e) => e.id === enemyId);
               if (enemy) {
                 const points = [
-                  new THREE.Vector3(tower.position.x, tower.size / 2, tower.position.y),
-                  new THREE.Vector3(enemy.position.x, 5, enemy.position.y)
+                  new THREE.Vector3(
+                    tower.position.x,
+                    tower.size / 2,
+                    tower.position.y
+                  ),
+                  new THREE.Vector3(enemy.position.x, 5, enemy.position.y),
                 ];
-                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const geometry = new THREE.BufferGeometry().setFromPoints(
+                  points
+                );
                 const material = new THREE.LineBasicMaterial({
                   color: 0xff6600,
                   linewidth: 4,
                   transparent: true,
-                  opacity: 0.7
+                  opacity: 0.7,
                 });
                 const line = new THREE.Line(geometry, material);
                 scene.add(line);
@@ -760,7 +825,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
         });
 
         // Очищаем старые ледяные лучи
-        iceLinesRef.current.forEach(line => scene.remove(line));
+        iceLinesRef.current.forEach((line) => scene.remove(line));
         iceLinesRef.current = [];
 
         // Рисуем ледяные потоки
@@ -768,22 +833,32 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
           const tower = gameState.towers.find((t) => t.id === stream.towerId);
           if (tower) {
             // Для ледяного оружия может быть несколько целей (конус)
-            const targetEnemyIds = 'targetEnemyIds' in stream ? stream.targetEnemyIds : 
-                                   'targetEnemyId' in stream ? [stream.targetEnemyId] : [];
-            
+            const targetEnemyIds =
+              "targetEnemyIds" in stream
+                ? stream.targetEnemyIds
+                : "targetEnemyId" in stream
+                  ? [stream.targetEnemyId]
+                  : [];
+
             targetEnemyIds.forEach((enemyId) => {
               const enemy = gameState.enemies.find((e) => e.id === enemyId);
               if (enemy) {
                 const points = [
-                  new THREE.Vector3(tower.position.x, tower.size / 2, tower.position.y),
-                  new THREE.Vector3(enemy.position.x, 5, enemy.position.y)
+                  new THREE.Vector3(
+                    tower.position.x,
+                    tower.size / 2,
+                    tower.position.y
+                  ),
+                  new THREE.Vector3(enemy.position.x, 5, enemy.position.y),
                 ];
-                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const geometry = new THREE.BufferGeometry().setFromPoints(
+                  points
+                );
                 const material = new THREE.LineBasicMaterial({
                   color: 0x00ffff,
                   linewidth: 3,
                   transparent: true,
-                  opacity: 0.8
+                  opacity: 0.8,
                 });
                 const line = new THREE.Line(geometry, material);
                 scene.add(line);
@@ -794,7 +869,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
         });
 
         // Очищаем старые электрические цепи
-        electricLinesRef.current.forEach(line => scene.remove(line));
+        electricLinesRef.current.forEach((line) => scene.remove(line));
         electricLinesRef.current = [];
 
         // Рисуем электрические цепи
@@ -805,25 +880,33 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
             .filter((e): e is Enemy => e !== undefined);
 
           if (tower && chainEnemies.length > 0) {
-            let prevPos = new THREE.Vector3(tower.position.x, tower.size / 2, tower.position.y);
-            
+            let prevPos = new THREE.Vector3(
+              tower.position.x,
+              tower.size / 2,
+              tower.position.y
+            );
+
             chainEnemies.forEach((enemy) => {
               const points = [
                 prevPos.clone(),
-                new THREE.Vector3(enemy.position.x, 5, enemy.position.y)
+                new THREE.Vector3(enemy.position.x, 5, enemy.position.y),
               ];
               const geometry = new THREE.BufferGeometry().setFromPoints(points);
               const material = new THREE.LineBasicMaterial({
                 color: 0x00ffff,
                 linewidth: 2,
                 transparent: true,
-                opacity: 0.9
+                opacity: 0.9,
               });
               const line = new THREE.Line(geometry, material);
               scene.add(line);
               electricLinesRef.current.push(line);
-              
-              prevPos = new THREE.Vector3(enemy.position.x, 5, enemy.position.y);
+
+              prevPos = new THREE.Vector3(
+                enemy.position.x,
+                5,
+                enemy.position.y
+              );
             });
           }
         });
@@ -861,7 +944,8 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     // Начинаем перетаскивание для панорамирования камеры
-    if (e.button === 0) { // Left mouse button
+    if (e.button === 0) {
+      // Left mouse button
       const state = cameraStateRef.current;
       setIsDragging(true);
       state.dragStartX = e.clientX;
@@ -874,16 +958,21 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
   const handleMouseUp = (e: React.MouseEvent<HTMLDivElement>) => {
     const wasDragging = isDragging;
     setIsDragging(false);
-    
+
     // Если мы не перетаскивали (или перетащили совсем чуть-чуть), обрабатываем как клик
     const state = cameraStateRef.current;
-    if (!wasDragging || (Math.abs(e.clientX - state.dragStartX) < 5 && Math.abs(e.clientY - state.dragStartY) < 5)) {
+    if (
+      !wasDragging ||
+      (Math.abs(e.clientX - state.dragStartX) < 5 &&
+        Math.abs(e.clientY - state.dragStartY) < 5)
+    ) {
       handleClick(e);
     }
   };
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current || !cameraRef.current || !groundRef.current) return;
+    if (!containerRef.current || !cameraRef.current || !groundRef.current)
+      return;
 
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -899,7 +988,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
 
     if (intersects.length > 0) {
       const point = intersects[0].point;
-      
+
       // Проверяем клик по башне
       for (const tower of gameState.towers) {
         const dx = point.x - tower.position.x;
@@ -919,36 +1008,42 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const state = cameraStateRef.current;
-    
+
     // Обрабатываем перетаскивание камеры
     if (isDragging && cameraRef.current) {
       const deltaX = e.clientX - state.dragStartX;
       const deltaY = e.clientY - state.dragStartY;
-      
+
       // Конвертируем движение мыши в движение камеры
       // Учитываем угол камеры для правильного направления панорамирования
       const panSpeed = 1.0;
       const angleRad = (state.angle * Math.PI) / 180;
-      
+
       state.targetX = state.dragStartTargetX - deltaX * panSpeed;
-      state.targetZ = state.dragStartTargetZ - deltaY * panSpeed * Math.cos(angleRad);
-      
+      state.targetZ =
+        state.dragStartTargetZ - deltaY * panSpeed * Math.cos(angleRad);
+
       // Обновляем позицию камеры
       const height = state.distance * Math.sin(angleRad);
       const horizontalDist = state.distance * Math.cos(angleRad);
-      
+
       cameraRef.current.position.set(
         state.targetX,
         height,
         state.targetZ + horizontalDist
       );
       cameraRef.current.lookAt(state.targetX, 0, state.targetZ);
-      
+
       return; // Не обрабатываем preview башни во время перетаскивания
     }
-    
+
     // Обрабатываем preview башни
-    if (!selectedTowerLevel || !containerRef.current || !cameraRef.current || !groundRef.current) {
+    if (
+      !selectedTowerLevel ||
+      !containerRef.current ||
+      !cameraRef.current ||
+      !groundRef.current
+    ) {
       setMousePos(null);
       return;
     }
@@ -986,7 +1081,11 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
         width: CANVAS_WIDTH,
         height: CANVAS_HEIGHT,
         border: "2px solid #0f3460",
-        cursor: isDragging ? "grabbing" : selectedTowerLevel ? "crosshair" : "grab",
+        cursor: isDragging
+          ? "grabbing"
+          : selectedTowerLevel
+            ? "crosshair"
+            : "grab",
       }}
     />
   );

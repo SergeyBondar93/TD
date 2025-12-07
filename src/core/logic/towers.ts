@@ -12,6 +12,7 @@ import type {
 } from "../../types/game";
 import { WeaponType as WeaponTypeEnum } from "../../types/game";
 import { GAME_SETTINGS } from "../../config/settings";
+import { TOWER_STATS } from "../../config/gameData/towers";
 import { distance, distanceToSegment, generateId } from "./math";
 
 /**
@@ -143,6 +144,33 @@ export function canPlaceTower(
   }
 
   return true;
+}
+
+/**
+ * Рассчитывает стоимость продажи башни (70% от вложенных средств)
+ */
+export function calculateTowerSellValue(tower: Tower): number {
+  // Рассчитываем стоимость завершенных улучшений
+  const completedUpgrades = Array.from(
+    { length: tower.upgradeLevel },
+    (_, i) => {
+      const stats = TOWER_STATS[tower.level][i + 1];
+      return stats?.upgradeCost ?? 0;
+    }
+  ).reduce((sum, cost) => sum + cost, 0);
+
+  // Рассчитываем стоимость улучшений в очереди
+  const queuedUpgrades = Array.from(
+    { length: tower.upgradeQueue || 0 },
+    (_, i) => {
+      const stats = TOWER_STATS[tower.level][tower.upgradeLevel + i + 1];
+      return stats?.upgradeCost ?? 0;
+    }
+  ).reduce((sum, cost) => sum + cost, 0);
+
+  // Общая инвестиция = базовая стоимость + завершенные + в очереди
+  const totalInvested = tower.cost + completedUpgrades + queuedUpgrades;
+  return Math.round(totalInvested * 0.7);
 }
 
 export interface TowerFireResult {

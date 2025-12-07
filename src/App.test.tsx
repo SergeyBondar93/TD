@@ -9,9 +9,6 @@ import { useUIStore } from "./stores/uiStore";
 vi.mock("./config/dev", () => ({
   DEV_CONFIG: {
     AUTO_START_LEVEL: null,
-    TEST_ENEMIES: false,
-    TEST_ENEMIES_COUNT: 0,
-    TEST_ENEMIES_DISTANCE: 0,
     SHOW_DEBUG_INFO: false,
     SHOW_COORDINATES: false,
     SHOW_PATH_COORDINATES: false,
@@ -23,7 +20,7 @@ describe("App Integration Tests", () => {
   beforeEach(() => {
     // Сбрасываем Zustand stores перед каждым тестом
     useGameStore.getState().resetGame();
-    useUIStore.setState({ selectedTowerLevel: null, isInitialized: false });
+    useUIStore.setState({ selectedTowerLevel: null });
   });
 
   afterEach(() => {

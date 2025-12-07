@@ -5,16 +5,13 @@ import { LevelSelect } from "./components/LevelSelect";
 import { GameOver } from "./components/GameOver";
 import { DebugInfo } from "./components/DebugInfo";
 import { TowerInfo } from "./components/TowerInfo";
-import { DevEnemyDebugger } from "./components/DevEnemyDebugger";
 import { GameEngine } from "./core/GameEngine";
 import { useUIStore } from "./stores/uiStore";
 import type { GameState, Enemy } from "./types/game";
-import { EnemyType, ENEMY_SIZES } from "./types/game";
 import { TOWER_STATS, createTowerFromStats } from "./config/gameData/towers";
 import { LEVELS, DEFAULT_PATH } from "./config/gameData/levels";
 import { DEV_CONFIG } from "./config/dev";
-import { SPIDER_MODEL } from "./config/gameData/enemies";
-import { canPlaceTower } from "./core/logic/towers";
+import { canPlaceTower, calculateTowerSellValue } from "./core/logic/towers";
 import "./App.css";
 
 function App() {
@@ -56,59 +53,6 @@ function App() {
 
       setSelectedTowerLevel(null);
 
-      // Создаем тестовых врагов если включен режим отладки
-      if (DEV_CONFIG.TEST_ENEMIES) {
-        const testEnemies: Enemy[] = [];
-        for (let i = 0; i < DEV_CONFIG.TEST_ENEMIES_COUNT; i++) {
-          const enemyTypes = [
-            EnemyType.INFANTRY,
-            EnemyType.TANK_SMALL,
-            EnemyType.TANK_MEDIUM,
-            EnemyType.TANK_LARGE,
-          ];
-          const enemyType = enemyTypes[i % enemyTypes.length];
-          const enemy: Enemy = {
-            id: `test-${i}`,
-            position: { x: 30 + i * DEV_CONFIG.TEST_ENEMIES_DISTANCE, y: 130 },
-            health: enemyType === EnemyType.INFANTRY ? 100 : 300,
-            maxHealth: enemyType === EnemyType.INFANTRY ? 100 : 300,
-            speed: 50,
-            level: i + 1,
-            pathIndex: 0,
-            reward: 20,
-            type: enemyType,
-            size: ENEMY_SIZES[enemyType],
-            pathOffset: 0,
-          };
-          testEnemies.push(enemy);
-        }
-        // Добавляем тестовых врагов напрямую в движок
-        testEnemies.forEach((e) => {
-          const enemies = engine.getEnemies();
-          enemies.push(e);
-        });
-      }
-
-      // Создаем dev врага если включен флаг
-      if (DEV_CONFIG.SHOW_DEV_ENEMY) {
-        const devEnemy: Enemy = {
-          id: "dev-enemy",
-          position: { x: 343, y: 330 },
-          health: 100,
-          maxHealth: 100,
-          speed: 50,
-          level: 1,
-          pathIndex: 0,
-          reward: 20,
-          type: EnemyType.INFANTRY,
-          size: ENEMY_SIZES[EnemyType.TANK_LARGE],
-          pathOffset: 0,
-          modelConfig: SPIDER_MODEL,
-        };
-        const enemies = engine.getEnemies();
-        enemies.push(devEnemy);
-      }
-
       // Автоматически размещаем башни если включен флаг
       if (DEV_CONFIG.AUTO_PLACE_TOWERS) {
         const tower1 = createTowerFromStats({
@@ -127,12 +71,10 @@ function App() {
         engine.addTower(tower2);
       }
 
-      // Автоматически стартуем первую волну если нет тестовых врагов
-      if (!DEV_CONFIG.TEST_ENEMIES) {
-        setTimeout(() => {
-          engine.startNextWave();
-        }, 100);
-      }
+      // Автоматически стартуем первую волну
+      setTimeout(() => {
+        engine.startNextWave();
+      }, 100);
 
       // Обновляем UI состояние
       setGameState(engine.getState());
@@ -228,28 +170,7 @@ function App() {
     const tower = towers.find((t) => t.id === selectedTowerId);
     if (!tower) return;
 
-    // Рассчитываем стоимость завершенных улучшений
-    const completedUpgrades = Array.from(
-      { length: tower.upgradeLevel },
-      (_, i) => {
-        const stats = TOWER_STATS[tower.level][i + 1];
-        return stats?.upgradeCost ?? 0;
-      }
-    ).reduce((sum, cost) => sum + cost, 0);
-
-    // Рассчитываем стоимость улучшений в очереди
-    const queuedUpgrades = Array.from(
-      { length: tower.upgradeQueue || 0 },
-      (_, i) => {
-        const stats = TOWER_STATS[tower.level][tower.upgradeLevel + i + 1];
-        return stats?.upgradeCost ?? 0;
-      }
-    ).reduce((sum, cost) => sum + cost, 0);
-
-    // Общая инвестиция = базовая стоимость + завершенные + в очереди
-    const totalInvested = tower.cost + completedUpgrades + queuedUpgrades;
-    const sellValue = Math.round(totalInvested * 0.7);
-
+    const sellValue = calculateTowerSellValue(tower);
     engine.removeTower(selectedTowerId);
     engine.addMoney(sellValue);
     setSelectedTowerId(null);
@@ -259,12 +180,6 @@ function App() {
   // Изменение скорости игры
   const handleGameSpeedChange = useCallback((speed: number) => {
     gameEngineRef.current.setGameSpeed(speed);
-    setGameState(gameEngineRef.current.getState());
-  }, []);
-
-  // Обновление dev врага
-  const handleDevEnemyUpdate = useCallback((updates: Partial<Enemy>) => {
-    gameEngineRef.current.updateEnemy("dev-enemy", updates);
     setGameState(gameEngineRef.current.getState());
   }, []);
 
@@ -343,7 +258,6 @@ function App() {
   // Экран игры
   const levelConfig = LEVELS[gameState.currentLevel - 1];
   const canStartWave = gameEngineRef.current.canStartWave();
-  const devEnemy = gameState.enemies.find((e) => e.id === "dev-enemy") || null;
 
   return (
     <div className="app-container" style={styles.app}>
@@ -353,8 +267,6 @@ function App() {
           onGameSpeedChange={handleGameSpeedChange}
         />
       )}
-
-      <DevEnemyDebugger enemy={devEnemy} onUpdate={handleDevEnemyUpdate} />
 
       <div className="app-main-content" style={styles.mainContent}>
         <div className="app-game-section" style={styles.gameSection}>

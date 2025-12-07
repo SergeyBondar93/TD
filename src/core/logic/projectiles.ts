@@ -154,19 +154,16 @@ export function processFlameStreams(
   currentTime: number
 ): ProcessedFlameStreams {
   const activeFlameStreams: FlameStream[] = [];
-  const enemiesMap = new Map(enemies.map((e) => [e.id, { ...e }]));
 
   for (const stream of flameStreams) {
-    // Поток огня существует только один кадр
     const duration = currentTime - stream.startTime;
     if (duration > GAME_SETTINGS.FLAME_STREAM_DURATION) continue;
-
     activeFlameStreams.push(stream);
   }
 
   return {
     activeFlameStreams,
-    updatedEnemies: Array.from(enemiesMap.values()),
+    updatedEnemies: enemies,
   };
 }
 
@@ -231,19 +228,16 @@ export function processIceStreams(
   currentTime: number
 ): ProcessedIceStreams {
   const activeIceStreams: IceStream[] = [];
-  const enemiesMap = new Map(enemies.map((e) => [e.id, { ...e }]));
 
   for (const stream of iceStreams) {
-    // Поток льда существует только один кадр
     const duration = currentTime - stream.startTime;
     if (duration > GAME_SETTINGS.ICE_STREAM_DURATION) continue;
-
     activeIceStreams.push(stream);
   }
 
   return {
     activeIceStreams,
-    updatedEnemies: Array.from(enemiesMap.values()),
+    updatedEnemies: enemies,
   };
 }
 
@@ -263,17 +257,14 @@ export function processElectricChains(
   chainDuration: number = GAME_SETTINGS.ELECTRIC_CHAIN_DURATION
 ): ProcessedElectricChains {
   const activeElectricChains: ElectricChain[] = [];
-  const enemiesMap = new Map(enemies.map((e) => [e.id, { ...e }]));
+  const enemyIds = new Set(enemies.map((e) => e.id));
 
   for (const chain of electricChains) {
     const chainAge = currentTime - chain.startTime;
-
-    if (chainAge > chainDuration) {
-      continue;
-    }
+    if (chainAge > chainDuration) continue;
 
     const allTargetsExist = chain.targetEnemyIds.every((id) =>
-      enemiesMap.has(id)
+      enemyIds.has(id)
     );
     if (allTargetsExist) {
       activeElectricChains.push(chain);
@@ -282,7 +273,7 @@ export function processElectricChains(
 
   return {
     activeElectricChains,
-    updatedEnemies: Array.from(enemiesMap.values()),
+    updatedEnemies: enemies,
   };
 }
 
@@ -302,24 +293,19 @@ export function processLaserBeams(
   beamDuration: number = GAME_SETTINGS.LASER_BEAM_DURATION
 ): ProcessedLaserBeams {
   const activeLaserBeams: LaserBeam[] = [];
-  const enemiesMap = new Map(enemies.map((e) => [e.id, { ...e }]));
+  const enemyIds = new Set(enemies.map((e) => e.id));
 
   for (const beam of laserBeams) {
     const beamAge = currentTime - beam.startTime;
+    if (beamAge > beamDuration) continue;
 
-    if (beamAge > beamDuration) {
-      continue;
-    }
-
-    const target = enemiesMap.get(beam.targetEnemyId);
-
-    if (target) {
+    if (enemyIds.has(beam.targetEnemyId)) {
       activeLaserBeams.push(beam);
     }
   }
 
   return {
     activeLaserBeams,
-    updatedEnemies: Array.from(enemiesMap.values()),
+    updatedEnemies: enemies,
   };
 }

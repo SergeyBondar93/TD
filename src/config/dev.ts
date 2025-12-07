@@ -14,7 +14,7 @@ export const DEV_CONFIG = {
   AUTO_START_LEVEL: 10,
 
   // Начальная скорость игры (для отладки)
-  GAME_SPEED: 0.01,
+  GAME_SPEED: 0.0001,
   // GAME_SPEED: 1.05,
 
   // Скрывать цифры HP у пехоты

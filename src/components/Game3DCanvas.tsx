@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import type { GameState, Enemy, Tower, Projectile } from "../types/game";
 import {
   CANVAS_WIDTH,
@@ -82,6 +83,17 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
   const previewMeshRef = useRef<THREE.Mesh | null>(null);
   const rangeCircleRef = useRef<THREE.Line | null>(null);
   const groundRef = useRef<THREE.Mesh | null>(null);
+  const soldierModelRef = useRef<THREE.Group | null>(null);
+  const soldierMixerRef = useRef<THREE.AnimationMixer | null>(null);
+  
+  // Состояние для управления тестовым солдатом
+  const [soldierPosition, setSoldierPosition] = useState({
+    x: CANVAS_PADDING + GAME_WIDTH / 2,
+    y: 0,
+    z: CANVAS_PADDING + GAME_HEIGHT / 2,
+  });
+  const [soldierScale, setSoldierScale] = useState(1.0);
+  const [showSoldierControls, setShowSoldierControls] = useState(true);
 
   // Инициализация Three.js сцены
   useEffect(() => {
@@ -93,6 +105,83 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x1a1a2e);
     sceneRef.current = scene;
+
+    // Загружаем модель солдата
+    const loader = new GLTFLoader();
+    loader.load(
+      "/models/gltf/Soldier.glb",
+      (gltf) => {
+        const model = gltf.scene;
+        scene.add(model);
+
+        // Настраиваем тени для всех мешей
+        model.traverse((object) => {
+          if (object instanceof THREE.Mesh) {
+            object.castShadow = true;
+            object.receiveShadow = true;
+          }
+        });
+
+        // Создаем mixer для анимаций
+        const animations = gltf.animations;
+        const mixer = new THREE.AnimationMixer(model);
+
+        // Настраиваем анимации (как в примере)
+        if (animations.length > 0) {
+          const idleAction = mixer.clipAction(animations[0]);
+          const walkAction = animations.length > 3 ? mixer.clipAction(animations[3]) : null;
+          const runAction = animations.length > 1 ? mixer.clipAction(animations[1]) : null;
+
+          // Активируем idle анимацию
+          idleAction.play();
+
+          // Если есть walk и run, настраиваем их веса
+          if (walkAction) {
+            walkAction.play();
+            walkAction.setEffectiveWeight(0);
+          }
+          if (runAction) {
+            runAction.play();
+            runAction.setEffectiveWeight(0);
+          }
+        }
+
+        // Позиционируем солдата в центре сцены (начальная позиция)
+        const centerX = CANVAS_PADDING + GAME_WIDTH / 2;
+        const centerZ = CANVAS_PADDING + GAME_HEIGHT / 2;
+        model.position.set(centerX, 0, centerZ);
+        model.scale.set(1.0, 1.0, 1.0);
+
+        // Сохраняем ссылки
+        soldierModelRef.current = model;
+        soldierMixerRef.current = mixer;
+
+
+        const dirLight = new THREE.DirectionalLight( 0xffffff, 3 );
+				dirLight.position.set( - 3, 10, - 10 );
+				dirLight.castShadow = true;
+				dirLight.shadow.camera.top = 2;
+				dirLight.shadow.camera.bottom = - 2;
+				dirLight.shadow.camera.left = - 2;
+				dirLight.shadow.camera.right = 2;
+				dirLight.shadow.camera.near = 0.1;
+				dirLight.shadow.camera.far = 40;
+				scene.add( dirLight );
+
+        console.log("✅ Солдат загружен и добавлен на сцену");
+      },
+      undefined,
+      (error) => {
+        console.error("❌ Ошибка загрузки модели солдата:", error);
+      }
+    );
+
+
+
+
+
+
+
 
     // Создаём камеру (как в Warcraft 3 - вид сверху под углом)
     const camera = new THREE.PerspectiveCamera(
@@ -397,6 +486,11 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
       const now = Date.now();
       const deltaTime = (now - lastFrameTimeRef.current) / 1000;
       lastFrameTimeRef.current = now;
+
+      // Обновляем анимацию солдата
+      if (soldierMixerRef.current) {
+        soldierMixerRef.current.update(deltaTime);
+      }
 
       // Плавное изменение позиции камеры
       const state = cameraStateRef.current;
@@ -1008,6 +1102,15 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
     };
   }, [isInitialized, gameState, selectedTowerLevel, mousePos]);
 
+  // Применяем позицию и размер к тестовому солдату
+  useEffect(() => {
+    if (soldierModelRef.current) {
+      const model = soldierModelRef.current;
+      model.position.set(soldierPosition.x, soldierPosition.y, soldierPosition.z);
+      model.scale.set(soldierScale, soldierScale, soldierScale);
+    }
+  }, [soldierPosition, soldierScale]);
+
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     // Начинаем перетаскивание для панорамирования камеры
     if (e.button === 0) {
@@ -1137,22 +1240,179 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
   };
 
   return (
-    <div
-      ref={containerRef}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{
-        width: CANVAS_WIDTH,
-        height: CANVAS_HEIGHT,
-        border: "2px solid #0f3460",
-        cursor: isDragging
-          ? "grabbing"
-          : selectedTowerLevel
-            ? "crosshair"
-            : "grab",
-      }}
-    />
+    <div style={{ position: "relative" }}>
+      <div
+        ref={containerRef}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        style={{
+          width: CANVAS_WIDTH,
+          height: CANVAS_HEIGHT,
+          border: "2px solid #0f3460",
+          cursor: isDragging
+            ? "grabbing"
+            : selectedTowerLevel
+              ? "crosshair"
+              : "grab",
+        }}
+      />
+      
+      {/* Панель управления тестовым солдатом */}
+      {showSoldierControls && (
+        <div
+          style={{
+            position: "absolute",
+            top: 10,
+            right: 10,
+            backgroundColor: "rgba(0, 0, 0, 0.85)",
+            padding: "15px",
+            borderRadius: "8px",
+            color: "#fff",
+            fontFamily: "monospace",
+            fontSize: "12px",
+            minWidth: "250px",
+            zIndex: 1000,
+            border: "1px solid #0f3460",
+          }}
+        >
+          <div style={{ marginBottom: "10px", borderBottom: "1px solid #444", paddingBottom: "8px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0, color: "#00ff00", fontSize: "14px" }}>🎖️ Тестовый солдат</h3>
+              <button
+                onClick={() => setShowSoldierControls(false)}
+                style={{
+                  padding: "2px 8px",
+                  backgroundColor: "#ff4444",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "10px",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          {/* Позиция X */}
+          <div style={{ marginBottom: "12px" }}>
+            <label style={{ display: "block", marginBottom: "4px", fontSize: "11px" }}>
+              Позиция X: {soldierPosition.x.toFixed(1)}
+            </label>
+            <input
+              type="range"
+              min={CANVAS_PADDING}
+              max={CANVAS_PADDING + GAME_WIDTH}
+              step={1}
+              value={soldierPosition.x}
+              onChange={(e) =>
+                setSoldierPosition({ ...soldierPosition, x: Number(e.target.value) })
+              }
+              style={{ width: "100%" }}
+            />
+          </div>
+
+          {/* Позиция Y (высота) */}
+          <div style={{ marginBottom: "12px" }}>
+            <label style={{ display: "block", marginBottom: "4px", fontSize: "11px" }}>
+              Позиция Y (высота): {soldierPosition.y.toFixed(1)}
+            </label>
+            <input
+              type="range"
+              min={-50}
+              max={200}
+              step={1}
+              value={soldierPosition.y}
+              onChange={(e) =>
+                setSoldierPosition({ ...soldierPosition, y: Number(e.target.value) })
+              }
+              style={{ width: "100%" }}
+            />
+          </div>
+
+          {/* Позиция Z */}
+          <div style={{ marginBottom: "12px" }}>
+            <label style={{ display: "block", marginBottom: "4px", fontSize: "11px" }}>
+              Позиция Z: {soldierPosition.z.toFixed(1)}
+            </label>
+            <input
+              type="range"
+              min={CANVAS_PADDING}
+              max={CANVAS_PADDING + GAME_HEIGHT}
+              step={1}
+              value={soldierPosition.z}
+              onChange={(e) =>
+                setSoldierPosition({ ...soldierPosition, z: Number(e.target.value) })
+              }
+              style={{ width: "100%" }}
+            />
+          </div>
+
+          {/* Размер (Scale) */}
+          <div style={{ marginBottom: "12px" }}>
+            <label style={{ display: "block", marginBottom: "4px", fontSize: "11px" }}>
+              Размер (Scale): {soldierScale.toFixed(2)}x
+            </label>
+            <input
+              type="range"
+              min={0.1}
+              max={50.0}
+              step={0.1}
+              value={soldierScale}
+              onChange={(e) => setSoldierScale(Number(e.target.value))}
+              style={{ width: "100%" }}
+            />
+          </div>
+
+          {/* Кнопка сброса */}
+          <button
+            onClick={() => {
+              const centerX = CANVAS_PADDING + GAME_WIDTH / 2;
+              const centerZ = CANVAS_PADDING + GAME_HEIGHT / 2;
+              setSoldierPosition({ x: centerX, y: 0, z: centerZ });
+              setSoldierScale(1.0);
+            }}
+            style={{
+              width: "100%",
+              padding: "6px",
+              backgroundColor: "#444",
+              color: "#fff",
+              border: "1px solid #666",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontSize: "11px",
+              marginTop: "8px",
+            }}
+          >
+            🔄 Сбросить
+          </button>
+        </div>
+      )}
+
+      {/* Кнопка для показа панели управления (если скрыта) */}
+      {!showSoldierControls && (
+        <button
+          onClick={() => setShowSoldierControls(true)}
+          style={{
+            position: "absolute",
+            top: 10,
+            right: 10,
+            padding: "8px 12px",
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            color: "#fff",
+            border: "1px solid #0f3460",
+            borderRadius: "4px",
+            cursor: "pointer",
+            fontSize: "11px",
+            zIndex: 1000,
+          }}
+        >
+          🎖️ Показать управление солдатом
+        </button>
+      )}
+    </div>
   );
 };

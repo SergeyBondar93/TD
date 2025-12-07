@@ -66,6 +66,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
   // Храним 3D объекты врагов
   const enemyMeshesRef = useRef<Map<string, THREE.Object3D>>(new Map());
   const enemyHPSpritesRef = useRef<Map<string, THREE.Sprite>>(new Map());
+  const pathTurnPointsRef = useRef<Map<string, THREE.Sprite>>(new Map());
   const towerMeshesRef = useRef<Map<string, THREE.Mesh>>(new Map());
   const towerArrowsRef = useRef<Map<string, THREE.Mesh>>(new Map());
   const towerRangeCirclesRef = useRef<Map<string, THREE.Line>>(new Map());
@@ -266,6 +267,52 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
       pathSegment.receiveShadow = true;
       pathSegment.name = "enemyPath";
       scene.add(pathSegment);
+    }
+
+    // Удаляем старые метки точек поворота
+    pathTurnPointsRef.current.forEach((sprite) => {
+      scene.remove(sprite);
+    });
+    pathTurnPointsRef.current.clear();
+
+    // Добавляем метки для точек пути с координатами и углами
+    for (let i = 0; i < path.length; i++) {
+      const point = path[i];
+      const angle = i < path.length - 1 
+        ? Math.atan2(path[i + 1].y - point.y, path[i + 1].x - point.x)
+        : i > 0
+          ? Math.atan2(point.y - path[i - 1].y, point.x - path[i - 1].x)
+          : 0;
+
+      // Создаем текстовый спрайт для точки пути
+      const canvas = document.createElement("canvas");
+      canvas.width = 200;
+      canvas.height = 60;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#00ff00";
+        ctx.font = "bold 14px Arial";
+        ctx.textAlign = "left";
+        ctx.fillText(`P${i}: (${point.x.toFixed(0)}, ${point.y.toFixed(0)})`, 5, 20);
+        if (i < path.length - 1) {
+          const angleDeg = (angle * 180 / Math.PI).toFixed(1);
+          ctx.fillText(`∠: ${angleDeg}°`, 5, 40);
+        }
+      }
+
+      const texture = new THREE.CanvasTexture(canvas);
+      const spriteMaterial = new THREE.SpriteMaterial({
+        map: texture,
+        transparent: true,
+      });
+      const sprite = new THREE.Sprite(spriteMaterial);
+      sprite.scale.set(80, 24, 1);
+      sprite.position.set(point.x, 5, point.y);
+      sprite.name = `pathPoint${i}`;
+      scene.add(sprite);
+      pathTurnPointsRef.current.set(`path-${i}`, sprite);
     }
   }, [path, isInitialized]);
 

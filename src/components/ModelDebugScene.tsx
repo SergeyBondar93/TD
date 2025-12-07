@@ -1,8 +1,15 @@
 import React, { useRef, useEffect, useState } from "react";
 import * as THREE from "three";
+import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import { loadSoldierModel } from "../utils/modelLoader";
 import { SOLDIER_MODEL, SPIDER_MODEL, type EnemyModelConfig } from "../config/gameData/enemies";
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from "../types/game";
+
+// Функция для правильного клонирования модели со скелетной анимацией
+function cloneModelWithSkeleton(source: THREE.Object3D): THREE.Object3D {
+  // Используем SkeletonUtils.clone для правильного клонирования моделей с SkinnedMesh/Skeleton
+  return SkeletonUtils.clone(source) as THREE.Object3D;
+}
 
 interface ModelDebugSceneProps {
   onClose?: () => void;
@@ -142,8 +149,8 @@ export const ModelDebugScene: React.FC<ModelDebugSceneProps> = ({ onClose }) => 
       .then((loadedModel) => {
         console.log('[ModelDebugScene] Модель загружена, клонирую...');
         
-        // Клонируем базовую модель
-        const modelClone = loadedModel.scene.clone(true);
+        // Клонируем базовую модель со скелетом
+        const modelClone = cloneModelWithSkeleton(loadedModel.scene) as THREE.Group;
         
         // Убеждаемся, что модель видима и материалы правильно настроены
         let meshCount = 0;

@@ -1,7 +1,14 @@
 import * as THREE from "three";
+import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import { loadSoldierModel } from "../utils/modelLoader";
 import type { LoadedModel } from "../utils/modelLoader";
 import type { EnemyModelConfig } from "../config/gameData/enemies";
+
+// Функция для правильного клонирования модели со скелетной анимацией
+function cloneModelWithSkeleton(source: THREE.Object3D): THREE.Object3D {
+  // Используем SkeletonUtils.clone для правильного клонирования моделей с SkinnedMesh/Skeleton
+  return SkeletonUtils.clone(source) as THREE.Object3D;
+}
 
 // Состояние врага для рендеринга
 interface EnemyRenderState {
@@ -50,8 +57,8 @@ class Enemy3DManager {
       throw new Error("Base model not loaded");
     }
 
-    // Клонируем базовую модель
-    const modelClone = this.baseModel.scene.clone(true);
+    // Клонируем базовую модель со скелетом
+    const modelClone = cloneModelWithSkeleton(this.baseModel.scene) as THREE.Group;
     console.log('[Enemy3DRenderer] Клонированная модель:', modelClone);
     // Вычисляем bounding box для центрирования
     const box = new THREE.Box3().setFromObject(modelClone);

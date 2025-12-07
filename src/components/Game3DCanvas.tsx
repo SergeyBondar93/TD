@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import type { GameState, Enemy, Tower, Projectile } from "../types/game";
 import {
   CANVAS_WIDTH,
@@ -30,6 +31,12 @@ interface Game3DCanvasProps {
   selectedTowerLevel: 1 | 2 | 3 | 4 | 5 | null;
   selectedTowerId: string | null;
   path: { x: number; y: number }[];
+}
+
+// Функция для правильного клонирования модели со скелетной анимацией
+function cloneModelWithSkeleton(source: THREE.Object3D): THREE.Object3D {
+  // Используем SkeletonUtils.clone для правильного клонирования моделей с SkinnedMesh/Skeleton
+  return SkeletonUtils.clone(source) as THREE.Object3D;
 }
 
 export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
@@ -99,9 +106,9 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
   const testEnemyModelRef = useRef<THREE.Group | null>(null);
   const testEnemyMixerRef = useRef<THREE.AnimationMixer | null>(null);
   const [testEnemyPosition, setTestEnemyPosition] = useState({
-    x: 0,
+    x: 350,
     y: 0,
-    z: 0,
+    z: 300,
   });
   const [testEnemyScale, setTestEnemyScale] = useState(1.0);
   const [showTestEnemyControls, setShowTestEnemyControls] = useState(true);
@@ -191,7 +198,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
     loader.load(
       "/models/gltf/Soldier.glb",
       (gltf) => {
-        const model = gltf.scene.clone(true); // Клонируем модель
+        const model = cloneModelWithSkeleton(gltf.scene) as THREE.Group; // Клонируем модель со скелетом
         scene.add(model);
 
         // Настраиваем тени для всех мешей

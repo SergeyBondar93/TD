@@ -51,16 +51,6 @@ export async function loadSoldierModel(): Promise<LoadedModel> {
           }
         });
         
-        console.log('[ModelLoader] ✅ Модель успешно загружена:', {
-          animations: animations.length,
-          size: { x: size.x.toFixed(2), y: size.y.toFixed(2), z: size.z.toFixed(2) },
-          center: { x: center.x.toFixed(2), y: center.y.toFixed(2), z: center.z.toFixed(2) },
-          children: scene.children.length,
-          meshes: meshCount,
-          materials: materialCount,
-          visible: scene.visible
-        });
-        
         soldierModel = { scene, animations, mixer };
         isLoadingSoldier = false;
         soldierLoadCallbacks.forEach((cb) => cb(soldierModel!));

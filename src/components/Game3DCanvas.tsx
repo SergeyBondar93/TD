@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
 import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import type { GameState, Enemy, Tower, Projectile } from "../types/game";
 import {
@@ -14,6 +13,7 @@ import {
 import { getEnemy3DManager } from "./Enemy3DRenderer";
 import { canPlaceTower } from "../core/logic/towers";
 import { TOWER_STATS } from "../config/gameData/towers";
+import { loadSoldierModel } from "../utils/modelLoader";
 
 // Константы для управления камерой
 const CAMERA_DISTANCE_MIN = 300; // Минимальная дистанция (приближение)
@@ -90,28 +90,16 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
   const previewMeshRef = useRef<THREE.Mesh | null>(null);
   const rangeCircleRef = useRef<THREE.Line | null>(null);
   const groundRef = useRef<THREE.Mesh | null>(null);
-  const soldierModelRef = useRef<THREE.Group | null>(null);
-  const soldierMixerRef = useRef<THREE.AnimationMixer | null>(null);
-  
-  // Состояние для управления тестовым солдатом
-  const [soldierPosition, setSoldierPosition] = useState({
+  // Дебаггер модели
+  const debugModelRef = useRef<THREE.Group | null>(null);
+  const debugMixerRef = useRef<THREE.AnimationMixer | null>(null);
+  const [debugPosition, setDebugPosition] = useState({
     x: CANVAS_PADDING + GAME_WIDTH / 2,
     y: 0,
     z: CANVAS_PADDING + GAME_HEIGHT / 2,
   });
-  const [soldierScale, setSoldierScale] = useState(1.0);
-  const [showSoldierControls, setShowSoldierControls] = useState(true);
-  
-  // Состояние для управления тестовым врагом
-  const testEnemyModelRef = useRef<THREE.Group | null>(null);
-  const testEnemyMixerRef = useRef<THREE.AnimationMixer | null>(null);
-  const [testEnemyPosition, setTestEnemyPosition] = useState({
-    x: 350,
-    y: 0,
-    z: 300,
-  });
-  const [testEnemyScale, setTestEnemyScale] = useState(1.0);
-  const [showTestEnemyControls, setShowTestEnemyControls] = useState(true);
+  const [debugScale, setDebugScale] = useState(30.0);
+  const [showDebugControls, setShowDebugControls] = useState(true);
 
   // Инициализация Three.js сцены
   useEffect(() => {
@@ -124,139 +112,57 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
     scene.background = new THREE.Color(0x1a1a2e);
     sceneRef.current = scene;
 
-    // Загружаем модель солдата
-    const loader = new GLTFLoader();
-    loader.load(
-      "/models/gltf/Soldier.glb",
-      (gltf) => {
-        const model = gltf.scene;
-        scene.add(model);
+    // Загружаем модель для дебаггера
+    loadSoldierModel().then((loadedModel) => {
+      const model = cloneModelWithSkeleton(loadedModel.scene) as THREE.Group;
+      scene.add(model);
 
-        // Настраиваем тени для всех мешей
-        model.traverse((object) => {
-          if (object instanceof THREE.Mesh) {
-            object.castShadow = true;
-            object.receiveShadow = true;
-          }
-        });
-
-        // Создаем mixer для анимаций
-        const animations = gltf.animations;
-        const mixer = new THREE.AnimationMixer(model);
-
-        // Настраиваем анимации (как в примере)
-        if (animations.length > 0) {
-          const idleAction = mixer.clipAction(animations[0]);
-          const walkAction = animations.length > 3 ? mixer.clipAction(animations[3]) : null;
-          const runAction = animations.length > 1 ? mixer.clipAction(animations[1]) : null;
-
-          // Активируем idle анимацию
-          idleAction.play();
-
-          // Если есть walk и run, настраиваем их веса
-          if (walkAction) {
-            walkAction.play();
-            walkAction.setEffectiveWeight(0);
-          }
-          if (runAction) {
-            runAction.play();
-            runAction.setEffectiveWeight(0);
-          }
+      // Настраиваем тени для всех мешей
+      model.traverse((object) => {
+        if (object instanceof THREE.Mesh) {
+          object.castShadow = true;
+          object.receiveShadow = true;
         }
+      });
 
-        // Позиционируем солдата в центре сцены (начальная позиция)
-        const centerX = CANVAS_PADDING + GAME_WIDTH / 2;
-        const centerZ = CANVAS_PADDING + GAME_HEIGHT / 2;
-        model.position.set(centerX, 0, centerZ);
-        model.scale.set(1.0, 1.0, 1.0);
+      // Создаем mixer для анимаций
+      const animations = loadedModel.animations;
+      const mixer = new THREE.AnimationMixer(model);
 
-        // Сохраняем ссылки
-        soldierModelRef.current = model;
-        soldierMixerRef.current = mixer;
+      // Настраиваем анимации
+      if (animations.length > 0) {
+        const idleAction = mixer.clipAction(animations[0]);
+        const walkAction = animations.length > 3 ? mixer.clipAction(animations[3]) : null;
+        const runAction = animations.length > 1 ? mixer.clipAction(animations[1]) : null;
 
+        // Активируем idle анимацию
+        idleAction.play();
 
-        const dirLight = new THREE.DirectionalLight( 0xffffff, 3 );
-				dirLight.position.set( - 3, 10, - 10 );
-				dirLight.castShadow = true;
-				dirLight.shadow.camera.top = 2;
-				dirLight.shadow.camera.bottom = - 2;
-				dirLight.shadow.camera.left = - 2;
-				dirLight.shadow.camera.right = 2;
-				dirLight.shadow.camera.near = 0.1;
-				dirLight.shadow.camera.far = 40;
-				scene.add( dirLight );
-
-        console.log("✅ Солдат загружен и добавлен на сцену");
-      },
-      undefined,
-      (error) => {
-        console.error("❌ Ошибка загрузки модели солдата:", error);
-      }
-    );
-
-    // Загружаем модель тестового врага (та же модель, но отдельный экземпляр)
-    loader.load(
-      "/models/gltf/Soldier.glb",
-      (gltf) => {
-        const model = cloneModelWithSkeleton(gltf.scene) as THREE.Group; // Клонируем модель со скелетом
-        scene.add(model);
-
-        // Настраиваем тени для всех мешей
-        model.traverse((object) => {
-          if (object instanceof THREE.Mesh) {
-            object.castShadow = true;
-            object.receiveShadow = true;
-          }
-        });
-
-        // Создаем mixer для анимаций
-        const animations = gltf.animations;
-        const mixer = new THREE.AnimationMixer(model);
-
-        // Настраиваем анимации
-        if (animations.length > 0) {
-          const idleAction = mixer.clipAction(animations[0]);
-          const walkAction = animations.length > 3 ? mixer.clipAction(animations[3]) : null;
-          const runAction = animations.length > 1 ? mixer.clipAction(animations[1]) : null;
-
-          // Активируем idle анимацию
-          idleAction.play();
-
-          // Если есть walk и run, настраиваем их веса
-          if (walkAction) {
-            walkAction.play();
-            walkAction.setEffectiveWeight(0);
-          }
-          if (runAction) {
-            runAction.play();
-            runAction.setEffectiveWeight(0);
-          }
+        // Если есть walk и run, настраиваем их веса
+        if (walkAction) {
+          walkAction.play();
+          walkAction.setEffectiveWeight(0);
         }
-
-        // Позиционируем врага в центре сцены (позиция будет обновлена когда путь загрузится)
-        const centerX = CANVAS_PADDING + GAME_WIDTH / 2;
-        const centerZ = CANVAS_PADDING + GAME_HEIGHT / 2;
-        model.position.set(centerX, 0, centerZ);
-        model.scale.set(1.0, 1.0, 1.0);
-
-        // Сохраняем ссылки
-        testEnemyModelRef.current = model;
-        testEnemyMixerRef.current = mixer;
-
-        console.log("✅ Тестовый враг загружен и добавлен на сцену");
-      },
-      undefined,
-      (error) => {
-        console.error("❌ Ошибка загрузки модели тестового врага:", error);
+        if (runAction) {
+          runAction.play();
+          runAction.setEffectiveWeight(0);
+        }
       }
-    );
 
+      // Позиционируем модель в центре сцены
+      const centerX = CANVAS_PADDING + GAME_WIDTH / 2;
+      const centerZ = CANVAS_PADDING + GAME_HEIGHT / 2;
+      model.position.set(centerX, 0, centerZ);
+      model.scale.set(debugScale, debugScale, debugScale);
 
+      // Сохраняем ссылки
+      debugModelRef.current = model;
+      debugMixerRef.current = mixer;
 
-
-
-
-
+      console.log("✅ Дебаггер модели загружен и добавлен на сцену");
+    }).catch((error) => {
+      console.error("❌ Ошибка загрузки модели для дебаггера:", error);
+    });
 
     // Создаём камеру (как в Warcraft 3 - вид сверху под углом)
     const camera = new THREE.PerspectiveCamera(
@@ -562,9 +468,9 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
       const deltaTime = (now - lastFrameTimeRef.current) / 1000;
       lastFrameTimeRef.current = now;
 
-      // Обновляем анимацию солдата
-      if (soldierMixerRef.current) {
-        soldierMixerRef.current.update(deltaTime);
+      // Обновляем анимацию дебаггера
+      if (debugMixerRef.current) {
+        debugMixerRef.current.update(deltaTime);
       }
 
       // Плавное изменение позиции камеры
@@ -1177,42 +1083,14 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
     };
   }, [isInitialized, gameState, selectedTowerLevel, mousePos]);
 
-  // Применяем позицию и размер к тестовому солдату
+  // Применяем позицию и размер к дебаггеру
   useEffect(() => {
-    if (soldierModelRef.current) {
-      const model = soldierModelRef.current;
-      model.position.set(soldierPosition.x, soldierPosition.y, soldierPosition.z);
-      model.scale.set(soldierScale, soldierScale, soldierScale);
+    if (debugModelRef.current) {
+      const model = debugModelRef.current;
+      model.position.set(debugPosition.x, debugPosition.y, debugPosition.z);
+      model.scale.set(debugScale, debugScale, debugScale);
     }
-  }, [soldierPosition, soldierScale]);
-
-  // Вычисляем центр пути для тестового врага
-  useEffect(() => {
-    if (path.length > 0 && testEnemyModelRef.current) {
-      // Находим среднюю точку пути
-      const middleIndex = Math.floor(path.length / 2);
-      const centerPoint = path[middleIndex];
-      setTestEnemyPosition({
-        x: centerPoint.x,
-        y: 0,
-        z: centerPoint.y, // y в path = z в 3D
-      });
-    }
-  }, [path]);
-
-  // Обновляем позицию и размер тестового врага
-  useEffect(() => {
-    if (testEnemyModelRef.current) {
-      const model = testEnemyModelRef.current;
-      model.position.set(
-        testEnemyPosition.x,
-        testEnemyPosition.y,
-        testEnemyPosition.z
-      );
-      // Применяем масштаб напрямую (упрощенная логика, как у тестового солдата)
-      model.scale.set(testEnemyScale, testEnemyScale, testEnemyScale);
-    }
-  }, [testEnemyPosition, testEnemyScale]);
+  }, [debugPosition, debugScale]);
 
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -1363,8 +1241,8 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
         }}
       />
       
-      {/* Панель управления тестовым солдатом */}
-      {showSoldierControls && (
+      {/* Панель управления дебаггером модели */}
+      {showDebugControls && (
         <div
           style={{
             position: "absolute",
@@ -1383,9 +1261,9 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
         >
           <div style={{ marginBottom: "10px", borderBottom: "1px solid #444", paddingBottom: "8px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ margin: 0, color: "#00ff00", fontSize: "14px" }}>🎖️ Тестовый солдат</h3>
+              <h3 style={{ margin: 0, color: "#00ff00", fontSize: "14px" }}>🔧 Дебаггер модели</h3>
               <button
-                onClick={() => setShowSoldierControls(false)}
+                onClick={() => setShowDebugControls(false)}
                 style={{
                   padding: "2px 8px",
                   backgroundColor: "#ff4444",
@@ -1404,16 +1282,16 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
           {/* Позиция X */}
           <div style={{ marginBottom: "12px" }}>
             <label style={{ display: "block", marginBottom: "4px", fontSize: "11px" }}>
-              Позиция X: {soldierPosition.x.toFixed(1)}
+              Позиция X: {debugPosition.x.toFixed(1)}
             </label>
             <input
               type="range"
               min={CANVAS_PADDING}
               max={CANVAS_PADDING + GAME_WIDTH}
               step={1}
-              value={soldierPosition.x}
+              value={debugPosition.x}
               onChange={(e) =>
-                setSoldierPosition({ ...soldierPosition, x: Number(e.target.value) })
+                setDebugPosition({ ...debugPosition, x: Number(e.target.value) })
               }
               style={{ width: "100%" }}
             />
@@ -1422,16 +1300,16 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
           {/* Позиция Y (высота) */}
           <div style={{ marginBottom: "12px" }}>
             <label style={{ display: "block", marginBottom: "4px", fontSize: "11px" }}>
-              Позиция Y (высота): {soldierPosition.y.toFixed(1)}
+              Позиция Y (высота): {debugPosition.y.toFixed(1)}
             </label>
             <input
               type="range"
               min={-50}
               max={200}
               step={1}
-              value={soldierPosition.y}
+              value={debugPosition.y}
               onChange={(e) =>
-                setSoldierPosition({ ...soldierPosition, y: Number(e.target.value) })
+                setDebugPosition({ ...debugPosition, y: Number(e.target.value) })
               }
               style={{ width: "100%" }}
             />
@@ -1440,16 +1318,16 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
           {/* Позиция Z */}
           <div style={{ marginBottom: "12px" }}>
             <label style={{ display: "block", marginBottom: "4px", fontSize: "11px" }}>
-              Позиция Z: {soldierPosition.z.toFixed(1)}
+              Позиция Z: {debugPosition.z.toFixed(1)}
             </label>
             <input
               type="range"
               min={CANVAS_PADDING}
               max={CANVAS_PADDING + GAME_HEIGHT}
               step={1}
-              value={soldierPosition.z}
+              value={debugPosition.z}
               onChange={(e) =>
-                setSoldierPosition({ ...soldierPosition, z: Number(e.target.value) })
+                setDebugPosition({ ...debugPosition, z: Number(e.target.value) })
               }
               style={{ width: "100%" }}
             />
@@ -1458,15 +1336,15 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
           {/* Размер (Scale) */}
           <div style={{ marginBottom: "12px" }}>
             <label style={{ display: "block", marginBottom: "4px", fontSize: "11px" }}>
-              Размер (Scale): {soldierScale.toFixed(2)}x
+              Размер (Scale): {debugScale.toFixed(2)}x
             </label>
             <input
               type="range"
               min={0.1}
               max={50.0}
               step={0.1}
-              value={soldierScale}
-              onChange={(e) => setSoldierScale(Number(e.target.value))}
+              value={debugScale}
+              onChange={(e) => setDebugScale(Number(e.target.value))}
               style={{ width: "100%" }}
             />
           </div>
@@ -1476,8 +1354,8 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
             onClick={() => {
               const centerX = CANVAS_PADDING + GAME_WIDTH / 2;
               const centerZ = CANVAS_PADDING + GAME_HEIGHT / 2;
-              setSoldierPosition({ x: centerX, y: 0, z: centerZ });
-              setSoldierScale(1.0);
+              setDebugPosition({ x: centerX, y: 0, z: centerZ });
+              setDebugScale(30.0);
             }}
             style={{
               width: "100%",
@@ -1497,9 +1375,9 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
       )}
 
       {/* Кнопка для показа панели управления (если скрыта) */}
-      {!showSoldierControls && (
+      {!showDebugControls && (
         <button
-          onClick={() => setShowSoldierControls(true)}
+          onClick={() => setShowDebugControls(true)}
           style={{
             position: "absolute",
             top: 10,
@@ -1514,168 +1392,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
             zIndex: 1000,
           }}
         >
-          🎖️ Показать управление солдатом
-        </button>
-      )}
-
-      {/* Панель управления тестовым врагом */}
-      {showTestEnemyControls && (
-        <div
-          style={{
-            position: "absolute",
-            top: 10,
-            left: 10,
-            backgroundColor: "rgba(0, 0, 0, 0.85)",
-            padding: "15px",
-            borderRadius: "8px",
-            color: "#fff",
-            fontFamily: "monospace",
-            fontSize: "12px",
-            minWidth: "250px",
-            zIndex: 1000,
-            border: "1px solid #ff6600",
-          }}
-        >
-          <div style={{ marginBottom: "10px", borderBottom: "1px solid #444", paddingBottom: "8px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ margin: 0, color: "#ff6600", fontSize: "14px" }}>⚔️ Тестовый враг</h3>
-              <button
-                onClick={() => setShowTestEnemyControls(false)}
-                style={{
-                  padding: "2px 8px",
-                  backgroundColor: "#ff4444",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  fontSize: "10px",
-                }}
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-
-          {/* Позиция X */}
-          <div style={{ marginBottom: "12px" }}>
-            <label style={{ display: "block", marginBottom: "4px", fontSize: "11px" }}>
-              Позиция X: {testEnemyPosition.x.toFixed(1)}
-            </label>
-            <input
-              type="range"
-              min={CANVAS_PADDING}
-              max={CANVAS_PADDING + GAME_WIDTH}
-              step={1}
-              value={testEnemyPosition.x}
-              onChange={(e) =>
-                setTestEnemyPosition({ ...testEnemyPosition, x: Number(e.target.value) })
-              }
-              style={{ width: "100%" }}
-            />
-          </div>
-
-          {/* Позиция Y (высота) */}
-          <div style={{ marginBottom: "12px" }}>
-            <label style={{ display: "block", marginBottom: "4px", fontSize: "11px" }}>
-              Позиция Y (высота): {testEnemyPosition.y.toFixed(1)}
-            </label>
-            <input
-              type="range"
-              min={-50}
-              max={200}
-              step={1}
-              value={testEnemyPosition.y}
-              onChange={(e) =>
-                setTestEnemyPosition({ ...testEnemyPosition, y: Number(e.target.value) })
-              }
-              style={{ width: "100%" }}
-            />
-          </div>
-
-          {/* Позиция Z */}
-          <div style={{ marginBottom: "12px" }}>
-            <label style={{ display: "block", marginBottom: "4px", fontSize: "11px" }}>
-              Позиция Z: {testEnemyPosition.z.toFixed(1)}
-            </label>
-            <input
-              type="range"
-              min={CANVAS_PADDING}
-              max={CANVAS_PADDING + GAME_HEIGHT}
-              step={1}
-              value={testEnemyPosition.z}
-              onChange={(e) =>
-                setTestEnemyPosition({ ...testEnemyPosition, z: Number(e.target.value) })
-              }
-              style={{ width: "100%" }}
-            />
-          </div>
-
-          {/* Размер (Scale) */}
-          <div style={{ marginBottom: "12px" }}>
-            <label style={{ display: "block", marginBottom: "4px", fontSize: "11px" }}>
-              Размер (Scale): {testEnemyScale.toFixed(2)}x
-            </label>
-            <input
-              type="range"
-              min={0.1}
-              max={50.0}
-              step={0.1}
-              value={testEnemyScale}
-              onChange={(e) => setTestEnemyScale(Number(e.target.value))}
-              style={{ width: "100%" }}
-            />
-          </div>
-
-          {/* Кнопка сброса */}
-          <button
-            onClick={() => {
-              if (path.length > 0) {
-                const middleIndex = Math.floor(path.length / 2);
-                const centerPoint = path[middleIndex];
-                setTestEnemyPosition({
-                  x: centerPoint.x,
-                  y: 0,
-                  z: centerPoint.y,
-                });
-              }
-              setTestEnemyScale(1.0);
-            }}
-            style={{
-              width: "100%",
-              padding: "6px",
-              backgroundColor: "#444",
-              color: "#fff",
-              border: "1px solid #666",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "11px",
-              marginTop: "8px",
-            }}
-          >
-            🔄 Сбросить
-          </button>
-        </div>
-      )}
-
-      {/* Кнопка для показа панели управления тестовым врагом (если скрыта) */}
-      {!showTestEnemyControls && (
-        <button
-          onClick={() => setShowTestEnemyControls(true)}
-          style={{
-            position: "absolute",
-            top: 10,
-            left: 10,
-            padding: "8px 12px",
-            backgroundColor: "rgba(0, 0, 0, 0.7)",
-            color: "#fff",
-            border: "1px solid #ff6600",
-            borderRadius: "4px",
-            cursor: "pointer",
-            fontSize: "11px",
-            zIndex: 1000,
-          }}
-        >
-          ⚔️ Показать управление врагом
+          🔧 Показать дебаггер
         </button>
       )}
     </div>

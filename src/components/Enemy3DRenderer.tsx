@@ -117,8 +117,6 @@ class Enemy3DManager {
         height,
         configScale,
       } = this.createEnemyModel(config);
-      // НЕ добавляем в свою сцену, модель будет добавлена в основную сцену Game3DCanvas
-      // this.scene.add(enemyModel);
 
       // Сохраняем состояние врага
       this.enemies.set(enemyId, {
@@ -200,25 +198,6 @@ class Enemy3DManager {
         z: randomZ,
       };
     }
-  }
-
-  // Проверяем, завершена ли анимация смерти
-  public isDeathAnimationComplete(enemyId: string): boolean {
-    const enemy = this.enemies.get(enemyId);
-    if (!enemy) {
-      return false;
-    }
-
-    if (!enemy.isDying) {
-      return false;
-    }
-
-    const currentTime = Date.now() / 1000;
-    const totalDuration = enemy.deathDuration + enemy.fadeOutDuration;
-    const elapsed = currentTime - enemy.deathStartTime;
-    const isComplete = elapsed >= totalDuration;
-
-    return isComplete;
   }
 
   // Проверяем, находится ли враг в состоянии анимации смерти
@@ -400,13 +379,6 @@ class Enemy3DManager {
 
   public isLoaded(): boolean {
     return this.isModelLoaded;
-  }
-
-  public dispose() {
-    // Удаляем всех врагов
-    this.enemies.forEach((_, id) => {
-      this.removeEnemy(id);
-    });
   }
 }
 

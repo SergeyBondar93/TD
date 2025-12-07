@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { loadSpiderModel_Collada } from "../utils/modelLoader";
+import { loadSpiderModel_OBJ } from "../utils/modelLoader";
 import type { LoadedModel } from "../utils/modelLoader";
 import type { EnemyModelConfig } from "../config/gameData/enemies";
 
@@ -61,7 +61,7 @@ class Enemy3DManager {
 
   private async loadModel() {
     try {
-      this.baseModel = await loadSpiderModel_Collada();
+      this.baseModel = await loadSpiderModel_OBJ();
       this.isModelLoaded = true;
     } catch (error) {
       // Failed to load base model

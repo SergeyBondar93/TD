@@ -12,9 +12,6 @@ import {
 import { getEnemy3DManager } from "./Enemy3DRenderer";
 import { canPlaceTower } from "../core/logic/towers";
 import { TOWER_STATS } from "../config/gameData/towers";
-import { SOLDIER_MODEL } from "../config/gameData/enemies";
-import { generateId } from "../core/logic/math";
-import { ENEMY_SIZES } from "../types/game";
 
 // Константы для управления камерой
 const CAMERA_DISTANCE_MIN = 300; // Минимальная дистанция (приближение)
@@ -315,57 +312,6 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
       pathTurnPointsRef.current.set(`path-${i}`, sprite);
     }
   }, [path, isInitialized]);
-
-  // Тестовый враг в центре карты
-  useEffect(() => {
-    if (!sceneRef.current || !isInitialized) return;
-
-    const scene = sceneRef.current;
-    const enemy3DManager = enemy3DManagerRef.current;
-    const testEnemyId = "test-soldier-center";
-
-    // Проверяем, загружена ли модель
-    const checkAndAddTestEnemy = () => {
-      if (!enemy3DManager.isLoaded()) {
-        // Если модель еще не загружена, ждем немного и проверяем снова
-        setTimeout(checkAndAddTestEnemy, 100);
-        return;
-      }
-
-      // Проверяем, не добавлен ли уже тестовый враг
-      if (enemyMeshesRef.current.has(testEnemyId)) {
-        return;
-      }
-
-      // Центр карты
-      const centerX = CANVAS_PADDING + GAME_WIDTH / 2;
-      const centerY = CANVAS_PADDING + GAME_HEIGHT / 2;
-
-      // Создаем модель врага
-      const enemy3DModel = enemy3DManager.getOrCreateEnemy(
-        testEnemyId,
-        SOLDIER_MODEL
-      );
-
-      if (enemy3DModel) {
-        const mesh = enemy3DModel;
-        mesh.position.set(centerX, 0, centerY);
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-
-        // Увеличиваем базовый масштаб для видимости
-        // Модель имеет размер ~1.85 единиц, карта 740x540
-        // Нужен масштаб примерно 50-100 для нормальной видимости
-        const baseScale = 80; // Базовый масштаб для видимости
-        mesh.scale.set(baseScale, baseScale, baseScale);
-
-        scene.add(mesh);
-        enemyMeshesRef.current.set(testEnemyId, mesh);
-      }
-    };
-
-    checkAndAddTestEnemy();
-  }, [isInitialized]);
 
   // Preview башни при наведении
   useEffect(() => {

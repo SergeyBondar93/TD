@@ -71,6 +71,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
   // Храним 3D объекты врагов
   const enemyMeshesRef = useRef<Map<string, THREE.Object3D>>(new Map());
   const enemyHPSpritesRef = useRef<Map<string, THREE.Sprite>>(new Map());
+  const enemyPrevPositionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
   const pathTurnPointsRef = useRef<Map<string, THREE.Sprite>>(new Map());
   const towerMeshesRef = useRef<Map<string, THREE.Mesh>>(new Map());
   const towerArrowsRef = useRef<Map<string, THREE.Mesh>>(new Map());
@@ -517,6 +518,8 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
               scene.remove(hpSprite);
               enemyHPSpritesRef.current.delete(id);
             }
+            // Удаляем предыдущую позицию
+            enemyPrevPositionsRef.current.delete(id);
           }
         });
 
@@ -588,11 +591,29 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
 
           // Обновляем позицию и масштаб только для живых врагов
           if (mesh && !enemy.isDying) {
+            // Определяем, движется ли враг (сравниваем с предыдущей позицией)
+            const prevPos = enemyPrevPositionsRef.current.get(enemy.id);
+            const isMoving = prevPos
+              ? Math.abs(prevPos.x - enemy.position.x) > 0.1 ||
+                Math.abs(prevPos.y - enemy.position.y) > 0.1
+              : true; // Если нет предыдущей позиции, считаем что движется
+
+            // Обновляем анимацию
+            if (enemy.modelConfig) {
+              enemy3DManager.updateAnimation(enemy.id, deltaTime, isMoving);
+            }
+
             mesh.position.set(
               enemy.position.x,
               enemy.z ?? 0, // Используем z из врага, если задан (для дебаггера)
               enemy.position.y
             );
+
+            // Сохраняем текущую позицию для следующего кадра
+            enemyPrevPositionsRef.current.set(enemy.id, {
+              x: enemy.position.x,
+              y: enemy.position.y,
+            });
 
             // Обновляем масштаб модели при изменении размера врага
             if (enemy.modelConfig) {

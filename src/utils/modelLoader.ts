@@ -34,6 +34,12 @@ export async function loadSoldierModel(): Promise<LoadedModel> {
         const animations: THREE.AnimationClip[] = gltf.animations || [];
         const mixer = new THREE.AnimationMixer(scene);
         
+        // Логируем все доступные анимации
+        console.log('[ModelLoader] Доступные анимации модели:');
+        animations.forEach((anim, index) => {
+          console.log(`  [${index}] ${anim.name} (длительность: ${anim.duration.toFixed(2)}с)`);
+        });
+        
         // Вычисляем размеры модели для отладки
         const box = new THREE.Box3().setFromObject(scene);
         const size = box.getSize(new THREE.Vector3());

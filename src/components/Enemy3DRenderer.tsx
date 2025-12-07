@@ -14,6 +14,10 @@ function cloneModelWithSkeleton(source: THREE.Object3D): THREE.Object3D {
 interface EnemyRenderState {
   model: THREE.Group;
   config: EnemyModelConfig;
+  mixer: THREE.AnimationMixer;
+  idleAction: THREE.AnimationAction | null;
+  runAction: THREE.AnimationAction | null;
+  isMoving: boolean;
 }
 
 // Класс для управления 3D рендерингом врагов
@@ -37,8 +41,13 @@ class Enemy3DManager {
     }
   }
 
-  // Создаем новую модель для врага
-  private createEnemyModel(): THREE.Group {
+  // Создаем новую модель для врага с анимациями
+  private createEnemyModel(): {
+    model: THREE.Group;
+    mixer: THREE.AnimationMixer;
+    idleAction: THREE.AnimationAction | null;
+    runAction: THREE.AnimationAction | null;
+  } {
     if (!this.baseModel) {
       throw new Error("Base model not loaded");
     }
@@ -46,12 +55,33 @@ class Enemy3DManager {
     // Клонируем базовую модель со скелетом
     const model = cloneModelWithSkeleton(this.baseModel.scene) as THREE.Group;
 
-    // Отладочный лог только для первого создания модели
-    if (!this.enemies.size) {
-      console.log('[Enemy3DRenderer] ✅ Создана модель врага');
+    // Создаем mixer для анимаций
+    const mixer = new THREE.AnimationMixer(model);
+    const animations = this.baseModel.animations;
+
+    // Инициализируем анимации
+    let idleAction: THREE.AnimationAction | null = null;
+    let runAction: THREE.AnimationAction | null = null;
+
+    if (animations.length > 0) {
+      // Анимация Idle (индекс 0)
+      idleAction = mixer.clipAction(animations[0]);
+      idleAction.play();
     }
 
-    return model;
+    if (animations.length > 1) {
+      // Анимация Run (индекс 1)
+      runAction = mixer.clipAction(animations[1]);
+      runAction.play();
+      runAction.setEffectiveWeight(0); // Начинаем с весом 0 (не активна)
+    }
+
+    // Отладочный лог только для первого создания модели
+    if (!this.enemies.size) {
+      console.log('[Enemy3DRenderer] ✅ Создана модель врага с анимациями');
+    }
+
+    return { model, mixer, idleAction, runAction };
   }
 
   // Получаем или создаем модель для врага
@@ -76,12 +106,16 @@ class Enemy3DManager {
 
     // Создаем новую модель для врага
     try {
-      const enemyModel = this.createEnemyModel();
+      const { model, mixer, idleAction, runAction } = this.createEnemyModel();
 
       // Сохраняем состояние врага
       this.enemies.set(enemyId, {
-        model: enemyModel,
+        model,
         config,
+        mixer,
+        idleAction,
+        runAction,
+        isMoving: false,
       });
 
       // Логируем только первые несколько созданий
@@ -89,7 +123,7 @@ class Enemy3DManager {
         console.log(`[Enemy3DRenderer] ✅ Создан враг ${enemyId}, всего врагов: ${this.enemies.size}`);
       }
 
-      return enemyModel;
+      return model;
     } catch (error) {
       console.error(`[Enemy3DRenderer] ❌ Ошибка создания модели для врага ${enemyId}:`, error);
       return null;
@@ -101,6 +135,40 @@ class Enemy3DManager {
     const enemy = this.enemies.get(enemyId);
     if (enemy) {
       this.enemies.delete(enemyId);
+    }
+  }
+
+  // Обновляем анимацию врага
+  public updateAnimation(enemyId: string, deltaTime: number, isMoving: boolean) {
+    const enemy = this.enemies.get(enemyId);
+    if (!enemy) {
+      return;
+    }
+
+    // Обновляем mixer
+    enemy.mixer.update(deltaTime);
+
+    // Переключаем анимацию в зависимости от состояния движения
+    if (enemy.isMoving !== isMoving) {
+      enemy.isMoving = isMoving;
+
+      if (isMoving) {
+        // Переключаемся на Run
+        if (enemy.idleAction) {
+          enemy.idleAction.setEffectiveWeight(0);
+        }
+        if (enemy.runAction) {
+          enemy.runAction.setEffectiveWeight(1);
+        }
+      } else {
+        // Переключаемся на Idle
+        if (enemy.idleAction) {
+          enemy.idleAction.setEffectiveWeight(1);
+        }
+        if (enemy.runAction) {
+          enemy.runAction.setEffectiveWeight(0);
+        }
+      }
     }
   }
 

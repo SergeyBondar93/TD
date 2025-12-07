@@ -1,7 +1,5 @@
 import * as THREE from "three";
-import { ColladaLoader } from "three/examples/jsm/loaders/ColladaLoader.js";
-import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
-import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 export interface LoadedModel {
   scene: THREE.Group;
@@ -9,142 +7,71 @@ export interface LoadedModel {
   mixer: THREE.AnimationMixer;
 }
 
-let spiderModel: LoadedModel | null = null;
-let isLoadingSpider = false;
-const spiderLoadCallbacks: ((model: LoadedModel) => void)[] = [];
+let soldierModel: LoadedModel | null = null;
+let isLoadingSoldier = false;
+const soldierLoadCallbacks: ((model: LoadedModel) => void)[] = [];
 
-let spiderModelFBX: LoadedModel | null = null;
-let isLoadingSpiderFBX = false;
-const spiderFBXLoadCallbacks: ((model: LoadedModel) => void)[] = [];
-
-let spiderModelOBJ: LoadedModel | null = null;
-let isLoadingSpiderOBJ = false;
-const spiderOBJLoadCallbacks: ((model: LoadedModel) => void)[] = [];
-
-export async function loadSpiderModel_Collada(): Promise<LoadedModel> {
-  if (spiderModel) {
-    return spiderModel;
+export async function loadSoldierModel(): Promise<LoadedModel> {
+  if (soldierModel) {
+    return soldierModel;
   }
 
-  if (isLoadingSpider) {
+  if (isLoadingSoldier) {
     return new Promise((resolve) => {
-      spiderLoadCallbacks.push(resolve);
+      soldierLoadCallbacks.push(resolve);
     });
   }
 
-  isLoadingSpider = true;
+  isLoadingSoldier = true;
 
   return new Promise((resolve, reject) => {
-    const loader = new ColladaLoader();
-    loader.setPath("/models/spider/dae/");
+    const loader = new GLTFLoader();
+    console.log('[ModelLoader] Начинаю загрузку модели: /models/gltf/Soldier.glb');
     loader.load(
-      "spider.dae",
-      (object) => {
-        const scene = object.scene as unknown as THREE.Group;
-        const animations: THREE.AnimationClip[] = [];
+      "/models/gltf/Soldier.glb",
+      (gltf) => {
+        const scene = gltf.scene;
+        const animations: THREE.AnimationClip[] = gltf.animations || [];
         const mixer = new THREE.AnimationMixer(scene);
-        spiderModel = { scene, animations, mixer };
-        isLoadingSpider = false;
-        spiderLoadCallbacks.forEach((cb) => cb(spiderModel!));
-        spiderLoadCallbacks.length = 0;
-        resolve(spiderModel);
-      },
-      undefined,
-      (error) => {
-        isLoadingSpider = false;
-        reject(error);
-      }
-    );
-  });
-}
-
-export async function loadSpiderModel_FBX(): Promise<LoadedModel> {
-  if (spiderModelFBX) {
-    return spiderModelFBX;
-  }
-
-  if (isLoadingSpiderFBX) {
-    return new Promise((resolve) => {
-      spiderFBXLoadCallbacks.push(resolve);
-    });
-  }
-
-  isLoadingSpiderFBX = true;
-
-  return new Promise((resolve, reject) => {
-    const loader = new FBXLoader();
-    loader.setPath("/models/spider/fbx/");
-    loader.load(
-      "Spider.fbx",
-      (object) => {
-        const scene = object as THREE.Group;
-        const animations: THREE.AnimationClip[] = object.animations || [];
-        const mixer = new THREE.AnimationMixer(scene);
-        spiderModelFBX = { scene, animations, mixer };
-        isLoadingSpiderFBX = false;
-        spiderFBXLoadCallbacks.forEach((cb) => cb(spiderModelFBX!));
-        spiderFBXLoadCallbacks.length = 0;
-        resolve(spiderModelFBX);
-      },
-      undefined,
-      (error) => {
-        isLoadingSpiderFBX = false;
-        reject(error);
-      }
-    );
-  });
-}
-
-export async function loadSpiderModel_OBJ(): Promise<LoadedModel> {
-  if (spiderModelOBJ) {
-    return spiderModelOBJ;
-  }
-
-  if (isLoadingSpiderOBJ) {
-    return new Promise((resolve) => {
-      spiderOBJLoadCallbacks.push(resolve);
-    });
-  }
-
-  isLoadingSpiderOBJ = true;
-
-  return new Promise((resolve, reject) => {
-    const mtlLoader = new MTLLoader();
-    const objLoader = new OBJLoader();
-    const path = "/models/spider/obj/";
-
-    // Сначала загружаем материалы
-    mtlLoader.setPath(path);
-    mtlLoader.load(
-      "Only_Spider_with_Animations_Export.mtl",
-      (materials) => {
-        materials.preload();
-        objLoader.setMaterials(materials);
-        objLoader.setPath(path);
-
-        // Затем загружаем модель
-        objLoader.load(
-          "Only_Spider_with_Animations_Export.obj",
-          (object) => {
-            const scene = object as THREE.Group;
-            const animations: THREE.AnimationClip[] = [];
-            const mixer = new THREE.AnimationMixer(scene);
-            spiderModelOBJ = { scene, animations, mixer };
-            isLoadingSpiderOBJ = false;
-            spiderOBJLoadCallbacks.forEach((cb) => cb(spiderModelOBJ!));
-            spiderOBJLoadCallbacks.length = 0;
-            resolve(spiderModelOBJ);
-          },
-          undefined,
-          (error) => {
-            isLoadingSpiderOBJ = false;
-            reject(error);
+        
+        // Вычисляем размеры модели для отладки
+        const box = new THREE.Box3().setFromObject(scene);
+        const size = box.getSize(new THREE.Vector3());
+        const center = box.getCenter(new THREE.Vector3());
+        
+        // Подсчитываем меши и материалы
+        let meshCount = 0;
+        let materialCount = 0;
+        scene.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            meshCount++;
+            if (child.material) {
+              materialCount++;
+            }
           }
-        );
+        });
+        
+        console.log('[ModelLoader] ✅ Модель успешно загружена:', {
+          animations: animations.length,
+          size: { x: size.x.toFixed(2), y: size.y.toFixed(2), z: size.z.toFixed(2) },
+          center: { x: center.x.toFixed(2), y: center.y.toFixed(2), z: center.z.toFixed(2) },
+          children: scene.children.length,
+          meshes: meshCount,
+          materials: materialCount,
+          visible: scene.visible
+        });
+        
+        soldierModel = { scene, animations, mixer };
+        isLoadingSoldier = false;
+        soldierLoadCallbacks.forEach((cb) => cb(soldierModel!));
+        soldierLoadCallbacks.length = 0;
+        resolve(soldierModel);
       },
       undefined,
       (error) => {
-        isLoadingSpiderOBJ = false;
+        console.error('!! Soldier model not loaded', error);
+        
+        isLoadingSoldier = false;
         reject(error);
       }
     );

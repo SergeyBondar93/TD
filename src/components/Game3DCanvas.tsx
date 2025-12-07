@@ -12,6 +12,9 @@ import {
 import { getEnemy3DManager } from "./Enemy3DRenderer";
 import { canPlaceTower } from "../core/logic/towers";
 import { TOWER_STATS } from "../config/gameData/towers";
+import { SOLDIER_MODEL } from "../config/gameData/enemies";
+import { generateId } from "../core/logic/math";
+import { ENEMY_SIZES } from "../types/game";
 
 // Константы для управления камерой
 const CAMERA_DISTANCE_MIN = 300; // Минимальная дистанция (приближение)
@@ -61,7 +64,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
   });
 
   // Храним 3D объекты врагов
-  const enemyMeshesRef = useRef<Map<string, THREE.Mesh>>(new Map());
+  const enemyMeshesRef = useRef<Map<string, THREE.Object3D>>(new Map());
   const enemyHPSpritesRef = useRef<Map<string, THREE.Sprite>>(new Map());
   const towerMeshesRef = useRef<Map<string, THREE.Mesh>>(new Map());
   const towerArrowsRef = useRef<Map<string, THREE.Mesh>>(new Map());
@@ -266,6 +269,57 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
     }
   }, [path, isInitialized]);
 
+  // Тестовый враг в центре карты
+  useEffect(() => {
+    if (!sceneRef.current || !isInitialized) return;
+
+    const scene = sceneRef.current;
+    const enemy3DManager = enemy3DManagerRef.current;
+    const testEnemyId = "test-soldier-center";
+
+    // Проверяем, загружена ли модель
+    const checkAndAddTestEnemy = () => {
+      if (!enemy3DManager.isLoaded()) {
+        // Если модель еще не загружена, ждем немного и проверяем снова
+        setTimeout(checkAndAddTestEnemy, 100);
+        return;
+      }
+
+      // Проверяем, не добавлен ли уже тестовый враг
+      if (enemyMeshesRef.current.has(testEnemyId)) {
+        return;
+      }
+
+      // Центр карты
+      const centerX = CANVAS_PADDING + GAME_WIDTH / 2;
+      const centerY = CANVAS_PADDING + GAME_HEIGHT / 2;
+
+      // Создаем модель врага
+      const enemy3DModel = enemy3DManager.getOrCreateEnemy(
+        testEnemyId,
+        SOLDIER_MODEL
+      );
+
+      if (enemy3DModel) {
+        const mesh = enemy3DModel;
+        mesh.position.set(centerX, 0, centerY);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+
+        // Увеличиваем базовый масштаб для видимости
+        // Модель имеет размер ~1.85 единиц, карта 740x540
+        // Нужен масштаб примерно 50-100 для нормальной видимости
+        const baseScale = 80; // Базовый масштаб для видимости
+        mesh.scale.set(baseScale, baseScale, baseScale);
+
+        scene.add(mesh);
+        enemyMeshesRef.current.set(testEnemyId, mesh);
+      }
+    };
+
+    checkAndAddTestEnemy();
+  }, [isInitialized]);
+
   // Preview башни при наведении
   useEffect(() => {
     if (!sceneRef.current || !isInitialized) return;
@@ -427,8 +481,27 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
               // Применяем scale один раз
               mesh.scale.set(totalScale, totalScale, totalScale);
 
+              // Отладочные логи только для первых нескольких врагов
+              if (enemyMeshesRef.current.size < 3) {
+                const box = new THREE.Box3().setFromObject(mesh);
+                const size = box.getSize(new THREE.Vector3());
+                console.log(`[Game3DCanvas] ✅ Добавлен враг ${enemy.id} в сцену:`, {
+                  position: { x: mesh.position.x.toFixed(2), y: mesh.position.y.toFixed(2), z: mesh.position.z.toFixed(2) },
+                  scale: { x: mesh.scale.x.toFixed(3), y: mesh.scale.y.toFixed(3), z: mesh.scale.z.toFixed(3) },
+                  totalScale: totalScale.toFixed(3),
+                  meshSize: { x: size.x.toFixed(2), y: size.y.toFixed(2), z: size.z.toFixed(2) },
+                  children: mesh.children.length,
+                  visible: mesh.visible
+                });
+              }
+
               scene.add(mesh);
               enemyMeshesRef.current.set(enemy.id, mesh);
+            } else {
+              // Логируем только первые несколько раз
+              if (enemyMeshesRef.current.size === 0) {
+                console.warn(`[Game3DCanvas] ⚠️ Не удалось получить модель для врага ${enemy.id}`);
+              }
             }
 
             // Создаем HP sprite

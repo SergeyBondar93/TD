@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { loadSpiderModel_OBJ } from "../utils/modelLoader";
+import { loadSoldierModel } from "../utils/modelLoader";
 import type { LoadedModel } from "../utils/modelLoader";
 import type { EnemyModelConfig } from "../config/gameData/enemies";
 
@@ -61,10 +61,12 @@ class Enemy3DManager {
 
   private async loadModel() {
     try {
-      this.baseModel = await loadSpiderModel_OBJ();
+      console.log('[Enemy3DRenderer] Загрузка базовой модели...');
+      this.baseModel = await loadSoldierModel();
       this.isModelLoaded = true;
+      console.log('[Enemy3DRenderer] ✅ Базовая модель загружена, готова к использованию');
     } catch (error) {
-      // Failed to load base model
+      console.error('[Enemy3DRenderer] ❌ Ошибка загрузки базовой модели:', error);
     }
   }
 
@@ -96,9 +98,20 @@ class Enemy3DManager {
 
     // НЕ применяем scale здесь - он будет применен в Game3DCanvas вместе с sizeScale
     // Просто сохраняем значение scale из конфигурации
-    const configScale = config.scale / 100;
+    const configScale = config.scale / 20;
     // Добавляем модель в группу
     enemyGroup.add(modelClone);
+
+    // Отладочный лог только для первого создания модели
+    if (!this.enemies.size) {
+      console.log('[Enemy3DRenderer] Создана модель врага:', {
+        originalSize: { x: size.x.toFixed(2), y: size.y.toFixed(2), z: size.z.toFixed(2) },
+        originalCenter: { x: center.x.toFixed(2), y: center.y.toFixed(2), z: center.z.toFixed(2) },
+        modelClonePosition: { x: modelClone.position.x.toFixed(2), y: modelClone.position.y.toFixed(2), z: modelClone.position.z.toFixed(2) },
+        configScale: configScale.toFixed(3),
+        meshCount: modelClone.children.length
+      });
+    }
 
     return { group: enemyGroup, modelClone, height, configScale };
   }
@@ -109,6 +122,10 @@ class Enemy3DManager {
     config: EnemyModelConfig
   ): THREE.Group | null {
     if (!this.isModelLoaded) {
+      // Логируем только первые несколько раз, чтобы не спамить
+      if (this.enemies.size === 0) {
+        console.warn('[Enemy3DRenderer] ⚠️ Модель еще не загружена, враг не может быть создан');
+      }
       return null;
     }
 
@@ -146,8 +163,14 @@ class Enemy3DManager {
         config,
       });
 
+      // Логируем только первые несколько созданий
+      if (this.enemies.size <= 3) {
+        console.log(`[Enemy3DRenderer] ✅ Создан враг ${enemyId}, всего врагов: ${this.enemies.size}`);
+      }
+
       return enemyModel;
     } catch (error) {
+      console.error(`[Enemy3DRenderer] ❌ Ошибка создания модели для врага ${enemyId}:`, error);
       return null;
     }
   }

@@ -77,6 +77,28 @@ export const SPIDER_MODEL: EnemyModelConfig = {
   },
 };
 
+export const SOLDIER_MODEL: EnemyModelConfig = {
+  modelType: "spider", // Используем тот же тип, но модель будет загружена из Soldier.glb
+  scale: 100, // 100% от базового размера
+  rotationOffset: 0, // Без поворота
+  animations: {
+    walk: {
+      enabled: true,
+      bobAmount: 0.05, // Покачивание вверх-вниз
+      swayAmount: 0.12, // Покачивание в стороны
+      tiltAmount: 0.15, // Наклон
+      speed: 8, // Скорость анимации
+      rotationOffset: 0, // Без поправки
+    },
+    death: {
+      duration: 2.0, // 2 секунды переворачивания
+      fadeOutDuration: 1.0, // 1 секунда растворения
+      flipOver: { x: 0.2, y: 0.2, z: 0.2, easeFunction: "easeOut" },
+      knockbackDistance: 15,
+    },
+  },
+};
+
 // ============================================
 // 15 БАЗОВЫХ ТИПОВ ВРАГОВ
 // Используются на всех уровнях с модификаторами

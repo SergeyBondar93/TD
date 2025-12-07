@@ -13,6 +13,7 @@ import {
 import { getEnemy3DManager } from "./Enemy3DRenderer";
 import { canPlaceTower } from "../core/logic/towers";
 import { TOWER_STATS } from "../config/gameData/towers";
+import { SOLDIER_MODEL } from "../config/gameData/enemies";
 
 // Константы для управления камерой
 const CAMERA_DISTANCE_MIN = 300; // Минимальная дистанция (приближение)
@@ -94,6 +95,17 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
   });
   const [soldierScale, setSoldierScale] = useState(1.0);
   const [showSoldierControls, setShowSoldierControls] = useState(true);
+  
+  // Состояние для управления тестовым врагом
+  const testEnemyMeshRef = useRef<THREE.Group | null>(null);
+  const [testEnemyPosition, setTestEnemyPosition] = useState({
+    x: 0,
+    y: 0,
+    z: 0,
+  });
+  const [testEnemyScale, setTestEnemyScale] = useState(1.0);
+  const [testEnemySize, setTestEnemySize] = useState(100);
+  const [showTestEnemyControls, setShowTestEnemyControls] = useState(true);
 
   // Инициализация Three.js сцены
   useEffect(() => {
@@ -1111,6 +1123,81 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
     }
   }, [soldierPosition, soldierScale]);
 
+  // Вычисляем центр пути для тестового врага
+  useEffect(() => {
+    if (path.length > 0) {
+      // Находим среднюю точку пути
+      const middleIndex = Math.floor(path.length / 2);
+      const centerPoint = path[middleIndex];
+      setTestEnemyPosition({
+        x: centerPoint.x,
+        y: 0,
+        z: centerPoint.y, // y в path = z в 3D
+      });
+    }
+  }, [path]);
+
+  // Создаем тестового врага (один раз при инициализации)
+  useEffect(() => {
+    if (!sceneRef.current || !isInitialized) return;
+
+    const scene = sceneRef.current;
+    const enemy3DManager = enemy3DManagerRef.current;
+
+    // Проверяем, не создан ли уже тестовый враг
+    if (testEnemyMeshRef.current) return;
+
+    // Создаем тестового врага когда модель загружена
+    const checkAndCreate = () => {
+      if (enemy3DManager.isLoaded() && !testEnemyMeshRef.current) {
+        const testEnemyId = "test-enemy-debug";
+        const enemy3DModel = enemy3DManager.getOrCreateEnemy(
+          testEnemyId,
+          SOLDIER_MODEL
+        );
+
+        if (enemy3DModel) {
+          testEnemyMeshRef.current = enemy3DModel;
+          enemy3DModel.castShadow = true;
+          enemy3DModel.receiveShadow = true;
+          scene.add(enemy3DModel);
+          console.log("[Game3DCanvas] ✅ Тестовый враг создан");
+        }
+      }
+    };
+
+    // Проверяем сразу и через небольшую задержку (на случай если модель еще загружается)
+    checkAndCreate();
+    const timeout = setTimeout(checkAndCreate, 500);
+
+    return () => {
+      clearTimeout(timeout);
+      if (testEnemyMeshRef.current && sceneRef.current) {
+        sceneRef.current.remove(testEnemyMeshRef.current);
+        testEnemyMeshRef.current = null;
+      }
+    };
+  }, [isInitialized]);
+
+  // Обновляем позицию и размер тестового врага
+  useEffect(() => {
+    if (testEnemyMeshRef.current) {
+      const mesh = testEnemyMeshRef.current;
+      mesh.position.set(
+        testEnemyPosition.x,
+        testEnemyPosition.y,
+        testEnemyPosition.z
+      );
+
+      // Обновляем масштаб
+      const configScale = SOLDIER_MODEL.scale || 100;
+      const configScaleFactor = configScale / 100;
+      const sizeScale = testEnemySize / 100;
+      const totalScale = configScaleFactor * sizeScale * testEnemyScale;
+      mesh.scale.set(totalScale, totalScale, totalScale);
+    }
+  }, [testEnemyPosition, testEnemyScale, testEnemySize]);
+
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     // Начинаем перетаскивание для панорамирования камеры
     if (e.button === 0) {
@@ -1411,6 +1498,184 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
           }}
         >
           🎖️ Показать управление солдатом
+        </button>
+      )}
+
+      {/* Панель управления тестовым врагом */}
+      {showTestEnemyControls && (
+        <div
+          style={{
+            position: "absolute",
+            top: 10,
+            left: 10,
+            backgroundColor: "rgba(0, 0, 0, 0.85)",
+            padding: "15px",
+            borderRadius: "8px",
+            color: "#fff",
+            fontFamily: "monospace",
+            fontSize: "12px",
+            minWidth: "250px",
+            zIndex: 1000,
+            border: "1px solid #ff6600",
+          }}
+        >
+          <div style={{ marginBottom: "10px", borderBottom: "1px solid #444", paddingBottom: "8px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0, color: "#ff6600", fontSize: "14px" }}>⚔️ Тестовый враг</h3>
+              <button
+                onClick={() => setShowTestEnemyControls(false)}
+                style={{
+                  padding: "2px 8px",
+                  backgroundColor: "#ff4444",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "10px",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          {/* Позиция X */}
+          <div style={{ marginBottom: "12px" }}>
+            <label style={{ display: "block", marginBottom: "4px", fontSize: "11px" }}>
+              Позиция X: {testEnemyPosition.x.toFixed(1)}
+            </label>
+            <input
+              type="range"
+              min={CANVAS_PADDING}
+              max={CANVAS_PADDING + GAME_WIDTH}
+              step={1}
+              value={testEnemyPosition.x}
+              onChange={(e) =>
+                setTestEnemyPosition({ ...testEnemyPosition, x: Number(e.target.value) })
+              }
+              style={{ width: "100%" }}
+            />
+          </div>
+
+          {/* Позиция Y (высота) */}
+          <div style={{ marginBottom: "12px" }}>
+            <label style={{ display: "block", marginBottom: "4px", fontSize: "11px" }}>
+              Позиция Y (высота): {testEnemyPosition.y.toFixed(1)}
+            </label>
+            <input
+              type="range"
+              min={-50}
+              max={200}
+              step={1}
+              value={testEnemyPosition.y}
+              onChange={(e) =>
+                setTestEnemyPosition({ ...testEnemyPosition, y: Number(e.target.value) })
+              }
+              style={{ width: "100%" }}
+            />
+          </div>
+
+          {/* Позиция Z */}
+          <div style={{ marginBottom: "12px" }}>
+            <label style={{ display: "block", marginBottom: "4px", fontSize: "11px" }}>
+              Позиция Z: {testEnemyPosition.z.toFixed(1)}
+            </label>
+            <input
+              type="range"
+              min={CANVAS_PADDING}
+              max={CANVAS_PADDING + GAME_HEIGHT}
+              step={1}
+              value={testEnemyPosition.z}
+              onChange={(e) =>
+                setTestEnemyPosition({ ...testEnemyPosition, z: Number(e.target.value) })
+              }
+              style={{ width: "100%" }}
+            />
+          </div>
+
+          {/* Размер врага (Size) */}
+          <div style={{ marginBottom: "12px" }}>
+            <label style={{ display: "block", marginBottom: "4px", fontSize: "11px" }}>
+              Size: {testEnemySize}
+            </label>
+            <input
+              type="range"
+              min={0.01}
+              max={200}
+              step={0.05}
+              value={testEnemySize}
+              onChange={(e) => setTestEnemySize(Number(e.target.value))}
+              style={{ width: "100%" }}
+            />
+          </div>
+
+          {/* Размер (Scale) */}
+          <div style={{ marginBottom: "12px" }}>
+            <label style={{ display: "block", marginBottom: "4px", fontSize: "11px" }}>
+              Размер (Scale): {testEnemyScale.toFixed(2)}x
+            </label>
+            <input
+              type="range"
+              min={0.1}
+              max={50.0}
+              step={0.1}
+              value={testEnemyScale}
+              onChange={(e) => setTestEnemyScale(Number(e.target.value))}
+              style={{ width: "100%" }}
+            />
+          </div>
+
+          {/* Кнопка сброса */}
+          <button
+            onClick={() => {
+              if (path.length > 0) {
+                const middleIndex = Math.floor(path.length / 2);
+                const centerPoint = path[middleIndex];
+                setTestEnemyPosition({
+                  x: centerPoint.x,
+                  y: 0,
+                  z: centerPoint.y,
+                });
+              }
+              setTestEnemyScale(1.0);
+              setTestEnemySize(100);
+            }}
+            style={{
+              width: "100%",
+              padding: "6px",
+              backgroundColor: "#444",
+              color: "#fff",
+              border: "1px solid #666",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontSize: "11px",
+              marginTop: "8px",
+            }}
+          >
+            🔄 Сбросить
+          </button>
+        </div>
+      )}
+
+      {/* Кнопка для показа панели управления тестовым врагом (если скрыта) */}
+      {!showTestEnemyControls && (
+        <button
+          onClick={() => setShowTestEnemyControls(true)}
+          style={{
+            position: "absolute",
+            top: 10,
+            left: 10,
+            padding: "8px 12px",
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            color: "#fff",
+            border: "1px solid #ff6600",
+            borderRadius: "4px",
+            cursor: "pointer",
+            fontSize: "11px",
+            zIndex: 1000,
+          }}
+        >
+          ⚔️ Показать управление врагом
         </button>
       )}
     </div>

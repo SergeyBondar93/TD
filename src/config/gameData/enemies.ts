@@ -57,7 +57,7 @@ const SPAWN_DELAY = {
 
 export const SPIDER_MODEL: EnemyModelConfig = {
   modelType: "spider",
-  scale: 40, // 20% от базового размера
+  scale: 4000, // 20% от базового размера
   rotationOffset: Math.PI, // Паук смотрит назад, поворачиваем на 180°
   animations: {
     walk: {
@@ -79,7 +79,7 @@ export const SPIDER_MODEL: EnemyModelConfig = {
 
 export const SOLDIER_MODEL: EnemyModelConfig = {
   modelType: "spider", // Используем тот же тип, но модель будет загружена из Soldier.glb
-  scale: 100, // 100% от базового размера
+  scale: 4000, // 40 раз больше оригинала (100 * 40 = 4000)
   rotationOffset: 0, // Без поворота
   animations: {
     walk: {
@@ -113,7 +113,7 @@ const SCOUT: EnemyClass = {
   baseSpeed: 75,
   baseReward: 1,
   spawnDelay: SPAWN_DELAY.INFANTRY,
-  modelConfig: SPIDER_MODEL,
+  modelConfig: SOLDIER_MODEL,
 };
 
 const SOLDIER: EnemyClass = {
@@ -124,7 +124,7 @@ const SOLDIER: EnemyClass = {
   baseSpeed: 60,
   baseReward: 1,
   spawnDelay: SPAWN_DELAY.INFANTRY,
-  modelConfig: SPIDER_MODEL,
+  modelConfig: SOLDIER_MODEL,
 };
 
 const VETERAN: EnemyClass = {
@@ -135,7 +135,7 @@ const VETERAN: EnemyClass = {
   baseSpeed: 55,
   baseReward: 2,
   spawnDelay: SPAWN_DELAY.INFANTRY,
-  modelConfig: SPIDER_MODEL,
+  modelConfig: SOLDIER_MODEL,
 };
 
 const COMMANDO: EnemyClass = {
@@ -146,7 +146,7 @@ const COMMANDO: EnemyClass = {
   baseSpeed: 85,
   baseReward: 2,
   spawnDelay: SPAWN_DELAY.INFANTRY,
-  modelConfig: SPIDER_MODEL,
+  modelConfig: SOLDIER_MODEL,
 };
 
 const HEAVY_INFANTRY: EnemyClass = {
@@ -157,7 +157,7 @@ const HEAVY_INFANTRY: EnemyClass = {
   baseSpeed: 50,
   baseReward: 2,
   spawnDelay: SPAWN_DELAY.INFANTRY,
-  modelConfig: SPIDER_MODEL,
+  modelConfig: SOLDIER_MODEL,
 };
 
 // --- ЛЕГКИЕ ТАНКИ (3 типа) ---
@@ -169,7 +169,7 @@ const LIGHT_TANK: EnemyClass = {
   baseSpeed: 55,
   baseReward: 3,
   spawnDelay: SPAWN_DELAY.TANK_SMALL,
-  modelConfig: SPIDER_MODEL,
+  modelConfig: SOLDIER_MODEL,
 };
 
 const FAST_TANK: EnemyClass = {
@@ -180,7 +180,7 @@ const FAST_TANK: EnemyClass = {
   baseSpeed: 70,
   baseReward: 3,
   spawnDelay: SPAWN_DELAY.TANK_SMALL,
-  modelConfig: SPIDER_MODEL,
+  modelConfig: SOLDIER_MODEL,
 };
 
 const ARMORED_TRANSPORT: EnemyClass = {
@@ -191,7 +191,7 @@ const ARMORED_TRANSPORT: EnemyClass = {
   baseSpeed: 50,
   baseReward: 4,
   spawnDelay: SPAWN_DELAY.TANK_SMALL,
-  modelConfig: SPIDER_MODEL,
+  modelConfig: SOLDIER_MODEL,
 };
 
 // --- СРЕДНИЕ ТАНКИ (4 типа) ---
@@ -203,7 +203,7 @@ const MEDIUM_TANK: EnemyClass = {
   baseSpeed: 50,
   baseReward: 5,
   spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
-  modelConfig: SPIDER_MODEL,
+  modelConfig: SOLDIER_MODEL,
 };
 
 const BATTLE_TANK: EnemyClass = {
@@ -214,7 +214,7 @@ const BATTLE_TANK: EnemyClass = {
   baseSpeed: 55,
   baseReward: 6,
   spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
-  modelConfig: SPIDER_MODEL,
+  modelConfig: SOLDIER_MODEL,
 };
 
 const ASSAULT_TANK: EnemyClass = {
@@ -225,7 +225,7 @@ const ASSAULT_TANK: EnemyClass = {
   baseSpeed: 60,
   baseReward: 6,
   spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
-  modelConfig: SPIDER_MODEL,
+  modelConfig: SOLDIER_MODEL,
 };
 
 const SIEGE_TANK: EnemyClass = {
@@ -236,7 +236,7 @@ const SIEGE_TANK: EnemyClass = {
   baseSpeed: 45,
   baseReward: 7,
   spawnDelay: SPAWN_DELAY.TANK_MEDIUM,
-  modelConfig: SPIDER_MODEL,
+  modelConfig: SOLDIER_MODEL,
 };
 
 // --- ТЯЖЕЛЫЕ ТАНКИ (3 типа) ---
@@ -248,7 +248,7 @@ const HEAVY_TANK: EnemyClass = {
   baseSpeed: 45,
   baseReward: 8,
   spawnDelay: SPAWN_DELAY.TANK_LARGE,
-  modelConfig: SPIDER_MODEL,
+  modelConfig: SOLDIER_MODEL,
 };
 
 const BEHEMOTH: EnemyClass = {
@@ -259,7 +259,7 @@ const BEHEMOTH: EnemyClass = {
   baseSpeed: 40,
   baseReward: 10,
   spawnDelay: SPAWN_DELAY.TANK_LARGE,
-  modelConfig: SPIDER_MODEL,
+  modelConfig: SOLDIER_MODEL,
 };
 
 const JUGGERNAUT: EnemyClass = {
@@ -270,7 +270,7 @@ const JUGGERNAUT: EnemyClass = {
   baseSpeed: 35,
   baseReward: 12,
   spawnDelay: SPAWN_DELAY.TANK_LARGE,
-  modelConfig: SPIDER_MODEL,
+  modelConfig: SOLDIER_MODEL,
 };
 
 // --- БОСС ---
@@ -282,7 +282,7 @@ const BOSS: EnemyClass = {
   baseSpeed: 30,
   baseReward: 100,
   spawnDelay: 0,
-  modelConfig: { ...SPIDER_MODEL, scale: 50 }, // Босс больше (50% вместо 20%)
+  modelConfig: { ...SOLDIER_MODEL, scale: 4000 }, // Босс использует ту же модель солдата с увеличенным размером
 };
 
 // ============================================

@@ -13,7 +13,6 @@ import {
 import { getEnemy3DManager } from "./Enemy3DRenderer";
 import { canPlaceTower } from "../core/logic/towers";
 import { TOWER_STATS } from "../config/gameData/towers";
-import { SOLDIER_MODEL } from "../config/gameData/enemies";
 
 // Константы для управления камерой
 const CAMERA_DISTANCE_MIN = 300; // Минимальная дистанция (приближение)
@@ -97,14 +96,14 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
   const [showSoldierControls, setShowSoldierControls] = useState(true);
   
   // Состояние для управления тестовым врагом
-  const testEnemyMeshRef = useRef<THREE.Group | null>(null);
+  const testEnemyModelRef = useRef<THREE.Group | null>(null);
+  const testEnemyMixerRef = useRef<THREE.AnimationMixer | null>(null);
   const [testEnemyPosition, setTestEnemyPosition] = useState({
     x: 0,
     y: 0,
     z: 0,
   });
   const [testEnemyScale, setTestEnemyScale] = useState(1.0);
-  const [testEnemySize, setTestEnemySize] = useState(100);
   const [showTestEnemyControls, setShowTestEnemyControls] = useState(true);
 
   // Инициализация Three.js сцены
@@ -185,6 +184,63 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
       undefined,
       (error) => {
         console.error("❌ Ошибка загрузки модели солдата:", error);
+      }
+    );
+
+    // Загружаем модель тестового врага (та же модель, но отдельный экземпляр)
+    loader.load(
+      "/models/gltf/Soldier.glb",
+      (gltf) => {
+        const model = gltf.scene.clone(true); // Клонируем модель
+        scene.add(model);
+
+        // Настраиваем тени для всех мешей
+        model.traverse((object) => {
+          if (object instanceof THREE.Mesh) {
+            object.castShadow = true;
+            object.receiveShadow = true;
+          }
+        });
+
+        // Создаем mixer для анимаций
+        const animations = gltf.animations;
+        const mixer = new THREE.AnimationMixer(model);
+
+        // Настраиваем анимации
+        if (animations.length > 0) {
+          const idleAction = mixer.clipAction(animations[0]);
+          const walkAction = animations.length > 3 ? mixer.clipAction(animations[3]) : null;
+          const runAction = animations.length > 1 ? mixer.clipAction(animations[1]) : null;
+
+          // Активируем idle анимацию
+          idleAction.play();
+
+          // Если есть walk и run, настраиваем их веса
+          if (walkAction) {
+            walkAction.play();
+            walkAction.setEffectiveWeight(0);
+          }
+          if (runAction) {
+            runAction.play();
+            runAction.setEffectiveWeight(0);
+          }
+        }
+
+        // Позиционируем врага в центре сцены (позиция будет обновлена когда путь загрузится)
+        const centerX = CANVAS_PADDING + GAME_WIDTH / 2;
+        const centerZ = CANVAS_PADDING + GAME_HEIGHT / 2;
+        model.position.set(centerX, 0, centerZ);
+        model.scale.set(1.0, 1.0, 1.0);
+
+        // Сохраняем ссылки
+        testEnemyModelRef.current = model;
+        testEnemyMixerRef.current = mixer;
+
+        console.log("✅ Тестовый враг загружен и добавлен на сцену");
+      },
+      undefined,
+      (error) => {
+        console.error("❌ Ошибка загрузки модели тестового врага:", error);
       }
     );
 
@@ -1125,7 +1181,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
 
   // Вычисляем центр пути для тестового врага
   useEffect(() => {
-    if (path.length > 0) {
+    if (path.length > 0 && testEnemyModelRef.current) {
       // Находим среднюю точку пути
       const middleIndex = Math.floor(path.length / 2);
       const centerPoint = path[middleIndex];
@@ -1137,66 +1193,20 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
     }
   }, [path]);
 
-  // Создаем тестового врага (один раз при инициализации)
-  useEffect(() => {
-    if (!sceneRef.current || !isInitialized) return;
-
-    const scene = sceneRef.current;
-    const enemy3DManager = enemy3DManagerRef.current;
-
-    // Проверяем, не создан ли уже тестовый враг
-    if (testEnemyMeshRef.current) return;
-
-    // Создаем тестового врага когда модель загружена
-    const checkAndCreate = () => {
-      if (enemy3DManager.isLoaded() && !testEnemyMeshRef.current) {
-        const testEnemyId = "test-enemy-debug";
-        const enemy3DModel = enemy3DManager.getOrCreateEnemy(
-          testEnemyId,
-          SOLDIER_MODEL
-        );
-
-        if (enemy3DModel) {
-          testEnemyMeshRef.current = enemy3DModel;
-          enemy3DModel.castShadow = true;
-          enemy3DModel.receiveShadow = true;
-          scene.add(enemy3DModel);
-          console.log("[Game3DCanvas] ✅ Тестовый враг создан");
-        }
-      }
-    };
-
-    // Проверяем сразу и через небольшую задержку (на случай если модель еще загружается)
-    checkAndCreate();
-    const timeout = setTimeout(checkAndCreate, 500);
-
-    return () => {
-      clearTimeout(timeout);
-      if (testEnemyMeshRef.current && sceneRef.current) {
-        sceneRef.current.remove(testEnemyMeshRef.current);
-        testEnemyMeshRef.current = null;
-      }
-    };
-  }, [isInitialized]);
-
   // Обновляем позицию и размер тестового врага
   useEffect(() => {
-    if (testEnemyMeshRef.current) {
-      const mesh = testEnemyMeshRef.current;
-      mesh.position.set(
+    if (testEnemyModelRef.current) {
+      const model = testEnemyModelRef.current;
+      model.position.set(
         testEnemyPosition.x,
         testEnemyPosition.y,
         testEnemyPosition.z
       );
-
-      // Обновляем масштаб
-      const configScale = SOLDIER_MODEL.scale || 100;
-      const configScaleFactor = configScale / 100;
-      const sizeScale = testEnemySize / 100;
-      const totalScale = configScaleFactor * sizeScale * testEnemyScale;
-      mesh.scale.set(totalScale, totalScale, totalScale);
+      // Применяем масштаб напрямую (упрощенная логика, как у тестового солдата)
+      model.scale.set(testEnemyScale, testEnemyScale, testEnemyScale);
     }
-  }, [testEnemyPosition, testEnemyScale, testEnemySize]);
+  }, [testEnemyPosition, testEnemyScale]);
+
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     // Начинаем перетаскивание для панорамирования камеры
@@ -1593,22 +1603,6 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
             />
           </div>
 
-          {/* Размер врага (Size) */}
-          <div style={{ marginBottom: "12px" }}>
-            <label style={{ display: "block", marginBottom: "4px", fontSize: "11px" }}>
-              Size: {testEnemySize}
-            </label>
-            <input
-              type="range"
-              min={0.01}
-              max={200}
-              step={0.05}
-              value={testEnemySize}
-              onChange={(e) => setTestEnemySize(Number(e.target.value))}
-              style={{ width: "100%" }}
-            />
-          </div>
-
           {/* Размер (Scale) */}
           <div style={{ marginBottom: "12px" }}>
             <label style={{ display: "block", marginBottom: "4px", fontSize: "11px" }}>
@@ -1638,7 +1632,6 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
                 });
               }
               setTestEnemyScale(1.0);
-              setTestEnemySize(100);
             }}
             style={{
               width: "100%",

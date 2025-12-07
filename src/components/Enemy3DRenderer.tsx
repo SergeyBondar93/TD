@@ -22,40 +22,9 @@ interface EnemyRenderState {
 class Enemy3DManager {
   private baseModel: LoadedModel | null = null;
   private isModelLoaded = false;
-  private scene: THREE.Scene;
-  private camera: THREE.OrthographicCamera;
-  private renderer: THREE.WebGLRenderer;
   private enemies: Map<string, EnemyRenderState> = new Map(); // Хранилище врагов по ID
 
   constructor() {
-    this.scene = new THREE.Scene();
-    this.scene.background = null;
-    const viewSize = 3;
-    this.camera = new THREE.OrthographicCamera(
-      -viewSize,
-      viewSize,
-      viewSize,
-      -viewSize,
-      0.1,
-      100
-    );
-    this.camera.position.set(0, 3, 8);
-    this.camera.lookAt(0, 0, 0);
-    this.renderer = new THREE.WebGLRenderer({
-      alpha: true,
-      antialias: true,
-      preserveDrawingBuffer: true,
-    });
-    this.renderer.setSize(512, 512);
-    this.renderer.setClearColor(0x000000, 0);
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
-    this.scene.add(ambientLight);
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(5, 10, 5);
-    this.scene.add(directionalLight);
-    const backLight = new THREE.DirectionalLight(0xffffff, 0.4);
-    backLight.position.set(-5, 5, -5);
-    this.scene.add(backLight);
     this.loadModel();
   }
 
@@ -83,7 +52,7 @@ class Enemy3DManager {
 
     // Клонируем базовую модель
     const modelClone = this.baseModel.scene.clone(true);
-
+    console.log('[Enemy3DRenderer] Клонированная модель:', modelClone);
     // Вычисляем bounding box для центрирования
     const box = new THREE.Box3().setFromObject(modelClone);
     const center = box.getCenter(new THREE.Vector3());
@@ -132,6 +101,7 @@ class Enemy3DManager {
     // Если враг уже существует, обновляем его конфиг и возвращаем модель
     if (this.enemies.has(enemyId)) {
       const enemy = this.enemies.get(enemyId)!;
+
       // Обновляем конфиг на актуальный
       enemy.config = config;
       enemy.deathDuration = config.animations.death.duration;
@@ -330,7 +300,6 @@ class Enemy3DManager {
       deathStartTime,
       deathDuration,
       fadeOutDuration,
-      knockbackOffset,
       randomFlipRotation,
     } = enemy;
 
@@ -438,7 +407,6 @@ class Enemy3DManager {
     this.enemies.forEach((_, id) => {
       this.removeEnemy(id);
     });
-    this.renderer.dispose();
   }
 }
 

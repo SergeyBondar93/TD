@@ -1,6 +1,8 @@
 import React, { useRef, useEffect, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
+import { KTX2Loader } from "three/examples/jsm/loaders/KTX2Loader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 
@@ -301,15 +303,35 @@ export const ModelViewer: React.FC = () => {
 
       // Загружаем новую модель
       const loader = new GLTFLoader();
+      
+      // Настраиваем DRACOLoader для поддержки сжатых моделей
+      const dracoLoader = new DRACOLoader();
+      dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
+      loader.setDRACOLoader(dracoLoader);
+      
+      // Настраиваем KTX2Loader для поддержки KTX2 текстур
+      const ktx2Loader = new KTX2Loader();
+      ktx2Loader.setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.181.2/examples/jsm/libs/basis/');
+      loader.setKTX2Loader(ktx2Loader);
+      
       const gltf = await new Promise<{
         scene: THREE.Group;
         animations: THREE.AnimationClip[];
       }>((resolve, reject) => {
         loader.load(
           modelPath,
-          (gltf) => resolve(gltf),
+          (gltf) => {
+            // Очищаем загрузчики после загрузки
+            dracoLoader.dispose();
+            ktx2Loader.dispose();
+            resolve(gltf);
+          },
           undefined,
-          (error) => reject(error)
+          (error) => {
+            dracoLoader.dispose();
+            ktx2Loader.dispose();
+            reject(error);
+          }
         );
       });
 

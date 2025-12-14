@@ -108,7 +108,7 @@ export const useGameStore = create<GameState>((set) => ({
   currentWave: 0,
   currentLevel:
     typeof window !== "undefined"
-      ? DEV_CONFIG.AUTO_START_LEVEL
+      ? (DEV_CONFIG as any).AUTO_START_LEVEL
         ? 1
         : null
       : null,

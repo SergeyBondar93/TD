@@ -40,11 +40,6 @@ export async function loadSoldierModel(): Promise<LoadedModel> {
           console.log(`  [${index}] ${anim.name} (длительность: ${anim.duration.toFixed(2)}с)`);
         });
         
-        // Вычисляем размеры модели для отладки
-        const box = new THREE.Box3().setFromObject(scene);
-        const size = box.getSize(new THREE.Vector3());
-        const center = box.getCenter(new THREE.Vector3());
-        
         // Подсчитываем меши и материалы
         let meshCount = 0;
         let materialCount = 0;

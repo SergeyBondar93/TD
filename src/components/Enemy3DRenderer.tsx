@@ -17,7 +17,9 @@ interface EnemyRenderState {
   mixer: THREE.AnimationMixer;
   idleAction: THREE.AnimationAction | null;
   runAction: THREE.AnimationAction | null;
+  deathAction: THREE.AnimationAction | null;
   isMoving: boolean;
+  isDying: boolean;
 }
 
 // Класс для управления 3D рендерингом врагов
@@ -47,6 +49,7 @@ class Enemy3DManager {
     mixer: THREE.AnimationMixer;
     idleAction: THREE.AnimationAction | null;
     runAction: THREE.AnimationAction | null;
+    deathAction: THREE.AnimationAction | null;
   } {
     if (!this.baseModel) {
       throw new Error("Base model not loaded");
@@ -62,6 +65,7 @@ class Enemy3DManager {
     // Инициализируем анимации
     let idleAction: THREE.AnimationAction | null = null;
     let runAction: THREE.AnimationAction | null = null;
+    let deathAction: THREE.AnimationAction | null = null;
 
     if (animations.length > 0) {
       // Анимация Idle (индекс 0)
@@ -76,12 +80,29 @@ class Enemy3DManager {
       runAction.setEffectiveWeight(0); // Начинаем с весом 0 (не активна)
     }
 
-    // Отладочный лог только для первого создания модели
-    if (!this.enemies.size) {
-      console.log('[Enemy3DRenderer] ✅ Создана модель врага с анимациями');
+    // Ищем анимацию смерти по имени или используем индекс 2
+    if (animations.length > 2) {
+      // Пытаемся найти анимацию смерти по имени
+      const deathAnim = animations.find(
+        (anim) => anim.name.toLowerCase().includes('death') || anim.name.toLowerCase().includes('die')
+      ) || animations[2]; // Если не найдена, используем индекс 2
+      
+      deathAction = mixer.clipAction(deathAnim);
+      deathAction.setLoop(THREE.LoopOnce, 1); // Анимация смерти проигрывается один раз
+      deathAction.clampWhenFinished = true; // Остается в последнем кадре
     }
 
-    return { model, mixer, idleAction, runAction };
+    // Отладочный лог только для первого создания модели
+    if (!this.enemies.size) {
+      console.log('[Enemy3DRenderer] ✅ Создана модель врага с анимациями', {
+        idle: !!idleAction,
+        run: !!runAction,
+        death: !!deathAction,
+        totalAnimations: animations.length
+      });
+    }
+
+    return { model, mixer, idleAction, runAction, deathAction };
   }
 
   // Получаем или создаем модель для врага
@@ -106,7 +127,7 @@ class Enemy3DManager {
 
     // Создаем новую модель для врага
     try {
-      const { model, mixer, idleAction, runAction } = this.createEnemyModel();
+      const { model, mixer, idleAction, runAction, deathAction } = this.createEnemyModel();
 
       // Сохраняем состояние врага
       this.enemies.set(enemyId, {
@@ -115,7 +136,9 @@ class Enemy3DManager {
         mixer,
         idleAction,
         runAction,
+        deathAction,
         isMoving: false,
+        isDying: false,
       });
 
       // Логируем только первые несколько созданий
@@ -138,8 +161,26 @@ class Enemy3DManager {
     }
   }
 
+  // Запускаем анимацию смерти
+  public startDeathAnimation(enemyId: string) {
+    const enemy = this.enemies.get(enemyId);
+    if (!enemy || enemy.isDying) {
+      return; // Уже умирает или не найден
+    }
+
+    enemy.isDying = true;
+
+    // Отключаем все другие анимации
+    if (enemy.idleAction) {
+      enemy.idleAction.setEffectiveWeight(0);
+    }
+    if (enemy.runAction) {
+      enemy.runAction.setEffectiveWeight(0);
+    }
+  }
+
   // Обновляем анимацию врага
-  public updateAnimation(enemyId: string, deltaTime: number, isMoving: boolean) {
+  public updateAnimation(enemyId: string, deltaTime: number, isMoving: boolean, isDying: boolean = false) {
     const enemy = this.enemies.get(enemyId);
     if (!enemy) {
       return;
@@ -147,6 +188,17 @@ class Enemy3DManager {
 
     // Обновляем mixer
     enemy.mixer.update(deltaTime);
+
+    // Если враг умирает, запускаем анимацию смерти
+    if (isDying && !enemy.isDying) {
+      this.startDeathAnimation(enemyId);
+      return;
+    }
+
+    // Если уже умирает, не переключаем анимации
+    if (enemy.isDying) {
+      return;
+    }
 
     // Переключаем анимацию в зависимости от состояния движения
     if (enemy.isMoving !== isMoving) {

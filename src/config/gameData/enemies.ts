@@ -51,32 +51,6 @@ const SPAWN_DELAY = {
   TANK_LARGE: 800,
 } as const;
 
-// ============================================
-// СТАНДАРТНЫЕ КОНФИГУРАЦИИ МОДЕЛЕЙ
-// ============================================
-
-export const SPIDER_MODEL: EnemyModelConfig = {
-  modelType: "spider",
-  scale: 4000, // 20% от базового размера
-  rotationOffset: Math.PI, // Паук смотрит назад, поворачиваем на 180°
-  animations: {
-    walk: {
-      enabled: true,
-      bobAmount: 0.15, // Покачивание вверх-вниз
-      swayAmount: 0.12, // Покачивание в стороны
-      tiltAmount: 0.15, // Наклон
-      speed: 40, // Скорость анимации
-      rotationOffset: Math.PI / 2, // Поправка на -90 градусов для правильного направления
-    },
-    death: {
-      duration: 2.0, // 2 секунды переворачивания
-      fadeOutDuration: 1.0, // 1 секунда растворения
-      flipOver: { x: 0.2, y: 0.2, z: 0.2, easeFunction: "easeOut" }, // Переворачивается на спину с координатами отлета
-      knockbackDistance: 15, // Отлетает на 8 единиц (уменьшено чтобы не обрезался)
-    },
-  },
-};
-
 export const SOLDIER_MODEL: EnemyModelConfig = {
   modelType: "spider", // Используем тот же тип, но модель будет загружена из Soldier.glb
   scale: 4000, // 40 раз больше оригинала (100 * 40 = 4000)
@@ -87,7 +61,7 @@ export const SOLDIER_MODEL: EnemyModelConfig = {
       bobAmount: 0.05, // Покачивание вверх-вниз
       swayAmount: 0.12, // Покачивание в стороны
       tiltAmount: 0.15, // Наклон
-      speed: 8, // Скорость анимации
+      speed: 8, // Скорость 
       rotationOffset: 0, // Без поправки
     },
     death: {

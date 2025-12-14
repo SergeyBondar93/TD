@@ -11,7 +11,7 @@ export const DEV_CONFIG = {
   SHOW_PATH_COORDINATES: true,
 
   // Автоматически запускать первый уровень при загрузке (для разработки)
-  AUTO_START_LEVEL: 10,
+  // AUTO_START_LEVEL: 10,
 
   // Начальная скорость игры (для отладки)
   GAME_SPEED: 0.0001,

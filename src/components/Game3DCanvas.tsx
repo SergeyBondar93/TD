@@ -525,6 +525,23 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
 
         // Обновляем или создаём врагов
         gameState.enemies.forEach((enemy) => {
+          // Если враг умирает, сразу удаляем его из сцены
+          if (enemy.isDying) {
+            const mesh = enemyMeshesRef.current.get(enemy.id);
+            if (mesh) {
+              scene.remove(mesh);
+              enemyMeshesRef.current.delete(enemy.id);
+              enemy3DManager.removeEnemy(enemy.id);
+            }
+            const hpSprite = enemyHPSpritesRef.current.get(enemy.id);
+            if (hpSprite) {
+              scene.remove(hpSprite);
+              enemyHPSpritesRef.current.delete(enemy.id);
+            }
+            enemyPrevPositionsRef.current.delete(enemy.id);
+            return; // Пропускаем обработку умирающего врага
+          }
+
           let mesh = enemyMeshesRef.current.get(enemy.id);
 
           if (!mesh) {
@@ -589,8 +606,8 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
             enemyHPSpritesRef.current.set(enemy.id, hpSprite);
           }
 
-          // Обновляем позицию и масштаб только для живых врагов
-          if (mesh && !enemy.isDying) {
+          // Обновляем анимацию для живых врагов
+          if (mesh && enemy.modelConfig) {
             // Определяем, движется ли враг (сравниваем с предыдущей позицией)
             const prevPos = enemyPrevPositionsRef.current.get(enemy.id);
             const isMoving = prevPos
@@ -599,9 +616,11 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
               : true; // Если нет предыдущей позиции, считаем что движется
 
             // Обновляем анимацию
-            if (enemy.modelConfig) {
-              enemy3DManager.updateAnimation(enemy.id, deltaTime, isMoving);
-            }
+            enemy3DManager.updateAnimation(enemy.id, deltaTime, isMoving, false);
+          }
+
+          // Обновляем позицию и масштаб для живых врагов
+          if (mesh) {
 
             mesh.position.set(
               enemy.position.x,
@@ -631,7 +650,7 @@ export const Game3DCanvas: React.FC<Game3DCanvasProps> = ({
 
           // Обновляем HP sprite
           const hpSprite = enemyHPSpritesRef.current.get(enemy.id);
-          if (hpSprite && !enemy.isDying) {
+          if (hpSprite) {
             hpSprite.position.set(
               enemy.position.x,
               (enemy.z ?? 0) + enemy.size / 2 + 15, // Учитываем высоту врага
